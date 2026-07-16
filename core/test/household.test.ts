@@ -3,6 +3,7 @@ import assert from "node:assert/strict";
 import {
   ageAt, yearsToPayoff, totalDebtBalance, mortgageBalance, nonMortgageDebtBalance,
   youngestDependentChild, yearsUntilLastChildReaches, obligationDeclineSchedule,
+  dependents,
 } from "../src/household.ts";
 import type { Household, Person, Debt } from "../src/types.ts";
 
@@ -57,9 +58,19 @@ test("debt totals split mortgage from the rest", () => {
 });
 
 test("informal dependents are counted — the household is not assumed nuclear", () => {
-  const supported = h.dependents.filter((p) => !p.isFormalDependent);
-  assert.equal(supported.length, 1);
-  assert.equal(supported[0]!.name, "Mother");
+  const all = dependents(h);
+  assert.equal(all.length, 3, "mother, and two children");
+
+  const informal = all.filter((p) => !p.isFormalDependent);
+  assert.equal(informal.length, 1);
+  assert.equal(informal[0]!.name, "Mother");
+  assert.equal(informal[0]!.relationship, "parent");
+  assert.equal(informal[0]!.monthlySupport, 800,
+    "an informally supported parent still carries a real monthly obligation");
+
+  const nonChildren = all.filter((p) => p.relationship !== "child");
+  assert.equal(nonChildren.length, 1,
+    "the household must model dependents who are not spouse-or-child");
 });
 
 test("youngestDependentChild ignores non-children", () => {
