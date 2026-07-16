@@ -1,6 +1,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import { ProvenanceBuilder, resolveParameter } from "../src/provenance.ts";
+import { P } from "../../parameters/tt-parameters.js";
 
 test("resolveParameter reads a dotted path and returns node + value", () => {
   const { node, value } = resolveParameter("nis.minimum_pension");
@@ -44,4 +45,24 @@ test("build() output is stable — same calls, byte-identical JSON", () => {
     return JSON.stringify(b.build());
   };
   assert.equal(mk(), mk());
+});
+
+test("build() output cannot be mutated to corrupt the builder", () => {
+  const b = new ProvenanceBuilder();
+  b.use("nis.minimum_pension");
+  const first = b.build();
+  assert.throws(() => { (first.parameters[0] as any).status = "TAMPERED"; },
+    "a returned provenance record must not be mutable");
+  const second = b.build();
+  assert.equal(second.parameters[0]!.status, "VERIFIED",
+    "the builder's internal state must survive a tampering attempt");
+});
+
+test("the parameter tables are frozen — no caller can corrupt the source of truth", () => {
+  const b = new ProvenanceBuilder();
+  b.use("scp.bands");
+  assert.throws(() => { (P as any).nis.minimum_pension.value = 1; },
+    "P must be deeply frozen");
+  assert.equal((P as any).nis.minimum_pension.value, 3000,
+    "the minimum pension must be unchanged after a tampering attempt");
 });

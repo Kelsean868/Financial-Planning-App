@@ -47,10 +47,13 @@ export class ProvenanceBuilder {
   }
 
   build(): Provenance {
-    return {
-      parameters: [...this.#params.values()].sort((a, b) => a.path.localeCompare(b.path)),
-      caveats: [...this.#caveats],
-      rulesFired: [...this.#rules],
-    };
+    const parameters = [...this.#params.values()]
+      .sort((a, b) => a.path.localeCompare(b.path))
+      .map((p) => Object.freeze({ ...p }));
+    return Object.freeze({
+      parameters: Object.freeze(parameters),
+      caveats: Object.freeze([...this.#caveats]),
+      rulesFired: Object.freeze([...this.#rules]),
+    }) as Provenance;
   }
 }
