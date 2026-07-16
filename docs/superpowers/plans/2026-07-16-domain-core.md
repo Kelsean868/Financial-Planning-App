@@ -717,7 +717,14 @@ test("group cover is still zero above 70", () => {
 });
 
 test("premiums and cash value sum only over in-force policies", () => {
-  assert.equal(totalMonthlyPremium(all), 767.18, "467.18 + 0 + 300; lapsed excluded");
+  // Money is TTD as float and the engine must NOT round intermediates (Global Constraint),
+  // so 467.18 + 300 lands on 767.1800000000001 in IEEE-754. The tolerance belongs in the
+  // TEST, not in the implementation — rounding in the engine would violate the constraint.
+  const premium = totalMonthlyPremium(all);
+  assert.ok(Math.abs(premium - 767.18) < 0.005,
+    `expected ~767.18 (467.18 + 0 + 300; lapsed excluded), got ${premium}`);
+
+  // Cash values are whole dollars here, so exact equality is safe.
   assert.equal(totalCashValue(all), 76283, "31283 + 45000");
 });
 
