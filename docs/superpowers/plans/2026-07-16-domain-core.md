@@ -505,9 +505,10 @@ test("youngestDependentChild ignores non-children", () => {
 });
 
 test("yearsUntilLastChildReaches drives income continuation", () => {
-  // Aaliyah born 2018-09-20 is 7 on 2026-07-16; reaches 21 in ~14.2 years
+  // Aaliyah born 2018-09-20 is 7 on 2026-07-16; she reaches 21 on 2039-09-20,
+  // which is 13.18 years away (13 years + 66 days).
   const y = yearsUntilLastChildReaches(h, 21, TODAY);
-  assert.ok(y > 14 && y < 14.5, `expected ~14.2, got ${y}`);
+  assert.ok(y > 13.1 && y < 13.3, `expected ~13.18, got ${y}`);
   assert.equal(yearsUntilLastChildReaches({ ...h, dependents: [mother] }, 21, TODAY), 0, "no children => zero");
 });
 
@@ -1029,9 +1030,10 @@ test("renter: 120 months of rent replaces mortgage liquidation", () => {
 
 test("income continuation runs until the last child reaches 21", () => {
   const n = computeDeathNeeds(owner, TODAY);
-  // child born 2018-09-20 -> ~14.18y to 21; 9000 expenses x 12 x 14.18
-  assert.ok(n.incomeContinuation > 1_520_000 && n.incomeContinuation < 1_540_000,
-    `expected ~1.53M, got ${n.incomeContinuation}`);
+  // child born 2018-09-20 reaches 21 on 2039-09-20 = 13.18y from TODAY.
+  // 9000 monthly expenses x 12 x 13.18 = ~1,423,471
+  assert.ok(n.incomeContinuation > 1_420_000 && n.incomeContinuation < 1_430_000,
+    `expected ~1.42M, got ${n.incomeContinuation}`);
 });
 
 test("no children => no income continuation", () => {
