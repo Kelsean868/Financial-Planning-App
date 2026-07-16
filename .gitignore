@@ -1,0 +1,15 @@
+# Working / derived material — regenerable, large, not source of truth
+.firecrawl/
+.superpowers/
+
+# graphify internals (the graph outputs themselves ARE tracked)
+graphify-out/cache/
+graphify-out/.graphify_*
+
+# Node
+node_modules/
+*.log
+
+# OS
+Thumbs.db
+.DS_Store

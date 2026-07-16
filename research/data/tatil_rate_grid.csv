@@ -1,0 +1,193 @@
+product,gender,smoker,issue_age,face_amount,monthly_premium,premium_per_1000,quote_date
+Limited Pay to 65,Female,Non-Smoke r,25,250000.0,261.48,12.551,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,25,500000.0,330.33,7.9279,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,25,750000.0,480.05,7.6808,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,35,250000.0,344.7,16.5456,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,35,500000.0,484.77,11.6345,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,35,750000.0,711.71,11.3874,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,45,250000.0,526.81,25.2869,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,45,500000.0,818.1,19.6344,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,45,750000.0,1211.71,19.3874,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,55,250000.0,1111.32,53.3434,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,55,500000.0,1876.45,45.0348,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoke r,55,750000.0,2799.23,44.7877,23-Sep-2024
+Limited Pay to 65,Female,Non-Smoker,25,100000.0,194.94,23.3928,13-Nov-2024
+Limited Pay to 65,Female,Non-Smoker,35,100000.0,230.54,27.6648,13-Nov-2024
+Limited Pay to 65,Female,Non-Smoker,45,100000.0,310.25,37.23,13-Nov-2024
+Limited Pay to 65,Female,Non-Smoker,55,100000.0,574.95,68.994,13-Nov-2024
+Limited Pay to 65,Female,Smoke r,25,250000.0,278.64,13.3747,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,25,500000.0,377.95,9.0708,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,25,750000.0,551.48,8.8237,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,35,250000.0,382.02,18.337,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,35,500000.0,580.44,13.9306,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,35,750000.0,855.21,13.6834,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,45,250000.0,597.81,28.6949,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,45,500000.0,999.14,23.9794,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,45,750000.0,1483.27,23.7323,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,55,250000.0,1242.17,59.6242,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,55,500000.0,2226.08,53.4259,23-Sep-2024
+Limited Pay to 65,Female,Smoke r,55,750000.0,3323.68,53.1789,23-Sep-2024
+Limited Pay to 65,Female,Smoker,25,100000.0,200.86,24.1032,13-Nov-2024
+Limited Pay to 65,Female,Smoker,35,100000.0,243.84,29.2608,13-Nov-2024
+Limited Pay to 65,Female,Smoker,45,100000.0,335.99,40.3188,13-Nov-2024
+Limited Pay to 65,Female,Smoker,55,100000.0,621.96,74.6352,13-Nov-2024
+Limited Pay to 65,Male,Non-Smoke r,25,250000.0,286.14,13.7347,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoke r,55,750000.0,3178.89,50.8622,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,25,100000.0,204.2,24.504,13-Nov-2024
+Limited Pay to 65,Male,Non-Smoker,25,500000.0,374.52,8.9885,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,25,750000.0,546.33,8.7413,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,35,100000.0,243.41,29.2092,13-Nov-2024
+Limited Pay to 65,Male,Non-Smoker,35,250000.0,380.09,18.2443,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,35,500000.0,549.98,13.1995,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,35,750000.0,809.52,12.9523,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,45,100000.0,332.82,39.9384,13-Nov-2024
+Limited Pay to 65,Male,Non-Smoker,45,250000.0,588.8,28.2624,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,45,500000.0,934.36,22.4246,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,45,750000.0,1386.1,22.1776,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,55,100000.0,622.82,74.7384,13-Nov-2024
+Limited Pay to 65,Male,Non-Smoker,55,250000.0,1243.24,59.6755,23-Sep-2024
+Limited Pay to 65,Male,Non-Smoker,55,500000.0,2129.56,51.1094,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,35,500000.0,685.97,16.4633,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,35,750000.0,1013.51,16.2162,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,45,250000.0,706.13,33.8942,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,45,500000.0,1212.35,29.0964,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,45,750000.0,1803.09,28.8494,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,55,250000.0,1480.26,71.0525,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,55,500000.0,2701.84,64.8442,23-Sep-2024
+Limited Pay to 65,Male,Smoke r,55,750000.0,4037.32,64.5971,23-Sep-2024
+Limited Pay to 65,Male,Smoker,25,100000.0,213.21,25.5852,13-Nov-2024
+Limited Pay to 65,Male,Smoker,25,250000.0,312.74,15.0115,23-Sep-2024
+Limited Pay to 65,Male,Smoker,25,500000.0,442.3,10.6152,23-Sep-2024
+Limited Pay to 65,Male,Smoker,25,750000.0,648.0,10.368,23-Sep-2024
+Limited Pay to 65,Male,Smoker,35,100000.0,263.32,31.5984,13-Nov-2024
+Limited Pay to 65,Male,Smoker,35,250000.0,436.29,20.9419,23-Sep-2024
+Limited Pay to 65,Male,Smoker,45,100000.0,375.2,45.024,13-Nov-2024
+Limited Pay to 65,Male,Smoker,55,100000.0,708.19,84.9828,13-Nov-2024
+Term to 65,Female,Non-Smoker,25,594185.0,119.11,2.4055,20th September 2024
+Term to 65,Female,Non-Smoker,25,594185.0,119.11,2.4055,20th September 2024
+Term to 65,Female,Non-Smoker,25,594185.0,119.11,2.4055,13th November  2024
+Term to 65,Female,Non-Smoker,25,750000.0,150.35,2.4056,20th September 2024
+Term to 65,Female,Non-Smoker,35,285394.0,119.11,5.0082,20th September 2024
+Term to 65,Female,Non-Smoker,35,285394.0,119.11,5.0082,13th November  2024
+Term to 65,Female,Non-Smoker,35,500000.0,124.32,2.9837,20th September 2024
+Term to 65,Female,Non-Smoker,35,750000.0,186.48,2.9837,20th September 2024
+Term to 65,Female,Non-Smoker,45,237825.0,119.11,6.01,13th November  2024
+Term to 65,Female,Non-Smoker,45,250000.0,125.21,6.0101,20th September 2024
+Term to 65,Female,Non-Smoker,45,500000.0,164.71,3.953,20th September 2024
+Term to 65,Female,Non-Smoker,45,500000.0,164.71,3.953,20th September 2024
+Term to 65,Female,Non-Smoker,55,193052.0,119.11,7.4038,13th November  2024
+Term to 65,Female,Non-Smoker,55,250000.0,154.25,7.404,20th September 2024
+Term to 65,Female,Non-Smoker,55,500000.0,216.01,5.1842,20th September 2024
+Term to 65,Female,Non-Smoker,55,750000.0,324.02,5.1843,20th September 2024
+Term to 65,Female,Smoker,25,278225.0,119.11,5.1373,20th September 2024
+Term to 65,Female,Smoker,25,278225.0,119.11,5.1373,13th November  2024
+Term to 65,Female,Smoker,25,500000.0,130.21,3.125,20th September 2024
+Term to 65,Female,Smoker,25,750000.0,195.31,3.125,20th September 2024
+Term to 65,Female,Smoker,35,216829.0,119.11,6.5919,13th November 2024
+Term to 65,Female,Smoker,35,250000.0,137.33,6.5918,20th September 2024
+Term to 65,Female,Smoker,35,500000.0,190.86,4.5806,20th September 2024
+Term to 65,Female,Smoker,35,750000.0,286.29,4.5806,20th September 2024
+Term to 65,Female,Smoker,45,159305.0,119.11,8.9722,13th November 2024
+Term to 65,Female,Smoker,45,250000.0,186.92,8.9722,20th September 2024
+Term to 65,Female,Smoker,45,500000.0,287.71,6.905,20th September 2024
+Term to 65,Female,Smoker,45,750000.0,431.57,6.9051,20th September 2024
+Term to 65,Female,Smoker,55,150000.0,145.81,11.6648,13th November 2024
+Term to 65,Female,Smoker,55,250000.0,243.01,11.6645,20th September 2024
+Term to 65,Female,Smoker,55,500000.0,388.26,9.3182,20th September 2024
+Term to 65,Female,Smoker,55,750000.0,582.4,9.3184,20th September 2024
+Term to 65,Male,Non-Smoker,25,291283.0,119.11,4.907,20th September 2024
+Term to 65,Male,Non-Smoker,25,291283.0,119.11,4.907,13th November  2024
+Term to 65,Male,Non-Smoker,25,500000.0,119.15,2.8596,20th September 2024
+Term to 65,Male,Non-Smoker,25,750000.0,178.73,2.8597,20th September 2024
+Term to 65,Male,Non-Smoker,35,257436.0,119.11,5.5521,20th September 2024
+Term to 65,Male,Non-Smoker,35,257436.0,119.11,5.5521,13th November  2024
+Term to 65,Male,Non-Smoker,35,500000.0,144.77,3.4745,20th September 2024
+Term to 65,Male,Non-Smoker,35,750000.0,217.16,3.4746,20th September 2024
+Term to 65,Male,Non-Smoker,45,203221.0,119.11,7.0333,13th November  2024
+Term to 65,Male,Non-Smoker,45,250000.0,146.53,7.0334,20th September 2024
+Term to 65,Male,Non-Smoker,45,500000.0,201.32,4.8317,20th September 2024
+Term to 65,Male,Non-Smoker,45,750000.0,301.98,4.8317,20th September 2024
+Term to 65,Male,Non-Smoker,55,160574.0,119.11,8.9013,13th November  2024
+Term to 65,Male,Non-Smoker,55,250000.0,185.45,8.9016,20th September 2024
+Term to 65,Male,Non-Smoker,55,500000.0,265.1,6.3624,20th September 2024
+Term to 65,Male,Non-Smoker,55,750000.0,397.65,6.3624,20th September 2024
+Term to 65,Male,Smoker,25,236126.0,119.11,6.0532,13th November  2024
+Term to 65,Male,Smoker,25,250000.0,126.11,6.0533,20th September 2024
+Term to 65,Male,Smoker,25,500000.0,163.01,3.9122,20th September 2024
+Term to 65,Male,Smoker,25,750000.0,244.52,3.9123,20th September 2024
+Term to 65,Male,Smoker,35,179979.0,119.11,7.9416,13th November  2024
+Term to 65,Male,Smoker,35,250000.0,165.45,7.9416,20th September 2024
+Term to 65,Male,Smoker,35,500000.0,239.13,5.7391,20th September 2024
+Term to 65,Male,Smoker,35,750000.0,358.7,5.7392,20th September 2024
+Term to 65,Male,Smoker,45,150000.0,148.99,11.9192,13th November  2024
+Term to 65,Male,Smoker,45,250000.0,248.32,11.9194,20th September 2024
+Term to 65,Male,Smoker,45,500000.0,396.29,9.511,20th September 2024
+Term to 65,Male,Smoker,45,750000.0,594.44,9.511,20th September 2024
+Term to 65,Male,Smoker,55,150000.0,207.08,16.5664,13th November  2024
+Term to 65,Male,Smoker,55,250000.0,345.13,16.5662,20th September 2024
+Term to 65,Male,Smoker,55,500000.0,566.63,13.5991,20th September 2024
+Term to 65,Male,Smoker,55,750000.0,849.95,13.5992,20th September 2024
+Whole Life,Female,Non-Smoke r,25,250000.0,244.74,11.7475,23-Sep-2024
+Whole Life,Female,Non-Smoke r,25,500000.0,302.02,7.2485,23-Sep-2024
+Whole Life,Female,Non-Smoke r,25,750000.0,437.58,7.0013,23-Sep-2024
+Whole Life,Female,Non-Smoke r,35,250000.0,299.44,14.3731,23-Sep-2024
+Whole Life,Female,Non-Smoke r,35,500000.0,405.83,9.7399,23-Sep-2024
+Whole Life,Female,Non-Smoke r,35,750000.0,593.31,9.493,23-Sep-2024
+Whole Life,Female,Non-Smoke r,45,250000.0,394.47,18.9346,23-Sep-2024
+Whole Life,Female,Non-Smoke r,45,500000.0,582.58,13.9819,23-Sep-2024
+Whole Life,Female,Non-Smoke r,45,750000.0,858.43,13.7349,23-Sep-2024
+Whole Life,Female,Non-Smoke r,55,250000.0,566.28,27.1814,23-Sep-2024
+Whole Life,Female,Non-Smoke r,55,500000.0,894.89,21.4774,23-Sep-2024
+Whole Life,Female,Non-Smoke r,55,750000.0,1326.9,21.2304,23-Sep-2024
+Whole Life,Female,Non-Smoker,25,100000.0,185.93,22.3116,13-Nov-2024
+Whole Life,Female,Non-Smoker,35,100000.0,206.69,24.8028,13-Nov-2024
+Whole Life,Female,Non-Smoker,45,100000.0,243.24,29.1888,13-Nov-2024
+Whole Life,Female,Non-Smoker,55,100000.0,310.68,37.2816,13-Nov-2024
+Whole Life,Female,Smoke r,25,250000.0,262.98,12.623,23-Sep-2024
+Whole Life,Female,Smoke r,25,500000.0,350.92,8.4221,23-Sep-2024
+Whole Life,Female,Smoke r,25,750000.0,510.94,8.175,23-Sep-2024
+Whole Life,Female,Smoke r,35,250000.0,338.7,16.2576,23-Sep-2024
+Whole Life,Female,Smoke r,35,500000.0,504.08,12.0979,23-Sep-2024
+Whole Life,Female,Smoke r,35,750000.0,740.67,11.8507,23-Sep-2024
+Whole Life,Female,Smoke r,45,250000.0,468.25,22.476,23-Sep-2024
+Whole Life,Female,Smoke r,45,500000.0,765.34,18.3682,23-Sep-2024
+Whole Life,Female,Smoke r,45,750000.0,1132.56,18.121,23-Sep-2024
+Whole Life,Female,Smoke r,55,250000.0,688.33,33.0398,23-Sep-2024
+Whole Life,Female,Smoke r,55,500000.0,1205.06,28.9214,23-Sep-2024
+Whole Life,Female,Smoke r,55,750000.0,1792.15,28.6744,23-Sep-2024
+Whole Life,Female,Smoker,25,100000.0,192.62,23.1144,13-Nov-2024
+Whole Life,Female,Smoker,35,100000.0,221.71,26.6052,13-Nov-2024
+Whole Life,Female,Smoker,45,100000.0,272.33,32.6796,13-Nov-2024
+Whole Life,Female,Smoker,55,100000.0,359.5,43.14,13-Nov-2024
+Whole Life,Male,Non-Smoke r,25,250000.0,268.98,12.911,23-Sep-2024
+Whole Life,Male,Non-Smoke r,25,500000.0,344.06,8.2574,23-Sep-2024
+Whole Life,Male,Non-Smoke r,25,750000.0,500.64,8.0102,23-Sep-2024
+Whole Life,Male,Non-Smoke r,35,250000.0,333.76,16.0205,23-Sep-2024
+Whole Life,Male,Non-Smoke r,35,500000.0,467.18,11.2123,23-Sep-2024
+Whole Life,Male,Non-Smoke r,35,750000.0,685.33,10.9653,23-Sep-2024
+Whole Life,Male,Non-Smoke r,45,250000.0,451.95,21.6936,23-Sep-2024
+Whole Life,Male,Non-Smoke r,45,500000.0,683.83,16.4119,23-Sep-2024
+Whole Life,Male,Non-Smoke r,45,750000.0,1010.3,16.1648,23-Sep-2024
+Whole Life,Male,Non-Smoke r,55,250000.0,666.45,31.9896,23-Sep-2024
+Whole Life,Male,Non-Smoke r,55,500000.0,1068.21,25.637,23-Sep-2024
+Whole Life,Male,Non-Smoke r,55,750000.0,1586.87,25.3899,23-Sep-2024
+Whole Life,Male,Non-Smoker,25,100000.0,195.2,23.424,13-Nov-2024
+Whole Life,Male,Non-Smoker,35,100000.0,219.82,26.3784,13-Nov-2024
+Whole Life,Male,Non-Smoker,45,100000.0,265.64,31.8768,13-Nov-2024
+Whole Life,Male,Non-Smoker,55,100000.0,350.41,42.0492,13-Nov-2024
+Whole Life,Male,Smoke r,25,250000.0,297.51,14.2805,23-Sep-2024
+Whole Life,Male,Smoke r,25,500000.0,414.41,9.9458,23-Sep-2024
+Whole Life,Male,Smoke r,25,750000.0,606.18,9.6989,23-Sep-2024
+Whole Life,Male,Smoke r,35,250000.0,395.32,18.9754,23-Sep-2024
+Whole Life,Male,Smoke r,35,500000.0,610.04,14.641,23-Sep-2024
+Whole Life,Male,Smoke r,35,750000.0,899.61,14.3938,23-Sep-2024
+Whole Life,Male,Smoke r,45,250000.0,582.58,27.9638,23-Sep-2024
+Whole Life,Male,Smoke r,45,500000.0,978.55,23.4852,23-Sep-2024
+Whole Life,Male,Smoke r,45,750000.0,1452.38,23.2381,23-Sep-2024
+Whole Life,Male,Smoke r,55,250000.0,915.27,43.933,23-Sep-2024
+Whole Life,Male,Smoke r,55,500000.0,1625.91,39.0218,23-Sep-2024
+Whole Life,Male,Smoke r,55,750000.0,2423.42,38.7747,23-Sep-2024
+Whole Life,Male,Smoker,25,100000.0,205.75,24.69,13-Nov-2024
+Whole Life,Male,Smoker,35,100000.0,243.41,29.2092,13-Nov-2024
+Whole Life,Male,Smoker,45,100000.0,317.2,38.064,13-Nov-2024
+Whole Life,Male,Smoker,55,100000.0,450.28,54.0336,13-Nov-2024
