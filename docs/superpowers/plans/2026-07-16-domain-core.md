@@ -628,10 +628,21 @@ git commit -m "feat(core): Household aggregate with informal dependents and debt
 - Create: `core/src/policy-ledger.ts`
 - Test: `core/test/policy-ledger.test.ts`
 
+**⚠️ PRE-FLIGHT RESOLUTION (supersedes the code shown below):** the group-life ages are **T&T parameters and must NOT be hardcoded** — this task as originally drafted contradicted the Global Constraints. They now live in `parameters/tt-parameters.json` under `group_life` (`reduction_age` 66, `reduction_factor` 0.5, `termination_age` 70, all `VERIFIED_SINGLE_SOURCE`). **Import them via `ProvenanceBuilder.use()` so they carry provenance like every other parameter.** Task 4 builds `ProvenanceBuilder`, so this task may either read them directly via `resolveParameter()` or — simpler — export them as module constants *derived from* the parameters module, never as literals:
+
+```ts
+import { P } from "../../parameters/tt-parameters.js";
+export const GROUP_LIFE_REDUCTION_AGE: number = P.group_life.reduction_age.value;
+export const GROUP_LIFE_TERMINATION_AGE: number = P.group_life.termination_age.value;
+export const GROUP_LIFE_REDUCTION_FACTOR: number = P.group_life.reduction_factor.value;
+```
+
+The literals `66`, `70`, `0.5` **must not appear** in `core/src/policy-ledger.ts`. Task 8's purity guard adds them to its forbidden list.
+
 **Interfaces:**
-- Consumes: `Policy`, `TTD` from `core/src/types.ts`
+- Consumes: `Policy`, `TTD` from `core/src/types.ts`; `P` from `parameters/tt-parameters.js`
 - Produces:
-  - `GROUP_LIFE_REDUCTION_AGE = 66`, `GROUP_LIFE_TERMINATION_AGE = 70`, `GROUP_LIFE_REDUCTION_FACTOR = 0.5`
+  - `GROUP_LIFE_REDUCTION_AGE`, `GROUP_LIFE_TERMINATION_AGE`, `GROUP_LIFE_REDUCTION_FACTOR` — **all read from `P.group_life`, never literals**
   - `inForceCoverAt(policies: Policy[], age: number): { individual: TTD; group: TTD; total: TTD }`
   - `totalMonthlyPremium(policies: Policy[]): TTD`
   - `totalCashValue(policies: Policy[]): TTD`
@@ -1678,6 +1689,9 @@ test("no T&T parameter is hardcoded outside the parameters module", () => {
     ["90000", "the personal allowance"],
     ["566.72", "a NIS benefit rate"],
     ["335.83", "a STALE NIS benefit rate"],
+    ["120", "the rental-income replacement months"],
+    ["66", "the group life reduction age"],
+    ["70", "the group life termination age"],
   ] as const;
   for (const f of files) {
     const src = readFileSync(f, "utf8");

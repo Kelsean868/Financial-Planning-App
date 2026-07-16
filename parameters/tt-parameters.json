@@ -350,6 +350,34 @@
     }
   },
 
+  "group_life": {
+    "_note": "Employer-sponsored group life terms. T&T-specific and materially affects the protection gap: most employed clients are underinsured AND about to lose what they have.",
+    "reduction_age": {
+      "value": 66,
+      "unit": "age",
+      "source": "https://www.sagicor.com/en-tt/business-solutions/employee-benefits",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE",
+      "notes": "Sagicor T&T CariCARE group life. Coverage reduces by 50% at this age."
+    },
+    "reduction_factor": {
+      "value": 0.5,
+      "unit": "fraction of face remaining",
+      "source": "https://www.sagicor.com/en-tt/business-solutions/employee-benefits",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE"
+    },
+    "termination_age": {
+      "value": 70,
+      "unit": "age",
+      "source": "https://www.sagicor.com/en-tt/business-solutions/employee-benefits",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE",
+      "client_insight": "Group life terminates at 70 with NO post-retirement cover. This is the single best prospecting insight for the individual-cover conversation: what you have through work vanishes exactly when you may still have dependents.",
+      "warning": "Sourced from Sagicor's terms. Other T&T carriers' group schemes may differ — confirm per scheme before relying on it for a specific client. An engine that counts group cover as permanent is mis-selling."
+    }
+  },
+
   "annuities": {
     "statutory_maturity_floor": {
       "value": 50,
