@@ -61,3 +61,31 @@ test("deterministic", () => {
   }));
   assert.equal(mk(), mk());
 });
+
+test("SCP cliff proximity is flagged — the engine must not step a client over silently", () => {
+  // Assessed income lands within $100 below the 5,500 cliff. Crossing it drops
+  // SCP from 500 to zero: one extra dollar costs $500/month.
+  const r = computeRetirementNeeds({
+    lifetimeAvgMonthlyEarnings: 0, totalContributions: 0,
+    retirementAge: 66, targetMonthlyIncome: 8000,
+    otherMonthlyIncome: 5450,
+  });
+  const warned = r.provenance.caveats.some((c) => /cliff|threshold/i.test(c));
+  assert.ok(warned,
+    `expected a cliff-proximity caveat at 5,450 assessed income, got: ${JSON.stringify(r.provenance.caveats)}`);
+});
+
+test("crossing the 5,500 cliff zeroes SCP entirely", () => {
+  const below = computeRetirementNeeds({
+    lifetimeAvgMonthlyEarnings: 0, totalContributions: 0,
+    retirementAge: 66, targetMonthlyIncome: 8000,
+    otherMonthlyIncome: 5500,
+  });
+  const above = computeRetirementNeeds({
+    lifetimeAvgMonthlyEarnings: 0, totalContributions: 0,
+    retirementAge: 66, targetMonthlyIncome: 8000,
+    otherMonthlyIncome: 5501,
+  });
+  assert.equal(below.scpMonthly, 500, "at exactly 5,500 SCP still pays 500");
+  assert.equal(above.scpMonthly, 0, "at 5,501 SCP is a hard disqualification, not a taper");
+});
