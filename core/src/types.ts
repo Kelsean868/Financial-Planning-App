@@ -95,14 +95,29 @@ export interface Policy {
   beneficiary?: string;
 }
 
-/** Why a number is what it is. Attached to every engine result. */
+/** One parameter's audit entry: what was read, and where it came from. */
+export interface ProvenanceParameter {
+  readonly path: string;
+  readonly effective: string | null;
+  readonly source: string | null;
+  readonly status: string;
+}
+
+/**
+ * Why a number is what it is. Attached to every engine result.
+ *
+ * `ProvenanceBuilder.build()` deep-freezes what it returns, so these fields are
+ * declared `readonly`: a type that advertised mutable arrays over a frozen object
+ * would let `gap.provenance.caveats.push(x)` type-check and then throw at runtime.
+ * The audit trail is evidence — it is immutable by construction, and the type says so.
+ */
 export interface Provenance {
   /** Parameter paths used, with their effective dates and sources. */
-  parameters: Array<{ path: string; effective: string | null; source: string | null; status: string }>;
+  readonly parameters: readonly ProvenanceParameter[];
   /** Anything the engine could not compute confidently. */
-  caveats: string[];
+  readonly caveats: readonly string[];
   /** Rules that fired, in order. */
-  rulesFired: string[];
+  readonly rulesFired: readonly string[];
 }
 
 export interface DeathNeedsProfile {

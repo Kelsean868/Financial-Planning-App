@@ -54,6 +54,34 @@ test("below SCP age, only NIS counts", () => {
   assert.equal(r.guaranteedFloorMonthly, 3000);
 });
 
+/**
+ * Retiring at 60 halves the guaranteed floor versus 66 (3,000 vs 5,500) purely because
+ * SCP is not yet payable. NIS retirement age phases 60 -> 65, so 60-64 is a live case,
+ * not an edge. The engine used to report the zero with nothing in the trail explaining
+ * it: `scpBenefit` returns `reason` precisely to explain it, and only `.cliffWarning`
+ * was being read — which is `undefined` on the ineligible branch.
+ */
+test("retiring before SCP age: the client is told WHY their SCP is zero", () => {
+  const early = computeRetirementNeeds({
+    lifetimeAvgMonthlyEarnings: 1000, totalContributions: 750,
+    retirementAge: 60, targetMonthlyIncome: 8000,
+  });
+  const later = computeRetirementNeeds({
+    lifetimeAvgMonthlyEarnings: 1000, totalContributions: 750,
+    retirementAge: 66, targetMonthlyIncome: 8000,
+  });
+
+  assert.equal(early.scpMonthly, 0);
+  assert.equal(early.guaranteedFloorMonthly, 3000);
+  assert.equal(later.guaranteedFloorMonthly, 5500, "precondition: the floor nearly doubles at 66");
+
+  const explained = [...early.provenance.rulesFired, ...early.provenance.caveats];
+  assert.ok(explained.some((s) => /SCP/.test(s) && /age/i.test(s)),
+    `a 2x swing in the headline floor must be explained, got: ${JSON.stringify(explained)}`);
+  assert.ok(!later.provenance.rulesFired.some((r) => /not payable/i.test(r)),
+    "a client who does qualify must not be told SCP is unpayable");
+});
+
 test("deterministic", () => {
   const mk = () => JSON.stringify(computeRetirementNeeds({
     lifetimeAvgMonthlyEarnings: 5000, totalContributions: 900,

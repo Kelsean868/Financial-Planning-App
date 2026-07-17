@@ -2,7 +2,7 @@ import { test } from "node:test";
 import assert from "node:assert/strict";
 import { readFileSync } from "node:fs";
 import { computeDeathNeeds, computeGap, computeRetirementNeeds } from "../src/index.ts";
-import type { Household, Person, Policy } from "../src/types.ts";
+import type { Household, Person, Policy, Provenance } from "../src/types.ts";
 
 const golden = JSON.parse(
   readFileSync(new URL("./golden/kyron-household.json", import.meta.url), "utf8")
@@ -97,9 +97,82 @@ test("golden: the retirement floor and the SCP offset", () => {
   assert.equal(r.guaranteedFloorMonthly, e.guaranteedFloorMonthly);
 });
 
+/**
+ * Assert the audit trail names the parameters that actually made the number, and that
+ * each one arrives with a source and a status.
+ *
+ * The previous form of this test — `every(p => p.effective !== undefined && p.status)` —
+ * could not fail: `provenance.ts` sets `effective` via `?? null`, so it is never
+ * `undefined`, and the loop is vacuous over an empty list besides. It passed a build in
+ * which the group-life parameters, the rule that most moves the gap, entered no
+ * provenance at all. A gate that cannot fail is not a gate.
+ */
+/**
+ * Parameters whose citation legitimately is not a `source` URL, and which therefore
+ * enter provenance with `source: null`:
+ *  - `scp.eligibility` cites `basis`: "s.4(1) Senior Citizens' Pension Act Chap. 32:02".
+ *    A statute section IS the provenance — there is no better URL for it.
+ *  - `scp.cliff_edges` is `DERIVED` from `scp.bands`; its provenance is its derivation.
+ *  - `nis.retirement_grant` carries its explanation in `notes`.
+ *
+ * This allowlist is deliberately explicit rather than a blanket "source may be null":
+ * a NEW parameter arriving with no citation must fail this test and be argued for here.
+ *
+ * It also records a real gap found while writing this test: `ProvenanceBuilder` records
+ * only `source`, so a statutory `basis` is DROPPED on the way into the audit trail. The
+ * table cites the Act; the client's provenance shows null. Fixing that changes the
+ * `Provenance` shape and every consumer of it — see the task report.
+ */
+const CITED_ELSEWHERE = new Set(["scp.eligibility", "scp.cliff_edges", "nis.retirement_grant"]);
+
+function assertProvenanceNames(p: Provenance, expectedPaths: string[], label: string): void {
+  assert.ok(p.parameters.length > 0, `${label}: parameters used must be recorded`);
+  const paths = p.parameters.map((x) => x.path);
+  for (const expected of expectedPaths) {
+    assert.ok(paths.includes(expected),
+      `${label}: ${expected} produced the number but is absent from provenance. Present: ${paths.join(", ")}`);
+  }
+  for (const param of p.parameters) {
+    if (!CITED_ELSEWHERE.has(param.path)) {
+      assert.ok(typeof param.source === "string" && param.source.length > 0,
+        `${label}: ${param.path} carries no source — a regulator cannot check it`);
+    }
+    assert.ok(typeof param.status === "string" && param.status.length > 0,
+      `${label}: ${param.path} carries no status`);
+  }
+}
+
 test("golden: every result carries provenance a regulator could read", () => {
   const n = computeDeathNeeds(household, golden.on);
-  assert.ok(n.provenance.parameters.length > 0, "parameters used must be recorded");
-  assert.ok(n.provenance.parameters.every((p) => p.effective !== undefined && p.status));
+  assertProvenanceNames(n.provenance, [
+    "conventions.rental_income_months",
+    "conventions.income_continuation_to_age",
+  ], "deathNeeds");
   assert.ok(n.provenance.rulesFired.length > 0, "rules fired must be recorded");
+
+  // The gap applies the group-life decay, so the parameters that drive it must be in
+  // the trail — with the caveat that they come from one carrier's terms.
+  const g = computeGap(n, policies, 40);
+  assertProvenanceNames(g.provenance, [
+    "conventions.rental_income_months",
+    "group_life.reduction_age",
+    "group_life.reduction_factor",
+    "group_life.termination_age",
+  ], "gap");
+  assert.ok(g.provenance.caveats.some((c) => /carriers.*may differ/i.test(c)),
+    "the client must be told the group terms come from a single carrier");
+
+  // The NIBTT basic-pension table is where the reported figure literally comes from.
+  const r = computeRetirementNeeds({
+    lifetimeAvgMonthlyEarnings: 1000, totalContributions: 750,
+    retirementAge: 66, targetMonthlyIncome: 9000,
+  });
+  assertProvenanceNames(r.provenance, [
+    "nis.benefit_rates.current",
+    "nis.contribution_tables.2016-09-05",
+    "nis.qualifying_conditions",
+    "nis.minimum_pension",
+    "scp.bands",
+    "scp.eligibility",
+  ], "retirement");
 });

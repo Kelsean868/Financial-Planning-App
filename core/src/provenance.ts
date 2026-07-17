@@ -1,5 +1,5 @@
 import { P, assertSafe } from "../../parameters/tt-parameters.js";
-import type { Provenance } from "./types.ts";
+import type { Provenance, ProvenanceParameter } from "./types.ts";
 
 /** Read a dotted parameter path, returning both the node (for provenance) and its value. */
 export function resolveParameter(path: string): { node: any; value: unknown } {
@@ -19,12 +19,20 @@ export function resolveParameter(path: string): { node: any; value: unknown } {
  * without its effective date, source and status coming with it.
  */
 export class ProvenanceBuilder {
-  #params = new Map<string, Provenance["parameters"][number]>();
+  #params = new Map<string, ProvenanceParameter>();
   #caveats: string[] = [];
   #rules: string[] = [];
 
-  /** Read a parameter, record its provenance, and refuse unsafe statuses. */
-  use(path: string): unknown {
+  /**
+   * Read a parameter, record its provenance, and refuse unsafe statuses —
+   * returning the whole node, not just its value.
+   *
+   * Some parameters carry a `warning` the client must be told (group life's
+   * "other T&T carriers' schemes may differ"). Reaching for that warning via a
+   * second, unrecorded read of `P` is exactly the bypass this class exists to
+   * close, so the recorded read hands the node back instead.
+   */
+  useNode(path: string): { node: any; value: unknown } {
     const { node, value } = resolveParameter(path);
     assertSafe(node, path);
     if (!this.#params.has(path)) {
@@ -35,7 +43,12 @@ export class ProvenanceBuilder {
         status: node.status ?? "UNMARKED",
       });
     }
-    return value;
+    return { node, value };
+  }
+
+  /** Read a parameter's value, recording its provenance. */
+  use(path: string): unknown {
+    return this.useNode(path).value;
   }
 
   caveat(msg: string): void {
@@ -71,6 +84,6 @@ export class ProvenanceBuilder {
       parameters: Object.freeze(parameters),
       caveats: Object.freeze([...this.#caveats]),
       rulesFired: Object.freeze([...this.#rules]),
-    }) as Provenance;
+    });
   }
 }

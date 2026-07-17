@@ -85,6 +85,63 @@ test("the Gap carries the needs engine's caveats forward — a client never sees
   }
 });
 
+/**
+ * Group CI riders are common on T&T group schemes. Critical illness is not death cover,
+ * so the rider's face must never enter the group death-cover reasoning at all.
+ *
+ * The bug this pins: the gap re-derived the eligible-policy filter and omitted the
+ * policy-type exclusion, so the rider's 100k read as group cover that had been reduced.
+ * The client was told "group cover reduced by 100000 at attained age 50" — nothing is
+ * reduced at 50 — and, because the phantom exclusion routed into the reduction branch,
+ * was NOT told that the group cover they do have halves at 66 and ends at 70. A false
+ * statement in the audit trail, and the mis-selling warning silently suppressed.
+ */
+test("a group critical-illness rider creates no phantom reduction below the reduction age", () => {
+  const groupCI: Policy = {
+    id: "p3", insurer: "Employer", productName: "Group Critical Illness",
+    type: "critical-illness", coverAmount: 100000, monthlyPremium: 0,
+    status: "in-force", isGroupCover: true,
+  };
+  const belowReduction = GROUP_LIFE_REDUCTION_AGE - 16; // 50 — well below any decay
+  const g = computeGap(needs, [group, groupCI], belowReduction);
+
+  assert.equal(g.inForceCover, 200000, "only the group LIFE face is death cover");
+  assert.equal(g.groupCoverExcluded, 0, "nothing is excluded at 50 — the CI rider is not group death cover");
+  assert.ok(!g.provenance.rulesFired.some((r) => /reduced|terminated/i.test(r)),
+    `no reduction happens at ${belowReduction} — the audit trail must not claim one: ${g.provenance.rulesFired.join(" | ")}`);
+  assert.ok(g.provenance.rulesFired.some((r) => /counted in full/i.test(r)),
+    "the client must still be told their group cover halves at 66 and ends at 70");
+});
+
+test("the group-life parameters reach provenance, with their carrier caveat", () => {
+  const g = computeGap(needs, [individual, group], 40);
+  const paths = g.provenance.parameters.map((p) => p.path);
+  for (const path of ["group_life.reduction_age", "group_life.reduction_factor", "group_life.termination_age"]) {
+    assert.ok(paths.includes(path), `${path} moved the number but carries no source: ${paths.join(", ")}`);
+  }
+  assert.ok(g.provenance.parameters.every((p) => p.source && p.status),
+    "every recorded parameter must carry a source and a status");
+  assert.ok(g.provenance.caveats.some((c) => /carriers.*may differ/i.test(c)),
+    "the client must be told other T&T carriers' group schemes may differ");
+});
+
+test("a client with no group cover gets no group-life parameters in their trail", () => {
+  const g = computeGap(needs, [individual], 40);
+  assert.ok(!g.provenance.parameters.some((p) => p.path.startsWith("group_life.")),
+    "provenance must not be padded with rules that did not apply to this client");
+  assert.ok(!g.provenance.caveats.some((c) => /carriers.*may differ/i.test(c)),
+    "no group cover, no group caveat");
+});
+
+test("an annuity is not death cover either", () => {
+  const annuity: Policy = {
+    id: "p4", insurer: "Tatil Life", productName: "Deferred Annuity", type: "annuity",
+    coverAmount: 500000, monthlyPremium: 900, status: "in-force", isGroupCover: false,
+  };
+  const g = computeGap(needs, [individual, annuity], 40);
+  assert.equal(g.inForceCover, 250000, "the annuity's value must not offset a death need");
+});
+
 test("group cover is half-counted between the reduction and termination ages", () => {
   const realNeeds = computeDeathNeeds(household, TODAY);
   const g = computeGap(realNeeds, [individual, group], GROUP_LIFE_REDUCTION_AGE);

@@ -19,17 +19,38 @@ function isActive(p: Policy): boolean {
   return p.status === "in-force" || p.status === "paid-up";
 }
 
-/** Cover actually available at a given attained age, with group cover correctly decayed. */
+/**
+ * Does this policy pay a death benefit at all?
+ *
+ * Annuities and critical-illness riders do not. Group CI riders are common on T&T
+ * group schemes, so any caller reasoning about group cover must apply the SAME
+ * exclusion the cover calculation applies — a caller that re-derived the filter
+ * and forgot this counted a CI rider's face as death cover that had "vanished",
+ * inventing a reduction that never happened. The filter therefore lives here once
+ * and is never restated by a caller.
+ */
+function isDeathCover(p: Policy): boolean {
+  return isActive(p) && p.type !== "annuity" && p.type !== "critical-illness";
+}
+
+/**
+ * Cover actually available at a given attained age, with group cover correctly decayed.
+ *
+ * `groupFaceTotal` is the eligible group face BEFORE decay. It is returned rather
+ * than left for the caller to recompute: the excluded amount is `groupFaceTotal - group`,
+ * and that subtraction is only correct if both sides applied the same eligibility filter.
+ */
 export function inForceCoverAt(
   policies: Policy[],
   age: number
-): { individual: TTD; group: TTD; total: TTD } {
+): { individual: TTD; group: TTD; groupFaceTotal: TTD; total: TTD } {
   let individual = 0;
   let group = 0;
+  let groupFaceTotal = 0;
   for (const p of policies) {
-    if (!isActive(p)) continue;
-    if (p.type === "annuity" || p.type === "critical-illness") continue; // not death cover
+    if (!isDeathCover(p)) continue;
     if (p.isGroupCover) {
+      groupFaceTotal += p.coverAmount;
       if (age >= GROUP_LIFE_TERMINATION_AGE) continue;
       group += age >= GROUP_LIFE_REDUCTION_AGE
         ? p.coverAmount * GROUP_LIFE_REDUCTION_FACTOR
@@ -38,7 +59,7 @@ export function inForceCoverAt(
       individual += p.coverAmount;
     }
   }
-  return { individual, group, total: individual + group };
+  return { individual, group, groupFaceTotal, total: individual + group };
 }
 
 export function totalMonthlyPremium(policies: Policy[]): TTD {

@@ -37,6 +37,40 @@ test("the core performs no I/O", () => {
 });
 
 /**
+ * The core depends on `parameters/` and on nothing else in the repo. `graphify-out/`,
+ * `research/` and `tools/` are working material — generated graphs, source notes and
+ * scripts. An import from any of them would make the engine's numbers depend on
+ * artefacts that are not the single source of truth, and would drag I/O-shaped code
+ * into a domain core that must stay pure.
+ *
+ * Matched against RAW source, not `codeOnly`: string-stripping blanks the module
+ * specifier, which is the whole thing being tested here.
+ */
+const FORBIDDEN_IMPORT = /\bfrom\s*["'][^"']*\b(graphify-out|research|tools)\//;
+
+test("the core imports nothing from graphify-out/, research/ or tools/", () => {
+  for (const f of files) {
+    const src = readFileSync(f, "utf8");
+    const hit = src.match(FORBIDDEN_IMPORT);
+    assert.ok(!hit, `${f} imports from ${hit?.[1]}/ — the core may only depend on parameters/`);
+  }
+});
+
+test("the forbidden-import guard actually catches a violation", () => {
+  // A guard that cannot fail is not a guard.
+  assert.ok(FORBIDDEN_IMPORT.test('import { g } from "../../graphify-out/graph.js";'),
+    "must catch an import from graphify-out/");
+  assert.ok(FORBIDDEN_IMPORT.test("import x from '../../research/factfinder-analysis.ts';"),
+    "must catch an import from research/");
+  assert.ok(FORBIDDEN_IMPORT.test('import { t } from "../../tools/ocr.js";'),
+    "must catch an import from tools/");
+  assert.ok(!FORBIDDEN_IMPORT.test('import { P } from "../../parameters/tt-parameters.js";'),
+    "must NOT trip on the one dependency the core is allowed");
+  assert.ok(!FORBIDDEN_IMPORT.test('// see research/factfinder-analysis.md for the formula'),
+    "must NOT trip on prose citing a research document");
+});
+
+/**
  * Strip string literals BEFORE comments, then strip comments.
  * Prose LEGITIMATELY mentions these numbers — "group life reduces by 50% at 66
  * and terminates at 70" is documentation, not a hardcoded parameter. Only

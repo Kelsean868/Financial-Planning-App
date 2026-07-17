@@ -17,12 +17,26 @@ export function computeGap(needs: DeathNeedsProfile, policies: Policy[], atAge: 
   b.merge(needs.provenance);
   const cover = inForceCoverAt(policies, atAge);
 
-  const groupFaceTotal = policies
-    .filter((p) => p.isGroupCover && (p.status === "in-force" || p.status === "paid-up"))
-    .reduce((s, p) => s + p.coverAmount, 0);
+  // The ledger owns the eligibility filter and reports the group face it actually
+  // counted. Re-deriving it here once dropped the policy-type exclusion, so a group
+  // critical-illness rider — common on T&T group schemes — read as group death cover
+  // that had already been reduced.
+  const groupFaceTotal = cover.groupFaceTotal;
   const groupCoverExcluded = groupFaceTotal - cover.group;
 
   if (groupFaceTotal > 0) {
+    // Record the group-life parameters ONLY when the household actually has group
+    // cover: they are the rules that most change the number here, so they must carry
+    // their source and be status-checked — but a client with no group cover should not
+    // have them in their audit trail at all.
+    b.use("group_life.reduction_age");
+    b.use("group_life.reduction_factor");
+    const termination = b.useNode("group_life.termination_age");
+    // The termination age is sourced from a single carrier's terms. A client whose
+    // number moves because of it is entitled to know that the scheme it came from
+    // may not be theirs.
+    if (typeof termination.node.warning === "string") b.caveat(termination.node.warning);
+
     if (atAge >= GROUP_LIFE_TERMINATION_AGE) {
       b.rule(`group cover of ${groupFaceTotal} has terminated at age ${GROUP_LIFE_TERMINATION_AGE} — excluded in full`);
     } else if (groupCoverExcluded > 0) {
