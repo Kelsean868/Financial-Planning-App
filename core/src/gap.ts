@@ -11,6 +11,10 @@ import { GROUP_LIFE_TERMINATION_AGE, inForceCoverAt } from "./policy-ledger.ts";
  */
 export function computeGap(needs: DeathNeedsProfile, policies: Policy[], atAge: number): Gap {
   const b = new ProvenanceBuilder();
+  // The gap composes the needs engine's result, so it must carry that engine's
+  // provenance forward — including the housing-inference caveat. A number the
+  // client sees must never be shown without the uncertainty attached to it.
+  b.merge(needs.provenance);
   const cover = inForceCoverAt(policies, atAge);
 
   const groupFaceTotal = policies

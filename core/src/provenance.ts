@@ -46,6 +46,23 @@ export class ProvenanceBuilder {
     if (!this.#rules.includes(msg)) this.#rules.push(msg);
   }
 
+  /**
+   * Fold another engine's provenance into this one.
+   *
+   * Engines compose (needs -> gap), so their provenance must compose too. A Gap
+   * that dropped the death engine's housing-inference caveat would present a
+   * number without the uncertainty that qualifies it — which is the failure the
+   * provenance system exists to prevent.
+   */
+  merge(p: Provenance): this {
+    for (const param of p.parameters) {
+      if (!this.#params.has(param.path)) this.#params.set(param.path, { ...param });
+    }
+    for (const c of p.caveats) this.caveat(c);
+    for (const r of p.rulesFired) this.rule(r);
+    return this;
+  }
+
   build(): Provenance {
     const parameters = [...this.#params.values()]
       .sort((a, b) => a.path.localeCompare(b.path))
