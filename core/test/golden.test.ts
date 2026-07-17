@@ -49,6 +49,21 @@ test("golden: death needs match the frozen hand-computed case", () => {
   assert.equal(n.housingRentReplacement, e.housingRentReplacement);
   assert.equal(n.education, e.education);
   assert.equal(n.assets.total, e.assetsTotal);
+  // incomeContinuation carries fractional years (13.18 years to the child's 21st),
+  // so it — and everything downstream of it — is a float. Money is never rounded
+  // in the engine, so the tolerance lives here in the test, not in the source.
+  assert.ok(
+    Math.abs(n.incomeContinuation - e.incomeContinuation) < 0.01,
+    `incomeContinuation ${n.incomeContinuation} !== ${e.incomeContinuation}`
+  );
+  assert.ok(
+    Math.abs(n.totalNeeds - e.totalNeeds) < 0.01,
+    `totalNeeds ${n.totalNeeds} !== ${e.totalNeeds}`
+  );
+  assert.ok(
+    Math.abs(n.insuranceNeed - e.insuranceNeed) < 0.01,
+    `insuranceNeed ${n.insuranceNeed} !== ${e.insuranceNeed}`
+  );
 });
 
 test("golden: the gap at 40 and at 70 — group cover vanishes", () => {
@@ -59,6 +74,15 @@ test("golden: the gap at 40 and at 70 — group cover vanishes", () => {
   assert.equal(g40.groupCoverExcluded, golden.expected.gapAt40.groupCoverExcluded);
   assert.equal(g70.inForceCover, golden.expected.gapAt70.inForceCover);
   assert.equal(g70.groupCoverExcluded, golden.expected.gapAt70.groupCoverExcluded);
+  // The gap magnitude, not just the ordering — this is the number the client sees.
+  assert.ok(
+    Math.abs(g40.gap - golden.expected.gapAt40.gap) < 0.01,
+    `gap at 40: ${g40.gap} !== ${golden.expected.gapAt40.gap}`
+  );
+  assert.ok(
+    Math.abs(g70.gap - golden.expected.gapAt70.gap) < 0.01,
+    `gap at 70: ${g70.gap} !== ${golden.expected.gapAt70.gap}`
+  );
   assert.ok(g70.gap > g40.gap, "losing group cover widens the gap");
 });
 

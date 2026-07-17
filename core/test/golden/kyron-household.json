@@ -10,15 +10,20 @@
       "mortgageLiquidation": 350000,
       "housingRentReplacement": 0,
       "education": 150000,
-      "assetsTotal": 25000
+      "assetsTotal": 25000,
+      "incomeContinuation": 1423470.7078174092,
+      "totalNeeds": 1974970.7078174092,
+      "insuranceNeed": 1949970.7078174092
     },
     "gapAt40": {
       "inForceCover": 450000,
-      "groupCoverExcluded": 0
+      "groupCoverExcluded": 0,
+      "gap": 1499970.7078174092
     },
     "gapAt70": {
       "inForceCover": 250000,
-      "groupCoverExcluded": 200000
+      "groupCoverExcluded": 200000,
+      "gap": 1699970.7078174092
     },
     "retirementAt66": {
       "nisMonthly": 3000,

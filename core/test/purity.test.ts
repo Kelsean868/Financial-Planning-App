@@ -37,19 +37,55 @@ test("the core performs no I/O", () => {
 });
 
 /**
- * Strip comments and string literals before checking for hardcoded values.
+ * Strip string literals BEFORE comments, then strip comments.
  * Prose LEGITIMATELY mentions these numbers — "group life reduces by 50% at 66
  * and terminates at 70" is documentation, not a hardcoded parameter. Only
  * executable code counts. (Caught during Task 3: the naive raw-source grep
  * failed on that exact doc-comment.)
+ *
+ * Order matters: a `//` inside a string literal (e.g. a URL in an error message)
+ * is not a comment. Blanking strings first means the comment regexes only ever
+ * see real comments. Doing it the other way round — comments first — lets a
+ * `//` inside a string blind everything after it on the line, including real
+ * code. Running string-stripping first is safe even for a string that happens
+ * to sit inside a comment: it gets blanked either way, and the comment strip
+ * still removes the (now-blanked) comment text around it.
  */
 function codeOnly(src: string): string {
   return src
-    .replace(/\/\*[\s\S]*?\*\//g, " ")   // block comments
-    .replace(/\/\/.*$/gm, " ")            // line comments
-    .replace(/"(?:[^"\\]|\\.)*"/g, '""')  // double-quoted strings
-    .replace(/'(?:[^'\\]|\\.)*'/g, "''")  // single-quoted strings
-    .replace(/`(?:[^`\\]|\\.)*`/g, "``"); // template literals
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')     // double-quoted strings
+    .replace(/'(?:[^'\\]|\\.)*'/g, "''")     // single-quoted strings
+    .replace(/`(?:[^`\\]|\\.)*`/g, stripTemplateProse) // template literals
+    .replace(/\/\*[\s\S]*?\*\//g, " ")       // block comments
+    .replace(/\/\/.*$/gm, " ");              // line comments
+}
+
+/**
+ * Blank a template literal's literal text but keep `${...}` interpolations —
+ * a hardcoded parameter can be written as `${f(3000)}`, and that 3000 is code,
+ * not prose. This is a simple bracket-depth scanner rather than a regex
+ * because `${...}` can itself contain nested braces (e.g. an object literal);
+ * a regex for balanced braces is the kind of clever that becomes unreadable.
+ */
+function stripTemplateProse(literal: string): string {
+  let out = "`";
+  let i = 1; // skip the opening backtick
+  while (i < literal.length - 1) { // stop before the closing backtick
+    if (literal[i] === "$" && literal[i + 1] === "{") {
+      let depth = 1;
+      let j = i + 2;
+      while (j < literal.length && depth > 0) {
+        if (literal[j] === "{") depth++;
+        else if (literal[j] === "}") depth--;
+        j++;
+      }
+      out += literal.slice(i, j); // keep the interpolation verbatim
+      i = j;
+    } else {
+      i++; // drop the prose character
+    }
+  }
+  return out + "`";
 }
 
 test("no T&T parameter is hardcoded outside the parameters module", () => {
@@ -84,4 +120,8 @@ test("the hardcoded-parameter guard actually catches a violation", () => {
     "must NOT trip on a block comment");
   assert.ok(!/\b3000\b/.test(codeOnly('const msg = "minimum is 3000";')),
     "must NOT trip on a string literal");
+  assert.ok(/\b3000\b/.test(codeOnly('const label = "see http://x"; const minPension = 3000;')),
+    "a // inside a string must not blind the rest of the line");
+  assert.ok(/\b3000\b/.test(codeOnly("const x = `${f(3000)}`;")),
+    "code inside a template interpolation must still be scanned");
 });
