@@ -1,0 +1,29 @@
+{
+  "_note": "Frozen expected output. If these numbers change, the change must be explained, not accepted.",
+  "case": "Owner, 36, spouse-less, one child aged 7, supported mother, mortgage + credit union",
+  "on": "2026-07-16",
+  "expected": {
+    "deathNeeds": {
+      "funeral": 40000,
+      "medical": 10000,
+      "outstandingLoans": 1500,
+      "mortgageLiquidation": 350000,
+      "housingRentReplacement": 0,
+      "education": 150000,
+      "assetsTotal": 25000
+    },
+    "gapAt40": {
+      "inForceCover": 450000,
+      "groupCoverExcluded": 0
+    },
+    "gapAt70": {
+      "inForceCover": 250000,
+      "groupCoverExcluded": 200000
+    },
+    "retirementAt66": {
+      "nisMonthly": 3000,
+      "scpMonthly": 2500,
+      "guaranteedFloorMonthly": 5500
+    }
+  }
+}
