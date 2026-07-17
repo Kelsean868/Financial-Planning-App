@@ -451,6 +451,20 @@
     "_note": "T&T market conventions — local norms, not universal truths. Sourced from the standard fact-finding instruments.",
     "rental_income_months": { "value": 120, "source": "Tatil Life Client Financial Profile (needs formula)", "status": "MARKET_CONVENTION" },
     "income_continuation_to_age": { "value": 21, "source": "Tatil Life Client Financial Profile — 'Continuation of Income until Last child attains age 21'", "status": "MARKET_CONVENTION" },
+    "funeral_cost_default": {
+      "value": 50000,
+      "unit": "TTD",
+      "source": "Founder (Kyron Marchan, CBTT-registered Tatil Life agent, 13+ years T&T practice), 2026-07-17",
+      "status": "VERIFIED_PRACTICE_UNCITED",
+      "notes": "A DEFAULT, not a floor. Used when the client has no figure of their own; a stated figure overrides it in EITHER direction. Contrast medical_cost_minimum, which is a floor."
+    },
+    "medical_cost_minimum": {
+      "value": 100000,
+      "unit": "TTD",
+      "source": "Founder (Kyron Marchan, CBTT-registered Tatil Life agent, 13+ years T&T practice), 2026-07-17",
+      "status": "VERIFIED_PRACTICE_UNCITED",
+      "notes": "A FLOOR, not a default. A client's own lower estimate does NOT override it — final-illness costs in T&T are systematically underestimated by clients, and understating this is the direction that leaves a family short. Rationale is professional judgement, not a published schedule; revisit if a costing source is found."
+    },
     "emergency_fund_multiple": { "value": 6, "unit": "x gross monthly income", "source": "Maritime Financial Fact Finder", "status": "MARKET_CONVENTION", "notes": "Note: 6x GROSS INCOME, not months of expenses as in US convention." },
     "benchmark_allocation": {
       "value": { "tax": 0.15, "loans": 0.25, "retirement": 0.10, "life_insurance": 0.05, "general_insurance": 0.05, "savings_investment": 0.10, "living_expenses": 0.30 },

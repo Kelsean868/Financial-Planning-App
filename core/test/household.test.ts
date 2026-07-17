@@ -35,7 +35,7 @@ const debts: Debt[] = [
 const h: Household = {
   client, dependents: [mother, child1, child2],
   monthlyIncome: 12000, monthlyExpenses: 9000,
-  debts, savings: 20000, otherInvestments: 5000,
+  debts, savings: 20000, otherInvestments: 5000, housingStrategy: "liquidate-mortgage",
 };
 
 const TODAY = "2026-07-16";

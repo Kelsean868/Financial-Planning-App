@@ -2,28 +2,33 @@
   "_note": "Frozen expected output. If these numbers change, the change must be explained, not accepted.",
   "case": "Owner, 36, spouse-less, one child aged 7, supported mother, mortgage + credit union",
   "on": "2026-07-16",
+  "_rebaselined": {
+    "date": "2026-07-17",
+    "why": "Founder confirmed conventions.medical_cost_minimum = 100,000 as a FLOOR. This household states 10,000, so the floor lifts medical by 90,000 and carries that delta through totalNeeds, insuranceNeed and both gaps. Every changed number below moves by exactly +90,000 and by nothing else — that is the check that the floor did what it was meant to and touched nothing it wasn't.",
+    "delta": 90000
+  },
   "expected": {
     "deathNeeds": {
       "funeral": 40000,
-      "medical": 10000,
+      "medical": 100000,
       "outstandingLoans": 1500,
       "mortgageLiquidation": 350000,
       "housingRentReplacement": 0,
       "education": 150000,
       "assetsTotal": 25000,
       "incomeContinuation": 1423470.7078174092,
-      "totalNeeds": 1974970.7078174092,
-      "insuranceNeed": 1949970.7078174092
+      "totalNeeds": 2064970.7078174092,
+      "insuranceNeed": 2039970.7078174092
     },
     "gapAt40": {
       "inForceCover": 450000,
       "groupCoverExcluded": 0,
-      "gap": 1499970.7078174092
+      "gap": 1589970.7078174092
     },
     "gapAt70": {
       "inForceCover": 250000,
       "groupCoverExcluded": 200000,
-      "gap": 1699970.7078174092
+      "gap": 1789970.7078174092
     },
     "retirementAt66": {
       "nisMonthly": 3000,

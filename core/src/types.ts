@@ -45,6 +45,26 @@ export interface Debt {
   endDate: ISODate;
 }
 
+/**
+ * How the household's housing need is to be met on death. The client's own
+ * answer — the fact-find asks it, the engine never infers it.
+ *
+ * Founder-confirmed 2026-07-17: this can legitimately be EITHER/OR **or BOTH**
+ * (a household can carry a mortgage on one property while paying rent on
+ * another). Because "both" is real, no rule over the mortgage and rent balances
+ * can recover the client's intent — the old `owns = mortgage > 0` inference was
+ * unsound in both directions, and this field replaces it.
+ */
+export type HousingStrategy =
+  /** Owner: clear the outstanding mortgage. */
+  | "liquidate-mortgage"
+  /** Renter: fund `conventions.rental_income_months` of rent. */
+  | "replace-rent"
+  /** Both apply — they are ADDITIVE, not alternatives. */
+  | "both"
+  /** No housing provision needed (e.g. owned outright, no rent). */
+  | "none";
+
 export interface Household {
   client: Person;
   dependents: Person[];
@@ -53,13 +73,21 @@ export interface Household {
   debts: Debt[];
   savings: TTD;
   otherInvestments: TTD;
-  /** Monthly rent, if the household rents rather than owns. */
+  /**
+   * How to meet the housing need. REQUIRED and never inferred — see HousingStrategy.
+   * Tenure is the client's to state, not the engine's to guess from a debt balance.
+   */
+  housingStrategy: HousingStrategy;
+  /** Monthly rent. Required in practice when housingStrategy includes rent replacement. */
   monthlyRent?: TTD;
   /** Total expected education cost across all dependents. */
   educationCost?: TTD;
-  /** Expected final medical costs. */
+  /**
+   * Expected final medical costs. Subject to a FLOOR — `conventions.medical_cost_minimum`
+   * wins if this is lower or absent. Clients systematically underestimate this.
+   */
   expectedMedicalCost?: TTD;
-  /** Expected funeral cost. */
+  /** Expected funeral cost. Defaults to `conventions.funeral_cost_default` if absent. */
   expectedFuneralCost?: TTD;
   /** First date of insurable employment — drives NIS contribution weeks. */
   workStartDate?: ISODate;

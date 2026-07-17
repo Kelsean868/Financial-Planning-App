@@ -28,7 +28,7 @@ const household: Household = {
     { kind: "mortgage", balance: 350000, monthlyInstallment: 3000, endDate: "2040-01-21" },
     { kind: "credit-union", balance: 1500, monthlyInstallment: 250, endDate: "2027-11-04" },
   ],
-  savings: 20000, otherInvestments: 5000,
+  savings: 20000, otherInvestments: 5000, housingStrategy: "liquidate-mortgage",
   educationCost: 150000, expectedFuneralCost: 40000, expectedMedicalCost: 10000,
 };
 
@@ -143,10 +143,13 @@ function assertProvenanceNames(p: Provenance, expectedPaths: string[], label: st
 }
 
 test("golden: every result carries provenance a regulator could read", () => {
+  // This household is an owner who liquidates, so `rental_income_months` is deliberately
+  // NOT expected: it never multiplies into the number and must not be claimed as used.
   const n = computeDeathNeeds(household, golden.on);
   assertProvenanceNames(n.provenance, [
-    "conventions.rental_income_months",
     "conventions.income_continuation_to_age",
+    "conventions.funeral_cost_default",
+    "conventions.medical_cost_minimum",
   ], "deathNeeds");
   assert.ok(n.provenance.rulesFired.length > 0, "rules fired must be recorded");
 
@@ -154,7 +157,7 @@ test("golden: every result carries provenance a regulator could read", () => {
   // the trail — with the caveat that they come from one carrier's terms.
   const g = computeGap(n, policies, 40);
   assertProvenanceNames(g.provenance, [
-    "conventions.rental_income_months",
+    "conventions.income_continuation_to_age",
     "group_life.reduction_age",
     "group_life.reduction_factor",
     "group_life.termination_age",

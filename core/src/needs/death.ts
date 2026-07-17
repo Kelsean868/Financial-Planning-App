@@ -16,26 +16,62 @@ export function computeDeathNeeds(
 ): DeathNeedsProfile {
   const b = new ProvenanceBuilder();
 
-  const rentalMonths = b.use("conventions.rental_income_months") as number; // 120
   const continuationToAge = b.use("conventions.income_continuation_to_age") as number; // 21
 
-  const funeral = h.expectedFuneralCost ?? 0;
-  const medical = h.expectedMedicalCost ?? 0;
+  // Funeral: a DEFAULT. The client's own figure wins in either direction.
+  const funeralDefault = b.use("conventions.funeral_cost_default") as number;
+  const funeral = h.expectedFuneralCost ?? funeralDefault;
+  if (h.expectedFuneralCost === undefined) {
+    b.rule(`funeral cost defaulted to ${funeralDefault} — the client gave no figure`);
+  }
+
+  // Medical: a FLOOR. A lower client estimate does NOT win — understating final
+  // illness costs is the direction that leaves the family short.
+  const medicalMinimum = b.use("conventions.medical_cost_minimum") as number;
+  const medicalStated = h.expectedMedicalCost ?? 0;
+  const medical = Math.max(medicalStated, medicalMinimum);
+  if (medical > medicalStated) {
+    b.rule(
+      `medical cost raised from ${medicalStated} to the ${medicalMinimum} minimum` +
+      (h.expectedMedicalCost === undefined ? " — the client gave no figure" : " — the client's own estimate was below the floor")
+    );
+  }
+
   const outstandingLoans = nonMortgageDebtBalance(h);
   const mortgage = mortgageBalance(h);
 
-  // Housing: liquidate the mortgage if they own, else fund `rentalMonths` of rent.
-  // INFERENCE — the Tatil form lists these as separate lines and does not state
-  // they are alternatives. This is the only reading that avoids double-counting.
-  const owns = mortgage > 0;
-  const mortgageLiquidation = owns ? mortgage : 0;
-  const housingRentReplacement = owns ? 0 : (h.monthlyRent ?? 0) * rentalMonths;
-  b.caveat(
-    "housing need treats mortgage liquidation and rent replacement as ALTERNATIVES " +
-    "(own => liquidate; rent => fund 120 months). The Tatil form lists them separately " +
-    "without stating they are exclusive. Confirm with the founder before relying on this."
-  );
-  b.rule(owns ? "housing: mortgage liquidation" : "housing: 120 months rent replacement");
+  // Housing: the client states this. It is NOT inferred from the mortgage balance,
+  // because "both" is a real case (mortgage on one property, rent on another) and no
+  // rule over the balances can recover intent. Founder-confirmed 2026-07-17.
+  const liquidates = h.housingStrategy === "liquidate-mortgage" || h.housingStrategy === "both";
+  const replacesRent = h.housingStrategy === "replace-rent" || h.housingStrategy === "both";
+
+  const mortgageLiquidation = liquidates ? mortgage : 0;
+  let housingRentReplacement = 0;
+  if (replacesRent) {
+    const rentalMonths = b.use("conventions.rental_income_months") as number; // 120
+    housingRentReplacement = (h.monthlyRent ?? 0) * rentalMonths;
+    b.rule(`housing: ${rentalMonths} months rent replacement`);
+    if (!h.monthlyRent) {
+      b.caveat(
+        "housing strategy asks for rent replacement, but no monthlyRent is recorded — " +
+        "the rent component computed to zero. Capture the rent or correct the strategy."
+      );
+    }
+  }
+  if (liquidates) {
+    b.rule("housing: mortgage liquidation");
+    if (mortgage === 0) {
+      b.caveat(
+        "housing strategy asks to liquidate a mortgage, but no mortgage debt is recorded — " +
+        "the liquidation component computed to zero. Capture the mortgage or correct the strategy."
+      );
+    }
+  }
+  if (h.housingStrategy === "none") b.rule("housing: no provision requested");
+  if (h.housingStrategy === "both") {
+    b.rule("housing: mortgage liquidation and rent replacement are ADDITIVE for this household");
+  }
 
   const education = h.educationCost ?? 0;
 
@@ -45,7 +81,22 @@ export function computeDeathNeeds(
   const netMonthlyNeed = Math.max(0, h.monthlyExpenses - survivorMonthly);
   const incomeContinuation = netMonthlyNeed * 12 * years;
   if (years > 0) b.rule(`income continuation for ${years.toFixed(2)} years to age ${continuationToAge}`);
-  if (survivorMonthly > 0) b.rule(`NIS survivor benefit of ${survivorMonthly}/month nets off the income need`);
+
+  // The NIS survivors' benefit is a RESOURCE. Omitting it overstates the need — the
+  // direction that sells more cover. That asymmetry is why silence is not acceptable
+  // here: absent the figure, the engine says so rather than quietly assuming zero.
+  if (opts.nisSurvivorMonthly === undefined) {
+    b.caveat(
+      "NIS survivors' benefit is NOT modelled — the NIBTT survivors' rate table has not been " +
+      "extracted, so it is treated as zero. This OVERSTATES the income-continuation need for any " +
+      "client with NIS contributions. Do not present this as the client's true need until the " +
+      "table is sourced or the benefit is entered explicitly."
+    );
+  } else if (survivorMonthly > 0) {
+    b.rule(`NIS survivors' benefit of ${survivorMonthly}/month nets off the income need`);
+  } else {
+    b.rule("NIS survivors' benefit confirmed as nil — no offset applied");
+  }
 
   const totalNeeds =
     funeral + medical + outstandingLoans + mortgageLiquidation +

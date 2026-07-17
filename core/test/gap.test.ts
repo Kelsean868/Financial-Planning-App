@@ -39,7 +39,7 @@ const household: Household = {
     { kind: "mortgage", balance: 350000, monthlyInstallment: 3000, endDate: "2040-01-21" },
     { kind: "credit-union", balance: 1500, monthlyInstallment: 250, endDate: "2027-11-04" },
   ],
-  savings: 20000, otherInvestments: 5000,
+  savings: 20000, otherInvestments: 5000, housingStrategy: "liquidate-mortgage",
   educationCost: 150000, expectedFuneralCost: 40000, expectedMedicalCost: 10000,
 };
 const TODAY = "2026-07-16";
@@ -77,8 +77,11 @@ test("the Gap carries the needs engine's caveats forward — a client never sees
   for (const c of realNeeds.provenance.caveats) {
     assert.ok(g.provenance.caveats.includes(c), `Gap dropped the caveat: ${c}`);
   }
-  assert.ok(g.provenance.caveats.some((c) => /inference|alternativ|Tatil form/i.test(c)),
-    "the housing-alternatives inference caveat must reach the Gap");
+  // A concrete anchor, so this test cannot pass merely because both caveat lists are
+  // empty. It was the housing-alternatives inference until the founder resolved it
+  // (2026-07-17); the live unresolved item is now the unmodelled NIS survivors' benefit.
+  assert.ok(g.provenance.caveats.some((c) => /survivors|OVERSTATES/i.test(c)),
+    "the unmodelled-survivors'-benefit caveat must reach the Gap — it is why the number may be too high");
   for (const p of realNeeds.provenance.parameters) {
     assert.ok(g.provenance.parameters.some((q) => q.path === p.path),
       `Gap dropped the parameter: ${p.path}`);
