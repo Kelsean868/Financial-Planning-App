@@ -697,7 +697,7 @@ function render(){
       $('arUnreg').className = 'ar' + (alUnreg > 0.5 ? '' : ' zero');
 
       $('alPersWhy').innerHTML = alPers > 0.5
-        ? `Fill this first. It saves ${money(saveAt(alPers))} of your own income tax, and it only costs your company a third of that amount in ceiling &mdash; so you come out ahead by taking it before the company plan, not after.`
+        ? `Fill this first. It saves ${money(saveAt(alPers))} of income tax now &mdash; slightly less than the company plan would on the same money &mdash; but this is the only one of the three whose income is <b>tax-free when it matures</b>. That is worth far more than the small difference in relief today.`
         : `Nothing here &mdash; your personal room is already used by NIS and your existing plans.`;
       $('alCorpWhy').innerHTML = alCorp > 0.5
         ? `Saves your company ${money(alCorp*corpRate2)} in corporation tax at ${Math.round(corpRate2*100)}%. The ceiling is ${money(s134.max)} once your personal allowance is filled &mdash; it was ${money(s134NoPersonal.max)} before, because the one-third limb is measured on chargeable income and your personal deduction lowers it.`
@@ -705,7 +705,16 @@ function render(){
       $('alUnregWhy').innerHTML = alUnreg > 0.5
         ? `Beyond both ceilings. No deduction, but no lock-in either, and it keeps the money out of a wrapper that would restrict it for nothing.`
         : `Nothing left over &mdash; both routes absorbed the full amount.`;
-      $('alFoot').innerHTML = `Total tax saved this way: <b>${money(saveAt(alPers) + alCorp*corpRate2)}</b> &mdash; ${money(saveAt(alPers))} off your income tax and ${money(alCorp*corpRate2)} off your company's corporation tax. Doing it in the other order, company first, would leave you worse off.`;
+      // The true this-year optimum sits at the crossover where the company ceiling
+      // exactly absorbs the remainder. Compute it — do not assume a flat spread
+      // between the two rates, because shifting money also moves the ceiling.
+      const pStar = Math.max(0, Math.min(maxUseful, (3*prem - m.before.chargeable)/2));
+      const cStar = s134MaxContribution({ grossAnnual:m.gross,
+                      chargeableIncome: model(pStar).after.chargeable }).max;
+      const bestThisYear = saveAt(pStar) + Math.min(Math.max(0,prem-pStar), cStar)*corpRate2;
+      const thisWay      = saveAt(alPers) + alCorp*corpRate2;
+      const giveUp       = Math.max(0, bestThisYear - thisWay);
+      $('alFoot').innerHTML = `Total tax saved this way: <b>${money(thisWay)}</b> &mdash; ${money(saveAt(alPers))} off your income tax and ${money(alCorp*corpRate2)} off your company's corporation tax. ${giveUp>1 ? `Shifting ${money(maxUseful-pStar)} of that from the personal plan to the company would save ${money(giveUp)} more tax this year,` : `Weighting it further toward the company would save marginally more tax this year,`} but its income would then be taxable at maturity &mdash; which costs more than it gains for anyone who will be paying tax in retirement. Skipping the personal plan altogether is the weakest option of the three.`;
     }
 
     $('rtCap').textContent      = CAP.toLocaleString('en-US');

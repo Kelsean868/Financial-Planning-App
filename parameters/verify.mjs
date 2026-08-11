@@ -192,14 +192,31 @@ console.log("\n=== s.134(6) interacts with the personal cap — order matters ==
   is(personalCap + c1.max > c0.max, true, "taking both still yields MORE total capacity than company-only");
 
   const corpRate = P.corporation_tax.ordinary_rate.value;
-  const personalFirst = (base.tax - incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
-                                                approvedContributionsAnnual: personalCap }).tax) + c1.max * corpRate;
-  const companyOnly = c0.max * corpRate;
+  // Compare like with like: all three strategies placing the SAME total.
+  const want = 200000;
+  const reliefOf = (p) => base.tax - incomeTax({ grossAnnual: gross,
+      nisContributionsAnnual: nis.annualEmployee, approvedContributionsAnnual: p }).tax;
+  const personalFirst = reliefOf(personalCap) + Math.min(want - personalCap, c1.max) * corpRate;
+  const companyOnly   = Math.min(want, c0.max) * corpRate;
   is(personalFirst > companyOnly, true,
-     `personal-first saves more tax (${personalFirst.toFixed(0)} vs ${companyOnly.toFixed(0)})`);
-  const lowestPersonalRate = P.income_tax.paye_bands.value[0].rate;
-  is(lowestPersonalRate > corpRate / 3, true,
-     "the ordering rule holds for every band: personal relief always exceeds one third of the corporation tax rate");
+     `personal-first beats company-only placing ${want.toLocaleString()} (${personalFirst.toFixed(0)} vs ${companyOnly.toFixed(0)})`);
+
+  // ...but personal-first is NOT the this-year optimum. Beyond the crossover each
+  // personal dollar swaps 30% corporate relief for 25% personal relief.
+  const pStar = (3 * want - base.chargeable) / 2;
+  const cStar = corpAt(pStar).max;
+  const atStar = reliefOf(pStar) + Math.min(want - pStar, cStar) * corpRate;
+  eq(want - pStar, cStar, "at the crossover the company ceiling exactly absorbs the remainder");
+  is(atStar > personalFirst, true,
+     `this-year optimum ${atStar.toFixed(0)} narrowly beats personal-first ${personalFirst.toFixed(0)}`);
+  console.log(`  note  the gap is only ${(atStar - personalFirst).toFixed(2)} — personal-first is recommended for the MATURITY treatment, not this year's relief`);
+
+  // The maturity exemption is what settles it.
+  const personalRate = P.income_tax.paye_bands.value[0].rate;
+  const breakeven = 1 - (1 - corpRate) / (1 - personalRate);
+  eq(breakeven, 1 - 0.70 / 0.75, "breakeven retirement tax rate is 6.67%");
+  is(personalRate > breakeven, true,
+     "T&T's own lowest band (25%) is far above the breakeven, so personal wins on lifetime value");
 }
 
 console.log("\n=== Parameters needing attention (audit) ===");
