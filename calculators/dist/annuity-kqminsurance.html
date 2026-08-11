@@ -90,7 +90,25 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .seg span{font-size:11.5px;color:#fff;white-space:nowrap;padding:0 6px;font-weight:600}
 .seg.nis{background:var(--teal)}.seg.pen{background:#3f6d85}.seg.exist{background:#6b8fa1}
 .seg.ann{background:var(--tealb)}
+/* Not an error state — money above the deduction limit is simply better held in a
+   different wrapper. Amber, not red. */
+.seg.unreg{background:repeating-linear-gradient(115deg,var(--goldd) 0 9px,#c08f2c 9px 18px)}
 .seg.over{background:repeating-linear-gradient(115deg,var(--bad) 0 8px,#b04531 8px 16px)}
+
+/* split recommendation */
+.split{margin-top:18px;border:1.5px solid var(--goldd);border-radius:10px;overflow:hidden;display:none}
+.split.show{display:block}
+.split-h{background:var(--goldd);color:#fff;padding:11px 16px;font-weight:600;font-size:14.5px}
+.split-b{padding:16px;background:#fdf8ee}
+.split-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.sr{background:#fff;border:1px solid var(--line);border-radius:9px;padding:14px}
+.sr .tag{font-size:11px;letter-spacing:.1em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.sr.reg .tag{color:var(--tealb)}
+.sr.unreg .tag{color:var(--goldd)}
+.sr .amt{font-family:Georgia,serif;font-size:26px;font-weight:500;line-height:1.1}
+.sr .per{font-size:12.5px;color:var(--mut);margin-bottom:7px}
+.sr .why{font-size:13px;color:var(--ink);line-height:1.5}
+.split-foot{margin-top:13px;font-size:12.5px;color:var(--mut);line-height:1.55}
 .seg.free{flex:1}.seg.free span{color:var(--mut)}
 .legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--mut)}
 .legend i{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px}
@@ -258,11 +276,31 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
           <span><i style="background:#1a4a63"></i>NIS</span>
           <span><i style="background:#3f6d85"></i>Work pension</span>
           <span><i style="background:#6b8fa1"></i>Annuity you have</span>
-          <span><i style="background:#01696f"></i>New annuity</span>
-          <span><i style="background:repeating-linear-gradient(115deg,#9c3626 0 4px,#b04531 4px 8px)"></i>Wasted</span>
+          <span><i style="background:#01696f"></i>New registered annuity</span>
+          <span><i style="background:repeating-linear-gradient(115deg,#b07d1a 0 4px,#c08f2c 4px 8px)"></i>Better held unregistered</span>
         </div>
         <div class="note warn" id="noteWarn"></div>
         <div class="note good" id="noteGood"></div>
+        <div class="split" id="splitBlock">
+          <div class="split-h">Past this point, split it across two plans</div>
+          <div class="split-b">
+            <div class="split-rows">
+              <div class="sr reg">
+                <div class="tag">Registered</div>
+                <div class="amt num" id="srReg">$0</div>
+                <div class="per" id="srRegPer">a year</div>
+                <div class="why" id="srRegWhy"></div>
+              </div>
+              <div class="sr unreg">
+                <div class="tag">Unregistered</div>
+                <div class="amt num" id="srUnreg">$0</div>
+                <div class="per" id="srUnregPer">a year</div>
+                <div class="why">No tax deduction &mdash; but no lock-in either. It does not have to mature between 50 and 70, and you are not penalised for reaching it early. Straightforward retirement saving.</div>
+              </div>
+            </div>
+            <div class="split-foot" id="splitFoot"></div>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -307,7 +345,7 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
       </div>
       <div class="nt-card">
         <div class="t">Saving is still worth doing</div>
-        <div class="d">None of this means don't save. It means a registered annuity is the wrong <i>wrapper</i> for you today &mdash; you would be accepting the lock-in rules without getting the benefit you are locking up for.</div>
+        <div class="d">None of this means don't save &mdash; it means a <b>registered</b> annuity is the wrong wrapper for you today. An <b>unregistered</b> plan does the same job without tying the money to a maturity date between 50 and 70, and without the penalty for reaching it early. You give up a tax break you cannot use anyway.</div>
       </div>
     </div>
     <p class="nt-foot">I would rather tell you this now than sell you something that does not fit. If you want to talk about what would suit you instead, the offer below still stands.</p>
@@ -1219,8 +1257,18 @@ function render(){
   // the table and the totals must not keep showing a premium the visitor can no
   // longer see or change. Recompute at zero rather than leaving a stale figure.
   if(m.before.tax <= 0 && prem !== 0){ prem = 0; m = model(0); }
-  const relieved = Math.min(prem, m.headroom);
-  const wasted   = Math.max(0, prem - m.headroom);
+
+  // Relief is limited by BOTH the shared cap and the tax actually payable — whichever
+  // runs out first. Past that point a REGISTERED plan adds nothing: the deduction is
+  // worth zero, but the 50-70 maturity window and the surrender rules still bind. So
+  // the honest split is registered up to here, unregistered above it.
+  const maxUseful  = Math.max(0, Math.min(m.headroom, m.before.chargeable));
+  let registered   = Math.min(prem, maxUseful);
+  let unregistered = Math.max(0, prem - maxUseful);
+  // maxUseful carries cents, so landing "exactly" on it leaves a few cents over.
+  // Clamp once here so the meter and the split panel agree on what counts as zero.
+  if(unregistered < 0.5){ registered = prem; unregistered = 0; }
+  const relieved   = registered;
 
   $('nEarn').textContent = money(m.gross);
   $('nNis').textContent  = money(m.nis.annualEmployee);
@@ -1234,39 +1282,45 @@ function render(){
   const pen = S.pen ? n('pension') : 0, ex = S.exist ? n('existing') : 0;
   const scaleMax = Math.max(CAP, nis70 + pen + ex + prem);
   let h='';
-  [['nis',nis70],['pen',pen],['exist',ex],['ann',relieved],['over',wasted]].forEach(([c,v])=>{
+  [['nis',nis70],['pen',pen],['exist',ex],['ann',registered],['unreg',unregistered]].forEach(([c,v])=>{
     if(v<=0) return; const w=v/scaleMax*100;
     h += `<div class="seg ${c}" style="width:${w}%">${w>14?`<span>${money(v)}</span>`:''}</div>`;
   });
-  const free = Math.max(0, CAP - Math.min(CAP, nis70+pen+ex+prem));
+  const free = Math.max(0, CAP - Math.min(CAP, nis70+pen+ex+registered));
   if(free>0) h += `<div class="seg free" style="width:${free/scaleMax*100}%">${free/scaleMax*100>16?`<span>${money(free)} free</span>`:''}</div>`;
   $('meter').innerHTML = h;
 
-  // Relief is limited by BOTH the shared cap and the tax actually payable. Whichever
-  // runs out first is the real ceiling — telling someone to "use all your room" when
-  // their tax hits zero first would be advice that costs them money for nothing.
-  const maxUseful = Math.max(0, Math.min(m.headroom, m.before.chargeable));
   const marginRate = m.before.chargeable > 1e6 ? 0.30 : 0.25;
+  const mult2 = PREM_MULT[S.premPeriod], word2 = PREM_WORD[S.premPeriod];
 
-  const nw=$('noteWarn'), ng=$('noteGood');
-  nw.className='note warn'; ng.className='note good';
-  if(m.before.tax<=0){
-    /* handled by the no-tax panel below; no note needed here */
-  } else if(wasted>0){
-    nw.className='note warn show';
-    nw.innerHTML = `<b>${money(wasted)} of this would be wasted.</b> You only have ${money(m.headroom)} of room left — NIS and the plans you already have take up the rest. Anything above that is still your savings, but it will not cut your tax.`;
-  } else if(m.headroom<=0){
-    nw.className='note warn show';
-    nw.innerHTML = `<b>You have no room left.</b> NIS and your existing plans already use the full ${money(CAP)}. An annuity would still build your retirement, but it cannot reduce your tax this year.`;
-  } else if(prem>maxUseful+0.5){
-    nw.className='note warn show';
-    nw.innerHTML = `<b>Past ${money(maxUseful)} a year you get no further tax relief.</b> At that point your taxable income is already down to zero — there is no more tax left to save. You still have room under the ${money(CAP)} limit, but putting more in would not increase your refund.`;
-  } else if(prem>0 && prem<maxUseful){
+  const nw=$('noteWarn'), ng=$('noteGood'), sp=$('splitBlock');
+  nw.className='note warn'; ng.className='note good'; sp.className='split';
+
+  if(prem>0 && prem<maxUseful){
     ng.className='note good show';
     ng.innerHTML = `<b>You could put in ${money(maxUseful-prem)} more and still get relief on all of it.</b> Going up to ${money(maxUseful)} a year would bring back roughly ${money((maxUseful-prem)*marginRate)} more.`;
-  } else if(prem>0){
+  } else if(prem>0 && unregistered<=0.5 && maxUseful>0){
     ng.className='note good show';
     ng.innerHTML = `<b>Every dollar of this cuts your tax.</b> You are getting relief on the full amount.`;
+  }
+
+  /* ---- split recommendation: right money, wrong wrapper ---- */
+  if(unregistered>0.5){
+    sp.className='split show';
+    $('srReg').textContent   = money(registered);
+    $('srUnreg').textContent = money(unregistered);
+    $('srRegPer').textContent   = `a year${mult2>1?` — ${money(registered/mult2)} ${word2}`:''}`;
+    $('srUnregPer').textContent = `a year${mult2>1?` — ${money(unregistered/mult2)} ${word2}`:''}`;
+
+    const capBinds = m.headroom < m.before.chargeable;
+    $('srRegWhy').innerHTML = registered>0
+      ? `Every dollar here comes off your taxable income and cuts your tax by ${money(registered*marginRate)}. ${capBinds
+          ? `This is all the room you have left under the ${money(CAP)} limit that NIS and your existing plans already share.`
+          : `Past this point your taxable income is already down to zero, so there is no more tax to save.`}`
+      : `There is no tax benefit available to you right now, so nothing needs to go into a registered plan.`;
+
+    $('splitFoot').innerHTML = `Putting the extra ${money(unregistered)} into a <b>registered</b> plan instead would earn you no deduction, while still tying it to a maturity date between 50 and 70 and taxing you in full if you cash it in early. `
+      + `The one argument the other way: income from a registered plan is tax-free at maturity, and an unregistered one is not. Which matters more depends on your age and whether you expect to be paying tax in retirement — worth a conversation rather than a rule of thumb.`;
   }
 
   /* ---- the honest answer: no tax means the deduction is worth nothing ---- */
