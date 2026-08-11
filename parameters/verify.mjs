@@ -1,6 +1,6 @@
 // Sanity + drift checks for the canonical parameter tables.
 //   node parameters/verify.mjs
-import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly } from "./tt-parameters.js";
+import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly, s134MaxContribution } from "./tt-parameters.js";
 
 let fails = 0;
 const eq = (a, b, msg) => {
@@ -122,6 +122,32 @@ console.log("\n=== The headroom that actually matters for an annuity sale ===");
   const withPlan = cap - nis.deductible70 - 18000;
   eq(withPlan, 35830.20, "...but only 35,830.20 once an 18,000 company pension is counted");
   console.log("  note  NIS alone consumes 6,169.80 of the 60,000 for every ceiling earner");
+}
+
+console.log("\n=== s.134(6) corporate deferred compensation ===");
+{
+  const node = P.annuities.s134_6a_deferred_compensation;
+  is(node.status, "VERIFIED_MARKET_STANDARD", "upgraded off the 1995-only source");
+  is(node.sources.length >= 3, true, "three independent implementations recorded");
+  is(node.employer_owned, true, "flagged as employer-owned");
+  is(node.maturity_exemption_applies, false, "does NOT get the Finance Act 2026 maturity exemption");
+
+  // High earner: 500,000 gross. 20% of gross vs one third of chargeable.
+  const nis = nisFromEarnings(500000, "year");
+  const it  = incomeTax({ grossAnnual: 500000, nisContributionsAnnual: nis.annualEmployee });
+  const r   = s134MaxContribution({ grossAnnual: 500000, chargeableIncome: it.chargeable });
+  eq(r.byGross, 100000, "20% of 500,000 gross = 100,000");
+  eq(r.byChargeable, it.chargeable / 3, "one third of chargeable income");
+  eq(r.max, Math.max(r.byGross, r.byChargeable), "takes the greater of the two");
+  console.log(`  note  chargeable ${it.chargeable.toFixed(0)} -> byChargeable ${r.byChargeable.toFixed(0)}, byGross ${r.byGross.toFixed(0)}, binding: ${r.binding}`);
+  is(r.max > P.income_tax.combined_deduction_cap.value, true,
+     `s.134(6) ceiling (${Math.round(r.max)}) exceeds the personal 60,000 cap for this earner`);
+
+  // Low earner: the gross test should bind, and it must never go negative.
+  const low = s134MaxContribution({ grossAnnual: 60000, chargeableIncome: 0 });
+  eq(low.byChargeable, 0, "no chargeable income -> nil on that limb");
+  eq(low.max, 12000, "20% of gross still applies");
+  is(low.binding, "gross_emoluments", "gross limb binds when chargeable is nil");
 }
 
 console.log("\n=== Parameters needing attention (audit) ===");

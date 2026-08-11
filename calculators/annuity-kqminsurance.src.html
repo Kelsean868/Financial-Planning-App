@@ -394,6 +394,47 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
   </div>
 </section>
 
+<section id="routesBlock" hidden style="padding-top:8px">
+  <div class="wrap">
+    <div class="card" style="border-top-color:var(--teal)">
+      <div class="kicker" style="color:var(--tealb)">For business owners</div>
+      <h2 id="rtHead">There is a third route</h2>
+      <p style="margin-top:10px;color:var(--mut);max-width:66ch;font-size:14.5px">
+        Everything above assumes you are paying the premium yourself. If you own a business &mdash; or your employer would agree to it &mdash; a company can fund a plan on your behalf under <b>section 134(6)</b> of the Income Tax Act. It runs on a share of income rather than the $<span id="rtCap">60,000</span> limit, and the company pays it out of pre-tax money rather than you paying out of taxed income. It is not simply a bigger version of the same thing.
+      </p>
+      <div style="overflow-x:auto;margin-top:20px">
+        <table style="min-width:600px">
+          <thead><tr>
+            <th></th><th>Personal registered</th><th>Company s.134(6)</th><th>Unregistered</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Most you could put in</td>
+              <td class="n" id="rtPersonal">$0</td>
+              <td class="n" id="rtCorporate">$0</td>
+              <td class="n">No limit</td></tr>
+            <tr><td>Who pays and owns it</td>
+              <td class="n">You</td><td class="n">Your company</td><td class="n">You</td></tr>
+            <tr><td>Who gets the deduction</td>
+              <td class="n">You, against income tax</td>
+              <td class="n">The company, against corporation tax</td>
+              <td class="n">Nobody</td></tr>
+            <tr class="hl"><td>Income when it pays out</td>
+              <td class="n"><b>Tax-free</b></td>
+              <td class="n">Taxable</td>
+              <td class="n">Taxable</td></tr>
+            <tr><td>Can you set it up alone?</td>
+              <td class="n">Yes</td><td class="n">No &mdash; the company must agree</td><td class="n">Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;padding:13px 16px;background:#fdf8ee;border-left:4px solid var(--goldd);border-radius:8px;font-size:13px;line-height:1.6;color:var(--ink)">
+        <b>The catch worth knowing.</b> A company-funded plan is owned by the employer, so it fails the &ldquo;purchased by an individual&rdquo; test for the Finance Act 2026 exemption &mdash; the income is <b>not</b> tax-free at maturity, unlike a personal registered plan. You get a much larger deduction going in and a worse tax position coming out. Which wins depends on the numbers and on how long the money has to grow.
+      </div>
+      <p style="margin-top:14px;font-size:12px;color:var(--mut);line-height:1.6" id="rtBasis"></p>
+    </div>
+  </div>
+</section>
+
 <section class="cta">
   <div class="wrap">
     <h2 id="ctaHead">Worth a conversation?</h2>
@@ -527,6 +568,25 @@ function render(){
   }
 
   /* ---- the honest answer: no tax means the deduction is worth nothing ---- */
+  /* ---- third route: employer-funded s.134(6) ---- */
+  const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
+  // Show it whenever there is tax to plan around. Do NOT gate on the corporate
+  // figure being larger — it often is not at middling incomes, but the company
+  // paying out of pre-tax money is an advantage regardless of the ceiling, and a
+  // business owner should still learn the route exists.
+  const showRoutes = m.before.tax > 0;
+  $('routesBlock').hidden = !showRoutes;
+  if(showRoutes){
+    $('rtHead').textContent = s134.max > maxUseful + 1
+      ? 'There is a third route, and for you it is much larger'
+      : 'There is a third route worth knowing about';
+    $('rtCap').textContent      = CAP.toLocaleString('en-US');
+    $('rtPersonal').textContent = money(maxUseful);
+    $('rtCorporate').textContent= money(s134.max);
+    $('rtBasis').innerHTML = `The company figure is the greater of one third of your chargeable income (${money(s134.byChargeable)}) and 20% of your gross pay (${money(s134.byGross)}) &mdash; here the ${s134.binding==='gross_emoluments'?'20% of gross':'one-third'} figure is the larger. `
+      + `This limit comes from how the market applies section 134(6) &mdash; it is consistent across two insurers' published material and my own earlier calculator, but it is not quoted from the Act itself, so treat it as a planning figure and not a legal citation.`;
+  }
+
   const noTax = m.before.tax <= 0;
   $('noTaxBlock').hidden = !noTax;
   $('resultBlock').hidden = noTax;

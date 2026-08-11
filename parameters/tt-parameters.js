@@ -316,6 +316,39 @@ export function checkAnnuityMaturity(age, { registered = true } = {}) {
   return { ok: true, severity: "OK", message: null };
 }
 
+/**
+ * Maximum annual s.134(6) corporate deferred-compensation contribution.
+ *
+ * This is EMPLOYER money against an EMPLOYER-OWNED policy — it is not a bigger
+ * version of the personal $60,000 allowance, and the employee cannot elect it
+ * alone. It also forfeits the Finance Act 2026 maturity exemption, because an
+ * employer-owned plan fails the "purchased by an individual" test in s.8(1)(ta).
+ * Callers MUST surface that trade-off rather than presenting the larger number
+ * as strictly better.
+ *
+ * NOT read from the statute — three independent industry implementations agree
+ * on the shape (see `sources` on the parameter node). Safe to compute with;
+ * do NOT cite a subsection to a client on this basis.
+ *
+ * @returns {{max:number, byChargeable:number, byGross:number, binding:string,
+ *            maturityExemptionApplies:boolean, employerOwned:boolean}}
+ */
+export function s134MaxContribution({ grossAnnual, chargeableIncome }) {
+  const node = P.annuities.s134_6a_deferred_compensation;
+  assertSafe(node, "annuities.s134_6a_deferred_compensation");
+  const byChargeable = Math.max(0, chargeableIncome) / node.limit.chargeable_income_divisor;
+  const byGross      = Math.max(0, grossAnnual) * node.limit.gross_emoluments_share;
+  const max          = Math.max(byChargeable, byGross);
+  return {
+    max,
+    byChargeable,
+    byGross,
+    binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
+    maturityExemptionApplies: node.maturity_exemption_applies, // false
+    employerOwned: node.employer_owned,                        // true
+  };
+}
+
 /* --------------------------------------------------------- Provenance API */
 
 /** Walk the tree and return every parameter whose status is not clean. */

@@ -394,6 +394,47 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
   </div>
 </section>
 
+<section id="routesBlock" hidden style="padding-top:8px">
+  <div class="wrap">
+    <div class="card" style="border-top-color:var(--teal)">
+      <div class="kicker" style="color:var(--tealb)">For business owners</div>
+      <h2 id="rtHead">There is a third route</h2>
+      <p style="margin-top:10px;color:var(--mut);max-width:66ch;font-size:14.5px">
+        Everything above assumes you are paying the premium yourself. If you own a business &mdash; or your employer would agree to it &mdash; a company can fund a plan on your behalf under <b>section 134(6)</b> of the Income Tax Act. It runs on a share of income rather than the $<span id="rtCap">60,000</span> limit, and the company pays it out of pre-tax money rather than you paying out of taxed income. It is not simply a bigger version of the same thing.
+      </p>
+      <div style="overflow-x:auto;margin-top:20px">
+        <table style="min-width:600px">
+          <thead><tr>
+            <th></th><th>Personal registered</th><th>Company s.134(6)</th><th>Unregistered</th>
+          </tr></thead>
+          <tbody>
+            <tr><td>Most you could put in</td>
+              <td class="n" id="rtPersonal">$0</td>
+              <td class="n" id="rtCorporate">$0</td>
+              <td class="n">No limit</td></tr>
+            <tr><td>Who pays and owns it</td>
+              <td class="n">You</td><td class="n">Your company</td><td class="n">You</td></tr>
+            <tr><td>Who gets the deduction</td>
+              <td class="n">You, against income tax</td>
+              <td class="n">The company, against corporation tax</td>
+              <td class="n">Nobody</td></tr>
+            <tr class="hl"><td>Income when it pays out</td>
+              <td class="n"><b>Tax-free</b></td>
+              <td class="n">Taxable</td>
+              <td class="n">Taxable</td></tr>
+            <tr><td>Can you set it up alone?</td>
+              <td class="n">Yes</td><td class="n">No &mdash; the company must agree</td><td class="n">Yes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div style="margin-top:16px;padding:13px 16px;background:#fdf8ee;border-left:4px solid var(--goldd);border-radius:8px;font-size:13px;line-height:1.6;color:var(--ink)">
+        <b>The catch worth knowing.</b> A company-funded plan is owned by the employer, so it fails the &ldquo;purchased by an individual&rdquo; test for the Finance Act 2026 exemption &mdash; the income is <b>not</b> tax-free at maturity, unlike a personal registered plan. You get a much larger deduction going in and a worse tax position coming out. Which wins depends on the numbers and on how long the money has to grow.
+      </div>
+      <p style="margin-top:14px;font-size:12px;color:var(--mut);line-height:1.6" id="rtBasis"></p>
+    </div>
+  </div>
+</section>
+
 <section class="cta">
   <div class="wrap">
     <h2 id="ctaHead">Worth a conversation?</h2>
@@ -846,11 +887,31 @@ const DATA = {
       "notes": "Approved vs non-approved must be a first-class distinction in the data model. Only BIR-approved annuities qualify for the deduction and the exemption."
     },
     "s134_6a_deferred_compensation": {
-      "value": "one-third of chargeable income",
-      "status": "UNVERIFIED_1995_SOURCE",
-      "source": "Tatil Cashbuilder III Product Specification (1995)",
-      "quote": "The maximum premium is one-third of the chargeable income of the employee. ... this together with other tax savings plans must not exceed 1/3 of assessable income.",
-      "warning": "If still current, s.134(6A) corporate deferred compensation runs on a ONE-THIRD-OF-INCOME limit, NOT the TT$60,000 cap — a far larger allowance for high earners, and the envelope optimizer would be materially wrong to ignore it. But this is a 1995 document. DO NOT ENCODE until verified against current law. Lead: the 'Corporation Tax Training' document in the resources folder."
+      "limit": { "chargeable_income_divisor": 3, "gross_emoluments_share": 0.20, "take": "greater" },
+      "unit": "TTD/year, per employee",
+      "status": "VERIFIED_MARKET_STANDARD",
+      "vote": "2-0",
+      "retrieved": "2026-08-11",
+      "basis": "NOT read from the statute. Three independent implementations agree on the shape: the greater of one-third of chargeable income, or 20% of gross emoluments.",
+      "sources": [
+        "Tatil Cashbuilder III Product Specification (1995) — 'The maximum premium is one-third of the chargeable income of the employee.'",
+        "Sagicor Business Tax Secure Annuity Plan (live, retrieved 2026-08-11) — 'up to 1/3 of assessable income or 20% of the employee's gross income (whichever is greater)', stated to operate under s.134(6).",
+        "Kelsean868/T-T-Financial-Insurance-Hub corporate-annuity-calculator.html (live) — max(gross * 0.20, chargeable * 1/3)."
+      ],
+      "discrepancy": "Sagicor says ASSESSABLE income; the 1995 Tatil spec and the live calculator say CHARGEABLE. Chargeable is smaller (it is net of all deductions), so using it is the conservative reading. This module uses CHARGEABLE. Settle against the Act before citing a figure to a client.",
+      "employer_owned": true,
+      "maturity_exemption_applies": false,
+      "warning": "Employer-owned and employer-funded, so it FAILS the 'purchased by an individual who is a resident' condition in s.8(1)(ta). Income from a s.134(6) plan is therefore NOT covered by the Finance Act 2026 maturity exemption. Source: ATTIC guidance reported in the Trinidad Express, 2026. Do not present s.134(6) as a strictly larger version of a personal registered annuity — the deduction is bigger, the maturity treatment is worse.",
+      "open_questions": [
+        "Is the employer's contribution a taxable benefit to the employee? The e-Tax return carries a line 'Employer's contribution to Fund (Taxable Benefit)', so it is for SOME funds. Unresolved for s.134(6).",
+        "No statutory text located. Do not cite a subsection to a client on this basis.",
+        "Lead for both: the 52pp 'Corporation Tax Training' document."
+      ],
+      "conditions": [
+        "Employer owns the policy and is the applicant; employer takes the deduction against corporation tax",
+        "Each policy must be BIR-approved before issue",
+        "Cannot be borrowed against, assigned or surrendered (BIR conditions for deductibility)"
+      ]
     }
   },
 
@@ -1196,6 +1257,39 @@ function checkAnnuityMaturity(age, { registered = true } = {}) {
   return { ok: true, severity: "OK", message: null };
 }
 
+/**
+ * Maximum annual s.134(6) corporate deferred-compensation contribution.
+ *
+ * This is EMPLOYER money against an EMPLOYER-OWNED policy — it is not a bigger
+ * version of the personal $60,000 allowance, and the employee cannot elect it
+ * alone. It also forfeits the Finance Act 2026 maturity exemption, because an
+ * employer-owned plan fails the "purchased by an individual" test in s.8(1)(ta).
+ * Callers MUST surface that trade-off rather than presenting the larger number
+ * as strictly better.
+ *
+ * NOT read from the statute — three independent industry implementations agree
+ * on the shape (see `sources` on the parameter node). Safe to compute with;
+ * do NOT cite a subsection to a client on this basis.
+ *
+ * @returns {{max:number, byChargeable:number, byGross:number, binding:string,
+ *            maturityExemptionApplies:boolean, employerOwned:boolean}}
+ */
+function s134MaxContribution({ grossAnnual, chargeableIncome }) {
+  const node = P.annuities.s134_6a_deferred_compensation;
+  assertSafe(node, "annuities.s134_6a_deferred_compensation");
+  const byChargeable = Math.max(0, chargeableIncome) / node.limit.chargeable_income_divisor;
+  const byGross      = Math.max(0, grossAnnual) * node.limit.gross_emoluments_share;
+  const max          = Math.max(byChargeable, byGross);
+  return {
+    max,
+    byChargeable,
+    byGross,
+    binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
+    maturityExemptionApplies: node.maturity_exemption_applies, // false
+    employerOwned: node.employer_owned,                        // true
+  };
+}
+
 /* --------------------------------------------------------- Provenance API */
 
 /** Walk the tree and return every parameter whose status is not clean. */
@@ -1324,6 +1418,25 @@ function render(){
   }
 
   /* ---- the honest answer: no tax means the deduction is worth nothing ---- */
+  /* ---- third route: employer-funded s.134(6) ---- */
+  const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
+  // Show it whenever there is tax to plan around. Do NOT gate on the corporate
+  // figure being larger — it often is not at middling incomes, but the company
+  // paying out of pre-tax money is an advantage regardless of the ceiling, and a
+  // business owner should still learn the route exists.
+  const showRoutes = m.before.tax > 0;
+  $('routesBlock').hidden = !showRoutes;
+  if(showRoutes){
+    $('rtHead').textContent = s134.max > maxUseful + 1
+      ? 'There is a third route, and for you it is much larger'
+      : 'There is a third route worth knowing about';
+    $('rtCap').textContent      = CAP.toLocaleString('en-US');
+    $('rtPersonal').textContent = money(maxUseful);
+    $('rtCorporate').textContent= money(s134.max);
+    $('rtBasis').innerHTML = `The company figure is the greater of one third of your chargeable income (${money(s134.byChargeable)}) and 20% of your gross pay (${money(s134.byGross)}) &mdash; here the ${s134.binding==='gross_emoluments'?'20% of gross':'one-third'} figure is the larger. `
+      + `This limit comes from how the market applies section 134(6) &mdash; it is consistent across two insurers' published material and my own earlier calculator, but it is not quoted from the Act itself, so treat it as a planning figure and not a legal citation.`;
+  }
+
   const noTax = m.before.tax <= 0;
   $('noTaxBlock').hidden = !noTax;
   $('resultBlock').hidden = noTax;
