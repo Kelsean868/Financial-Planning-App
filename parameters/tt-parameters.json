@@ -105,18 +105,37 @@
     "financial_and_petrochemical_rate": { "value": 0.35, "status": "VERIFIED_SINGLE_SOURCE", "retrieved": "2026-08-11" },
     "business_levy": {
       "value": 0.006,
-      "unit": "fraction of gross revenue",
-      "threshold_turnover": 360000,
-      "status": "VERIFIED_SINGLE_SOURCE",
+      "unit": "fraction of gross sales/receipts",
+      "status": "VERIFIED",
+      "vote": "3-0",
       "retrieved": "2026-08-11",
-      "warning": "PAYABLE ONLY WHERE IT EXCEEDS THE CORPORATION TAX LIABILITY. This is the trap for a s.134(6) illustration: a company with high turnover and thin profits pays the levy regardless, so a deduction against corporation tax may save it NOTHING. Never show a corporate tax saving without testing this."
+      "sources": [
+        "https://www.ird.gov.tt/corporations",
+        "https://www.ird.gov.tt/Media/Default/IRDForms/2016/I-500CTR--2016.pdf",
+        "https://fitzwilliamstone.com/legal-insight/company-tax-regime-in-trinidad-and-tobago/"
+      ],
+      "exemptions": {
+        "new_company_years": 3,
+        "new_company_basis": "Not charged until the expiry of three years from the date of registration, for a corporation registered after 1 January 1999.",
+        "turnover_threshold": 360000,
+        "turnover_basis": "Exempt where gross sales or receipts do not exceed TT$360,000."
+      },
+      "mechanism": "NOT a simple 'only if it exceeds corporation tax'. The company gets a credit against its business levy for corporation tax paid, capped at the levy. The net effect is that it pays the GREATER of corporation tax and business levy.",
+      "engine_rule": "A deduction only saves money while corporation tax stays ABOVE the business levy. Once corporation tax falls to the levy, further deduction saves nothing — structurally the same floor as the personal side, where relief is capped by tax payable. A company in its first three years, or under the 360,000 turnover threshold, has no levy floor and is unaffected."
     },
     "green_fund_levy": {
       "value": 0.003,
-      "unit": "fraction of gross income",
-      "status": "VERIFIED_SINGLE_SOURCE",
+      "unit": "fraction of gross sales/receipts",
+      "status": "VERIFIED",
+      "vote": "3-0",
       "retrieved": "2026-08-11",
-      "notes": "Neither deductible in computing chargeable income nor creditable against corporation tax. Unaffected by a s.134(6) contribution."
+      "sources": [
+        "https://www.ird.gov.tt/corporations",
+        "https://fitzwilliamstone.com/legal-insight/company-tax-regime-in-trinidad-and-tobago/"
+      ],
+      "exemptions": "NONE. There is no first-three-years exemption and no turnover threshold. It applies even where the company IS exempt from the business levy — the two must not be reasoned about together.",
+      "creditable": false,
+      "engine_rule": "Charged on gross receipts, not on profit, and creditable against nothing. A s.134(6) contribution does not change it at all. Exclude it from any annuity comparison — mentioning it only invites the reader to think it moves."
     }
   },
   "health_surcharge": {

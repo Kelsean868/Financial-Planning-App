@@ -633,7 +633,7 @@ function render(){
     // high-turnover thin-margin company gets nothing from the deduction.
     const levy = P.corporation_tax.business_levy;
     $('tuCaveat').className = 'tu-caveat show';
-    $('tuCaveat').innerHTML = `<b>Two things this assumes.</b> First, that your company has enough taxable profit to absorb the contribution &mdash; the saving is only real if there is corporation tax to reduce. If your company pays the <b>business levy</b> (${(levy.value*100).toFixed(1)}% of gross revenue, which applies only when it exceeds your corporation tax) the deduction may save you nothing at all. Second, these are two separate routes shown side by side, <b>not</b> a total &mdash; whether you can use both in the same year needs checking against your own figures.`;
+    $('tuCaveat').innerHTML = `<b>Two things this assumes.</b> First, that your company has enough taxable profit to absorb the contribution &mdash; the saving is only real if there is corporation tax to reduce. The <b>business levy</b> is ${(levy.value*100).toFixed(1)}% of gross receipts, and a company effectively pays whichever is greater &mdash; corporation tax or the levy. So once a deduction pushes your corporation tax down to the levy, anything further saves nothing. Companies in their first ${levy.exemptions.new_company_years} years from registration, or with receipts under ${money(levy.exemptions.turnover_threshold)}, have no levy at all and are not affected. Second, these are two separate routes shown side by side, <b>not</b> a total &mdash; whether you can use both in the same year needs checking against your own figures.`;
 
     $('rtHead').textContent = s134.max > maxUseful + 1
       ? 'There is a third route, and for you it is much larger'
