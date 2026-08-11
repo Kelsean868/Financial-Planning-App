@@ -1,0 +1,1295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Annuity Tax Calculator | KQM Insurance</title>
+<meta name="description" content="See what a registered annuity would do to your income tax in Trinidad &amp; Tobago. Enter what you earn — no TD4 needed. Nothing you type leaves your browser.">
+<style>
+/* ---- design tokens lifted from kqminsurance.com so this page reads as native ---- */
+:root{--navy:#0d1f2d;--navy2:#14324a;--teal:#1a4a63;--tealb:#01696f;--gold:#e8c477;--goldd:#b07d1a;--ink:#28251d;--mut:#6b6560;--cream:#f7f6f2;
+      --line:#e4e0d6;--good:#01696f;--bad:#9c3626}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',Arial,Helvetica,sans-serif;color:var(--ink);background:var(--cream);line-height:1.6}
+h1{font-family:Georgia,serif;font-weight:500;font-size:44px;line-height:1.18;margin-bottom:18px}
+h2{font-family:Georgia,serif;font-weight:500;font-size:26px;line-height:1.25}
+h3{font-family:Georgia,serif;font-weight:500;font-size:19px}
+.wrap{max-width:1080px;margin:0 auto;padding:0 24px}
+section{padding:64px 0}
+.card{background:#fff;border-radius:12px;padding:26px;box-shadow:0 4px 18px rgba(40,37,29,.07);border-top:3px solid var(--gold)}
+.btn{display:inline-block;padding:14px 26px;border-radius:8px;font-weight:600;text-decoration:none;font-size:16px;min-height:44px;border:none;cursor:pointer;font-family:inherit}
+.btn-gold{background:var(--gold);color:var(--navy)}
+.btn-gold:hover{background:var(--goldd);color:#fff}
+.btn-line{border:1.5px solid rgba(255,255,255,.5);color:#fff;background:none}
+.btn-line:hover{background:rgba(255,255,255,.12)}
+.num{font-variant-numeric:tabular-nums}
+
+/* hero */
+.hero{background:var(--navy);color:#fff;padding:56px 0 48px;position:relative;overflow:hidden}
+.hero::after{content:'';position:absolute;right:-120px;top:-120px;width:420px;height:420px;border-radius:50%;
+  background:radial-gradient(circle,rgba(232,196,119,.16),transparent 68%)}
+.hero h1{color:#fff;position:relative;z-index:1}
+.hero h1 em{font-style:italic;color:var(--gold)}
+.hero p{color:#c8d2da;font-size:17px;max-width:60ch;position:relative;z-index:1}
+.kicker{font-size:12px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px}
+
+/* steps */
+.step{margin-bottom:24px}
+.step-h{display:flex;align-items:center;gap:12px;margin-bottom:6px}
+.step-n{width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--navy);font-weight:700;font-size:14px;
+  display:flex;align-items:center;justify-content:center;flex:none}
+.step-note{font-size:14px;color:var(--mut);margin-bottom:18px;max-width:64ch}
+
+.earn{display:flex;gap:14px;flex-wrap:wrap}
+.earn-in{flex:1;min-width:220px;position:relative}
+.earn-in .cur{position:absolute;left:15px;top:50%;transform:translateY(-50%);font-size:23px;color:var(--mut)}
+.earn-in input{width:100%;font-size:29px;font-weight:600;padding:12px 14px 12px 40px;border:1.5px solid var(--line);
+  border-radius:8px;background:var(--cream);color:var(--ink);font-family:inherit;-moz-appearance:textfield}
+.earn-in input:focus{outline:none;border-color:var(--goldd);box-shadow:0 0 0 3px rgba(232,196,119,.35)}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.periods{display:flex;background:#efece4;border:1.5px solid var(--line);border-radius:8px;padding:4px;gap:2px}
+.periods button{flex:1;border:none;background:none;font-family:inherit;font-size:14px;color:var(--ink);padding:9px 14px;
+  border-radius:6px;cursor:pointer;white-space:nowrap;font-weight:600;min-height:40px}
+.periods button.on{background:var(--navy);color:#fff}
+.periods button:not(.on):hover{background:rgba(13,31,45,.08)}
+
+/* now strip */
+.now{margin-top:22px;background:var(--navy2);border-radius:10px;padding:20px 22px;color:#fff}
+.now-h{font-size:11px;letter-spacing:.15em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:14px}
+.now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:18px}
+.nc .l{font-size:12px;color:#b9c6d0;margin-bottom:2px}
+.nc .v{font-size:22px;font-weight:600;line-height:1.2}
+.nc .n{font-size:11.5px;color:#93a5b2;margin-top:2px;line-height:1.4}
+.nc.hi .v{color:var(--gold)}
+
+/* questions */
+.q{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.q:last-of-type{border-bottom:none}
+.q-t{flex:1;min-width:200px}
+.q-t .t{font-size:16px;font-weight:600}
+.q-t .d{font-size:13px;color:var(--mut)}
+.yn{display:flex;background:#efece4;border:1.5px solid var(--line);border-radius:8px;padding:3px;gap:2px;flex:none}
+.yn button{border:none;background:none;font-family:inherit;font-size:14px;padding:8px 20px;border-radius:6px;cursor:pointer;
+  color:var(--ink);font-weight:600;min-height:38px}
+.yn button.on{background:var(--navy);color:#fff}
+.q-amt{width:100%;margin-top:11px;display:none}
+.q-amt.show{display:block}
+.q-amt label{font-size:13px;color:var(--mut);display:block;margin-bottom:5px}
+.q-amt .ai{position:relative;max-width:240px}
+.q-amt .ai .cur{position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--mut)}
+.q-amt input{width:100%;font-size:16px;padding:10px 12px 10px 28px;border:1.5px solid var(--line);border-radius:8px;
+  background:var(--cream);font-family:inherit;color:var(--ink);-moz-appearance:textfield}
+.q-amt input:focus{outline:none;border-color:var(--goldd)}
+
+/* room */
+.room-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:10px;flex-wrap:wrap;gap:8px}
+.room-top .big{font-family:Georgia,serif;font-size:32px;color:var(--tealb);font-weight:500}
+.room-top .lab{font-size:13.5px;color:var(--mut);max-width:44ch}
+.meter{height:36px;border-radius:8px;overflow:hidden;display:flex;background:#e9e5da;border:1px solid var(--line)}
+.seg{height:100%;display:flex;align-items:center;justify-content:center;transition:width .5s ease;overflow:hidden}
+.seg span{font-size:11.5px;color:#fff;white-space:nowrap;padding:0 6px;font-weight:600}
+.seg.nis{background:var(--teal)}.seg.pen{background:#3f6d85}.seg.exist{background:#6b8fa1}
+.seg.ann{background:var(--tealb)}
+.seg.over{background:repeating-linear-gradient(115deg,var(--bad) 0 8px,#b04531 8px 16px)}
+.seg.free{flex:1}.seg.free span{color:var(--mut)}
+.legend{display:flex;gap:16px;flex-wrap:wrap;margin-top:10px;font-size:12.5px;color:var(--mut)}
+.legend i{width:10px;height:10px;border-radius:2px;display:inline-block;margin-right:6px}
+.note{margin-top:16px;padding:13px 16px;border-radius:8px;font-size:14px;display:none;border-left:4px solid}
+.note.show{display:block}
+.note.warn{background:#fbf0ed;border-color:var(--bad);color:#7d2a1c}
+.note.good{background:#e9f3f3;border-color:var(--good);color:#0b4a4e}
+
+/* slider */
+.slider-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+.slider-row .amt{font-family:Georgia,serif;font-size:34px;color:var(--tealb);font-weight:500}
+.slider-row .per{font-size:14px;color:var(--mut)}
+input[type=range]{width:100%;-webkit-appearance:none;background:transparent;cursor:pointer;margin-top:16px}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:#e2ddd1;border-radius:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:28px;height:28px;border-radius:50%;background:var(--gold);
+  margin-top:-11px;border:3px solid #fff;box-shadow:0 2px 8px rgba(40,37,29,.28)}
+input[type=range]::-moz-range-track{height:6px;background:#e2ddd1;border-radius:6px}
+input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;background:var(--gold);border:3px solid #fff}
+.chips{display:flex;gap:8px;margin-top:14px;flex-wrap:wrap}
+.chips button{background:#efece4;border:1.5px solid var(--line);color:var(--ink);font-family:inherit;font-size:13.5px;
+  padding:9px 15px;border-radius:99px;cursor:pointer;font-weight:600;min-height:40px}
+.chips button:hover{background:var(--navy);color:#fff;border-color:var(--navy)}
+
+/* result */
+.result{background:var(--navy);color:#fff;padding:56px 0}
+.result .kicker{margin-bottom:16px}
+.rbig{font-family:Georgia,serif;font-size:clamp(46px,9vw,84px);color:var(--gold);font-weight:500;line-height:1}
+.rcap{font-size:17px;color:#c8d2da;margin-top:12px;max-width:48ch}
+.rcols{display:grid;grid-template-columns:1fr auto 1fr;gap:22px;align-items:center;margin-top:30px;padding-top:26px;border-top:1px solid rgba(255,255,255,.16)}
+.rcol .l{font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:#9fb0bc;margin-bottom:6px}
+.rcol .v{font-size:28px;font-weight:600}
+.rcol.g .v{color:var(--gold)}
+.rarrow{font-size:24px;color:var(--gold);opacity:.7}
+.rfoot{display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:22px;margin-top:26px;padding-top:24px;border-top:1px solid rgba(255,255,255,.16)}
+.rf .l{font-size:11.5px;letter-spacing:.08em;text-transform:uppercase;color:#9fb0bc;margin-bottom:4px}
+.rf .v{font-size:20px;font-weight:600}
+.rf .n{font-size:11.5px;color:#8b9daa;margin-top:2px}
+
+/* detail */
+details{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:10px}
+summary{padding:16px 22px;cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';font-size:20px;color:var(--goldd);font-weight:400}
+details[open] summary::after{content:'\2013'}
+details[open] summary{border-bottom:1px solid var(--line)}
+.dbody{padding:18px 22px 22px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:14px;min-width:460px}
+th{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600;text-align:right;padding:0 0 9px;border-bottom:2px solid var(--navy)}
+th:first-child{text-align:left}
+td{padding:7px 0;border-bottom:1px solid #f0ece2}
+td.n{text-align:right;width:120px;padding-left:16px;font-variant-numeric:tabular-nums}
+tr.sec td{padding-top:16px;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--mut);font-weight:600}
+tr.tot td{font-weight:600;background:#faf8f3}
+tr.hl td{background:#eaf3f3}tr.hl td:first-child{color:var(--tealb);font-weight:600}
+tr.grand td{background:var(--navy);color:#fff;font-weight:700;font-size:15px}
+tr.grand td:first-child{border-radius:6px 0 0 6px;padding-left:12px}
+tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
+
+/* maturity + CTA */
+.mat{background:#fff;border-radius:12px;padding:28px;border-top:3px solid var(--tealb);box-shadow:0 4px 18px rgba(40,37,29,.07)}
+.conds{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:16px;margin-top:18px}
+.cond{background:var(--cream);border-radius:9px;padding:15px;border-left:3px solid var(--gold)}
+.cond .t{font-weight:600;font-size:14.5px;margin-bottom:3px}
+.cond .d{font-size:13px;color:var(--mut);line-height:1.5}
+.matfoot{margin-top:16px;font-size:12.5px;color:var(--mut)}
+
+.cta{background:var(--teal);color:#fff;padding:56px 0;text-align:center}
+.cta h2{color:#fff;margin-bottom:12px}
+.cta p{color:#cfe0e6;max-width:52ch;margin:0 auto 26px}
+.cta-btns{display:flex;gap:14px;justify-content:center;flex-wrap:wrap}
+
+.fine{font-size:12.5px;color:var(--mut);line-height:1.65;padding-bottom:56px}
+.fine b{color:var(--ink)}
+.fine p{margin-top:12px}
+
+@media(max-width:640px){
+  h1{font-size:32px}h2{font-size:22px}
+  .rcols{grid-template-columns:1fr}.rarrow{display:none}
+  section{padding:44px 0}.card{padding:20px}
+}
+@media print{.cta,.chips,input[type=range],.periods{display:none}details[open] .dbody{display:block}}
+</style>
+</head>
+<body>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="kicker">Free tool &middot; Trinidad &amp; Tobago &middot; 2026</div>
+    <h1>You are already paying this tax.<br><em>Some of it can come back.</em></h1>
+    <p>Tell me what you earn and I will show you what is coming out of your pay right now, and what a registered annuity would change. You do not need your TD4. Nothing you type here leaves your browser.</p>
+  </div>
+</header>
+
+<section>
+  <div class="wrap">
+
+    <div class="card step">
+      <div class="step-h"><span class="step-n">1</span><h2>What do you earn?</h2></div>
+      <p class="step-note">Your pay before anything is taken out. If you get a payslip, use the gross figure.</p>
+      <div class="earn">
+        <div class="earn-in"><span class="cur">$</span><input type="number" id="earn" value="20000" min="0" step="100" aria-label="Your earnings"></div>
+        <div class="periods" id="periods">
+          <button data-p="week">a week</button>
+          <button data-p="fortnight">a fortnight</button>
+          <button data-p="month" class="on">a month</button>
+          <button data-p="year">a year</button>
+        </div>
+      </div>
+      <div class="now">
+        <div class="now-h">What is happening to your pay right now</div>
+        <div class="now-grid">
+          <div class="nc"><div class="l">You earn</div><div class="v num" id="nEarn">$0</div><div class="n">a year</div></div>
+          <div class="nc"><div class="l">NIS taken out</div><div class="v num" id="nNis">$0</div><div class="n" id="nNisSub">&nbsp;</div></div>
+          <div class="nc hi"><div class="l">Income tax</div><div class="v num" id="nTax">$0</div><div class="n" id="nTaxSub">&nbsp;</div></div>
+          <div class="nc"><div class="l">Health surcharge</div><div class="v num" id="nHs">$0</div><div class="n">a year &mdash; an annuity does not change this</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card step">
+      <div class="step-h"><span class="step-n">2</span><h2>Three quick questions</h2></div>
+      <p class="step-note">These decide how much room you actually have. Answer what you know &mdash; leave the rest as no.</p>
+
+      <div class="q">
+        <div class="q-t"><div class="t">Are you in a pension or savings plan at work?</div>
+          <div class="d">Sometimes called a provident fund or superannuation plan</div></div>
+        <div class="yn" data-q="pen"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+        <div class="q-amt" id="amt-pen"><label>How much do <b>you</b> put in each year? (not your employer's share)</label>
+          <div class="ai"><span class="cur">$</span><input type="number" id="pension" value="0" min="0" step="500"></div></div>
+      </div>
+
+      <div class="q">
+        <div class="q-t"><div class="t">Do you already have an annuity?</div>
+          <div class="d">An approved deferred annuity you are already paying into</div></div>
+        <div class="yn" data-q="exist"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+        <div class="q-amt" id="amt-exist"><label>How much do you pay in each year?</label>
+          <div class="ai"><span class="cur">$</span><input type="number" id="existing" value="0" min="0" step="500"></div></div>
+      </div>
+
+      <div class="q">
+        <div class="q-t"><div class="t">Do you know the exact tax taken off your pay last year?</div>
+          <div class="d">It is on your TD4. If you don't know, I assume it was deducted correctly</div></div>
+        <div class="yn" data-q="paye"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+        <div class="q-amt" id="amt-paye"><label>Total income tax deducted per TD4</label>
+          <div class="ai"><span class="cur">$</span><input type="number" id="paye" value="0" min="0" step="500"></div></div>
+      </div>
+
+      <div style="margin-top:22px">
+        <div class="room-top">
+          <span class="big num" id="roomBig">$0</span>
+          <span class="lab">of room left before you reach the $<span id="capTxt">60,000</span> limit that NIS, work pensions and annuities all share</span>
+        </div>
+        <div class="meter" id="meter"></div>
+        <div class="legend">
+          <span><i style="background:#1a4a63"></i>NIS</span>
+          <span><i style="background:#3f6d85"></i>Work pension</span>
+          <span><i style="background:#6b8fa1"></i>Annuity you have</span>
+          <span><i style="background:#01696f"></i>New annuity</span>
+          <span><i style="background:repeating-linear-gradient(115deg,#9c3626 0 4px,#b04531 4px 8px)"></i>Wasted</span>
+        </div>
+        <div class="note warn" id="noteWarn"></div>
+        <div class="note good" id="noteGood"></div>
+      </div>
+    </div>
+
+    <div class="card step">
+      <div class="step-h"><span class="step-n">3</span><h2>What if you put money aside?</h2></div>
+      <p class="step-note">Drag to try an amount. This money stays yours &mdash; it goes into your own retirement plan, not to the government.</p>
+      <div class="slider-row"><span class="amt num" id="premTxt">$0</span><span class="per" id="premMo">a year</span></div>
+      <input type="range" id="prem" min="0" max="60000" step="250" value="0" aria-label="Annual annuity premium">
+      <div class="chips">
+        <button data-set="fill">Use all my room</button>
+        <button data-set="6000">$500 a month</button>
+        <button data-set="12000">$1,000 a month</button>
+        <button data-set="24000">$2,000 a month</button>
+        <button data-set="0">Clear</button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="result">
+  <div class="wrap">
+    <div class="kicker">What you get back</div>
+    <div class="rbig num" id="heroBig">$0</div>
+    <div class="rcap" id="heroCap">Move the slider above to see what comes back to you.</div>
+    <div class="rcols">
+      <div class="rcol"><div class="l">Your tax now</div><div class="v num" id="taxBefore">$0</div></div>
+      <div class="rarrow">&rarr;</div>
+      <div class="rcol g"><div class="l">Your tax with the annuity</div><div class="v num" id="taxAfter">$0</div></div>
+    </div>
+    <div class="rfoot">
+      <div class="rf"><div class="l">You put aside</div><div class="v num" id="fPrem">$0</div><div class="n" id="fPremMo">&nbsp;</div></div>
+      <div class="rf"><div class="l">It really costs you</div><div class="v num" id="fNet">$0</div><div class="n" id="fNetMo">&nbsp;</div></div>
+      <div class="rf"><div class="l">Each $1 costs you</div><div class="v num" id="fCents">&mdash;</div><div class="n" id="fCentsN">&nbsp;</div></div>
+      <div class="rf"><div class="l">Your tax rate</div><div class="v num" id="fRate">25%</div><div class="n" id="fRateN">&nbsp;</div></div>
+    </div>
+  </div>
+</section>
+
+<section style="padding-top:44px">
+  <div class="wrap">
+    <details>
+      <summary>Show me the working</summary>
+      <div class="dbody">
+        <table><thead><tr><th>Line</th><th>Now</th><th>With annuity</th></tr></thead><tbody id="tbody"></tbody></table>
+      </div>
+    </details>
+
+    <div class="mat" style="margin-top:24px">
+      <h2>And when it pays out, it is tax-free</h2>
+      <p style="margin-top:10px;color:var(--mut);max-width:64ch">Since 1 January 2026 the income from an approved deferred annuity is exempt from income tax when it matures. Relief going in, no tax coming out &mdash; but the exemption has conditions worth knowing before you sign anything.</p>
+      <div class="conds">
+        <div class="cond"><div class="t">You buy it yourself</div><div class="d">Purchased by, and payable to, a resident of Trinidad &amp; Tobago. A plan your employer owns does not qualify.</div></div>
+        <div class="cond"><div class="t">It matures between 50 and 70</div><div class="d">Outside that window the payout is legal but loses the exemption.</div></div>
+        <div class="cond"><div class="t">You keep it to maturity</div><div class="d">Cash it in early and the whole sum is taxable.</div></div>
+        <div class="cond"><div class="t">Plans you already have count</div><div class="d">Approved before, on or after 1 January 2026 &mdash; an existing policy qualifies.</div></div>
+      </div>
+      <div class="matfoot">Finance Act 2026, passed 10 June 2026, effective 1 January 2026, amending the Income Tax Act Chap. 75:01.</div>
+    </div>
+  </div>
+</section>
+
+<section class="cta">
+  <div class="wrap">
+    <h2>Worth a conversation?</h2>
+    <p>If the number above got your attention, the next step is working out what actually fits your situation &mdash; your age, your existing plans, and when you want it to mature. A conversation costs nothing.</p>
+    <div class="cta-btns">
+      <a class="btn btn-gold" href="https://outlook.office.com/bookwithme/user/745fdf2a17a54ab38060ce6cafdda8e2@tatil.co.tt?anonymous&amp;ep=plink" target="_blank" rel="noopener">Book a consultation</a>
+      <a class="btn btn-line" href="https://wa.me/18687981014" target="_blank" rel="noopener">WhatsApp me</a>
+    </div>
+  </div>
+</section>
+
+<section class="fine" style="padding-top:40px">
+  <div class="wrap">
+    <p><b>How exact is this?</b> NIS is a step table based on your earnings class, so for a regular wage over a full year it is exact, not an estimate. The income tax and the deduction limit are exact. What I assume is that the tax on your pay was deducted correctly, unless you told me otherwise, and that you worked the full year. Irregular earnings, part-year work or self-employment will differ.</p>
+    <p><b>Where the numbers come from.</b> <span id="provLine"></span></p>
+    <p><b>Please read.</b> This shows the income tax effect of a deduction. It is not a tax return, not tax advice, and not a projection of what an annuity will be worth. You cannot get back more tax than was taken off your pay. Health surcharge is not reduced by an annuity. Confirm your own position with the Board of Inland Revenue or a qualified adviser before acting. Kyron Marchan is a registered insurance agent with TATIL &amp; Tatil Life.</p>
+  </div>
+</section>
+
+<script type="module">
+/* ------------------------------------------------------------------
+   GENERATED FILE - DO NOT EDIT.
+   Source:  calculators/annuity-illustrator.src.html
+   Params:  parameters/tt-parameters.json  (inlined verbatim below)
+   Helpers: parameters/tt-parameters.js    (inlined verbatim below)
+   Rebuild: node calculators/build.mjs
+   ------------------------------------------------------------------ */
+const DATA = {
+  "$schema": "./tt-parameters.schema.json",
+  "_readme": "CANONICAL Trinidad & Tobago parameter tables. Single source of truth for BOTH the planning engine and the public calculators. Never hardcode any of these values anywhere else. Every parameter carries value + effective date + source URL + retrieved date + verification status. See README.md for the rules.",
+  "_generated": "2026-07-16",
+  "_rule": "Provenance is PER-PARAMETER, not per-page. Agencies contradict themselves: NIBTT publishes benefit rates in two places with ~69% different values; the Ministry of Finance publishes a TT$30,000 cap that is two increases and 17 years out of date; the SCP application form says $4,500 where the Ministry page says $5,500. Trust the maintained page over the linked PDF, and record where each number came from.",
+
+  "income_tax": {
+    "personal_allowance": {
+      "value": 90000,
+      "unit": "TTD/year",
+      "effective": "2023-01-01",
+      "basis": "s.18 Income Tax Act Chap. 75:01, as amended by Finance Act 2022",
+      "source": "https://www.ird.gov.tt/individual/deductions-and-required-supporting-documents",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "history": [
+        { "value": 72000, "effective": "2018-01-01" },
+        { "value": 84000, "effective": "2021-01-01" },
+        { "value": 90000, "effective": "2023-01-01" }
+      ],
+      "notes": "Also extends to non-residents receiving T&T pension income. Budget 2026 announced no further increase."
+    },
+    "paye_bands": {
+      "value": [
+        { "up_to": 1000000, "rate": 0.25 },
+        { "up_to": null, "rate": 0.30 }
+      ],
+      "unit": "TTD chargeable income / rate",
+      "effective": "2026-01-01",
+      "source": "https://taxsummaries.pwc.com/trinidad-and-tobago/individual/taxes-on-personal-income",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "notes": "Finance Act 2026 does not amend these. Confirmed unchanged for TY2026."
+    },
+    "nis_deductible_portion": {
+      "value": 0.70,
+      "unit": "fraction of NIS contributions allowable",
+      "effective": null,
+      "basis": "BIR administrative practice — NO STATUTORY SECTION LOCATED",
+      "source": "https://www.ird.gov.tt/individual/deductions-and-required-supporting-documents",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_PRACTICE_UNCITED",
+      "vote": "2-1",
+      "notes": "Safe to compute with; CANNOT be cited to a section. Appears on IRD's deductions page and Form T.D.-1 but no verifier located a statutory basis. Do not claim a legal citation."
+    },
+    "combined_deduction_cap": {
+      "value": 60000,
+      "unit": "TTD/year",
+      "effective": "2022-01-01",
+      "basis": "s.28(15) Income Tax Act Chap. 75:01, raised by Finance (No. 2) Act 2021",
+      "aggregates": [
+        "approved pension fund plan contributions",
+        "approved deferred annuity premiums",
+        "70% of NIS contributions",
+        "tax savings plan",
+        "Widows' & Orphans' fund"
+      ],
+      "source": "https://www.ird.gov.tt/individual/deductions-and-required-supporting-documents",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "history": [
+        { "value": 30000, "effective": "2009-01-01" },
+        { "value": 50000, "effective": "2018-01-01" },
+        { "value": 60000, "effective": "2022-01-01" }
+      ],
+      "warning": "The Ministry of Finance annuities page STILL PUBLISHES TT$30,000. It is two increases and 17 years stale. A verification panel killed that figure 0-3. Never source this from finance.gov.tt.",
+      "notes": "SINGLE AGGREGATE ceiling, not per-product."
+    },
+    "other_deductions": {
+      "tertiary_education": {
+        "value": 72000, "unit": "TTD/year", "effective": "2019-01-01",
+        "status": "VERIFIED", "vote": "2-1",
+        "notes": "FOREIGN institutions only."
+      },
+      "first_time_homeowner": {
+        "value": 30000, "unit": "TTD/year", "effective": "2022-01-01",
+        "basis": "s.18A ITA",
+        "status": "VERIFIED", "vote": "2-1",
+        "notes": "Property acquired on/after 2011-01-01; claimable for five years from year of acquisition."
+      },
+      "covenanted_donations": { "value": 0.15, "unit": "fraction of total income", "status": "VERIFIED", "vote": "2-1" },
+      "alimony_maintenance": { "value": 1.0, "unit": "fraction", "status": "VERIFIED", "vote": "2-1", "notes": "Lesser of payments made and the court-ordered amount." },
+      "travelling_expenses": { "value": 0.6667, "unit": "fraction of expenses", "status": "VERIFIED", "vote": "2-1" },
+      "s18D_fund_donations": {
+        "value": { "lesser_of_fraction_of_income": 0.20, "or_cap": 20000 },
+        "unit": "TTD/year", "effective": "2026-01-01",
+        "basis": "s.18D ITA, inserted by Finance Act 2026 cl.21(b)",
+        "status": "VERIFIED", "vote": "3-0",
+        "warning": "NOT a retirement provision. This is for donations to a Fund established under s.43 of the Exchequer and Audit Act Chap. 69:01. It sits BESIDE the retirement sections and shares a plausible-looking cap, which invites misreading. It has NO interaction with the combined_deduction_cap."
+      }
+    }
+  },
+
+  "health_surcharge": {
+    "rates": {
+      "value": [
+        { "monthly_emoluments_over": 469.99, "weekly_rate": 8.25 },
+        { "monthly_emoluments_over": null, "weekly_rate": 4.80 }
+      ],
+      "unit": "TTD/week",
+      "source": "https://www.ird.gov.tt/health-surcharge",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "notes": "Equivalent weekly test: >109.00/week => 8.25."
+    },
+    "exemptions": {
+      "value": ["under_16", "aged_60_and_over", "only_income_is_pension"],
+      "source": "https://www.ird.gov.tt/health-surcharge",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "warning": "MATERIAL for a retirement app: never charge health surcharge to a 60+ client. IRD wording is 'sixty (60) years and over' (i.e. 60+); one secondary source renders it 'over 60'. IRD governs. Do NOT cross-wire with the NIS 'under 16 / 65 and over' rule — different levy."
+    }
+  },
+
+  "nis": {
+    "contribution_rate": {
+      "value": 0.162,
+      "effective": "2026-01-05",
+      "split": { "employee": 0.3333, "employer": 0.6667 },
+      "source": "https://www.nibtt.net/Contribution_Rates/rates.html",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "history": [
+        { "value": 0.132, "effective": "2016-09-05" },
+        { "value": 0.120, "effective": "2014-03-03" },
+        { "value": 0.117, "effective": "2013-03-04" },
+        { "value": 0.114, "effective": "2012-01-02" },
+        { "value": 0.108, "effective": "2010-01-04" },
+        { "value": 0.105, "effective": "2008-01-07" }
+      ],
+      "future": {
+        "value": 0.192,
+        "effective": "2027-01-01",
+        "status": "PROVISIONAL",
+        "vote": "2-1",
+        "warning": "Rests on a Ministry of Finance budget announcement plus arithmetic (16.2 + 3). NO gazetted earnings-class schedule exists for 2027. Any 2027 class table is necessarily derived. NEVER present 2027 figures to a client as settled."
+      }
+    },
+    "insurable_earnings_ceiling": {
+      "value": 13600,
+      "unit": "TTD/month",
+      "effective": "2016-09-05",
+      "source": "https://www.nibtt.net/Contribution_Rates/rates_sep2016.html",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "client_insight": "Earnings above this contribute at Class XVI but do NOT increase the pension. High earners hit a hard benefit ceiling. This is an honest, rules-based argument for private provision."
+    },
+    "contribution_tables": {
+      "_rule": "ERA-SELECTED. Contributions are computed at the rate in force WHEN THEY WERE PAID. Select by contribution date, never by claim date.",
+      "_weeks_per_year": { "value": 52, "unit": "contribution weeks per year", "status": "MARKET_CONVENTION", "notes": "NIS is a weekly contribution; annualise at 52. Some calendar years contain 53 contribution weeks and payroll practice varies. Material only at the margin." },
+      "_source_note": "NIBTT publishes dated sets: 1972-2006, 2008-2012, 2013-2014, 2016, 2026. The 2016 page remaining live is CORRECT — contributions paid Sept 2016 to Jan 2026 were made at 13.2%.",
+      "2026-01-05": {
+        "rate": 0.162,
+        "source": "https://www.nibtt.net/Contribution_Rates/NISContributions_20260105.pdf",
+        "status": "VERIFIED",
+        "classes": [
+          { "class": "I", "monthly_min": 867, "monthly_max": 1472.99, "assumed_awe": 270.00, "weekly_total": 43.80, "weekly_employee": 14.60, "weekly_employer": 29.20 },
+          { "class": "II", "monthly_min": 1473, "monthly_max": 1949.99, "assumed_awe": 395.00, "weekly_total": 63.90, "weekly_employee": 21.30, "weekly_employer": 42.60 },
+          { "class": "III", "monthly_min": 1950, "monthly_max": 2642.99, "assumed_awe": 530.00, "weekly_total": 85.80, "weekly_employee": 28.60, "weekly_employer": 57.20 },
+          { "class": "IV", "monthly_min": 2643, "monthly_max": 3292.99, "assumed_awe": 685.00, "weekly_total": 111.00, "weekly_employee": 37.00, "weekly_employer": 74.00 },
+          { "class": "V", "monthly_min": 3293, "monthly_max": 4029.99, "assumed_awe": 845.00, "weekly_total": 136.80, "weekly_employee": 45.60, "weekly_employer": 91.20 },
+          { "class": "VI", "monthly_min": 4030, "monthly_max": 4852.99, "assumed_awe": 1025.00, "weekly_total": 166.20, "weekly_employee": 55.40, "weekly_employer": 110.80 },
+          { "class": "VII", "monthly_min": 4853, "monthly_max": 5632.99, "assumed_awe": 1210.00, "weekly_total": 195.90, "weekly_employee": 65.30, "weekly_employer": 130.60 },
+          { "class": "VIII", "monthly_min": 5633, "monthly_max": 6456.99, "assumed_awe": 1395.00, "weekly_total": 225.90, "weekly_employee": 75.30, "weekly_employer": 150.60 },
+          { "class": "IX", "monthly_min": 6457, "monthly_max": 7409.99, "assumed_awe": 1600.00, "weekly_total": 259.20, "weekly_employee": 86.40, "weekly_employer": 172.80 },
+          { "class": "X", "monthly_min": 7410, "monthly_max": 8276.99, "assumed_awe": 1810.00, "weekly_total": 293.10, "weekly_employee": 97.70, "weekly_employer": 195.40 },
+          { "class": "XI", "monthly_min": 8277, "monthly_max": 9272.99, "assumed_awe": 2025.00, "weekly_total": 328.20, "weekly_employee": 109.40, "weekly_employer": 218.80 },
+          { "class": "XII", "monthly_min": 9273, "monthly_max": 10312.99, "assumed_awe": 2260.00, "weekly_total": 366.00, "weekly_employee": 122.00, "weekly_employer": 244.00 },
+          { "class": "XIII", "monthly_min": 10313, "monthly_max": 11396.99, "assumed_awe": 2505.00, "weekly_total": 405.90, "weekly_employee": 135.30, "weekly_employer": 270.60 },
+          { "class": "XIV", "monthly_min": 11397, "monthly_max": 12652.99, "assumed_awe": 2775.00, "weekly_total": 449.70, "weekly_employee": 149.90, "weekly_employer": 299.80 },
+          { "class": "XV", "monthly_min": 12653, "monthly_max": 13599.99, "assumed_awe": 3029.00, "weekly_total": 490.80, "weekly_employee": 163.60, "weekly_employer": 327.20 },
+          { "class": "XVI", "monthly_min": 13600, "monthly_max": null, "assumed_awe": 3138.00, "weekly_total": 508.50, "weekly_employee": 169.50, "weekly_employer": 339.00 }
+        ],
+        "retrieved": "2026-08-11",
+        "vote": "2-0",
+        "transcription_note": "Classes II-XV transcribed 2026-08-11 from NISContributions_20260105.pdf. Two independent reads of the source agreed on every cell, and both reproduced the previously-VERIFIED Class I and Class XVI rows exactly. Gates applied to all 16 rows: employee + employer = total; total / assumed_awe = 16.2%; employee share = 1/3; bands contiguous with no gaps or overlaps.",
+        "client_insight": "The employee pays one third. At Class XVI that is 169.50/week = 8,814.00/year, of which 70% (6,169.80) is the most NIS can ever consume of the 60,000 combined deduction cap — so a ceiling earner with no company pension has 53,830.20 of annuity room, not 60,000."
+      },
+      "2016-09-05": {
+        "rate": 0.132,
+        "source": "https://www.nibtt.net/Contribution_Rates/rates_sep2016.html",
+        "retrieved": "2026-07-16",
+        "status": "VERIFIED",
+        "classes": [
+          { "class": "I", "weekly_min": 200, "weekly_max": 339.99, "monthly_min": 867, "monthly_max": 1472.99, "assumed_awe": 270.00, "weekly_employee": 11.90, "weekly_employer": 23.80, "weekly_total": 35.70, "class_z": 1.79 },
+          { "class": "II", "weekly_min": 340, "weekly_max": 449.99, "monthly_min": 1473, "monthly_max": 1949.99, "assumed_awe": 395.00, "weekly_employee": 17.40, "weekly_employer": 34.80, "weekly_total": 52.20, "class_z": 2.61 },
+          { "class": "III", "weekly_min": 450, "weekly_max": 609.99, "monthly_min": 1950, "monthly_max": 2642.99, "assumed_awe": 530.00, "weekly_employee": 23.30, "weekly_employer": 46.60, "weekly_total": 69.90, "class_z": 3.50 },
+          { "class": "IV", "weekly_min": 610, "weekly_max": 759.99, "monthly_min": 2643, "monthly_max": 3292.99, "assumed_awe": 685.00, "weekly_employee": 30.10, "weekly_employer": 60.20, "weekly_total": 90.30, "class_z": 4.52 },
+          { "class": "V", "weekly_min": 760, "weekly_max": 929.99, "monthly_min": 3293, "monthly_max": 4029.99, "assumed_awe": 845.00, "weekly_employee": 37.20, "weekly_employer": 74.40, "weekly_total": 111.60, "class_z": 5.58 },
+          { "class": "VI", "weekly_min": 930, "weekly_max": 1119.99, "monthly_min": 4030, "monthly_max": 4852.99, "assumed_awe": 1025.00, "weekly_employee": 45.10, "weekly_employer": 90.20, "weekly_total": 135.30, "class_z": 6.77 },
+          { "class": "VII", "weekly_min": 1120, "weekly_max": 1299.99, "monthly_min": 4853, "monthly_max": 5632.99, "assumed_awe": 1210.00, "weekly_employee": 53.20, "weekly_employer": 106.40, "weekly_total": 159.60, "class_z": 7.98 },
+          { "class": "VIII", "weekly_min": 1300, "weekly_max": 1489.99, "monthly_min": 5633, "monthly_max": 6456.99, "assumed_awe": 1395.00, "weekly_employee": 61.40, "weekly_employer": 122.80, "weekly_total": 184.20, "class_z": 9.21 },
+          { "class": "IX", "weekly_min": 1490, "weekly_max": 1709.99, "monthly_min": 6457, "monthly_max": 7409.99, "assumed_awe": 1600.00, "weekly_employee": 70.40, "weekly_employer": 140.80, "weekly_total": 211.20, "class_z": 10.56 },
+          { "class": "X", "weekly_min": 1710, "weekly_max": 1909.99, "monthly_min": 7410, "monthly_max": 8276.99, "assumed_awe": 1810.00, "weekly_employee": 79.60, "weekly_employer": 159.20, "weekly_total": 238.80, "class_z": 11.94 },
+          { "class": "XI", "weekly_min": 1910, "weekly_max": 2139.99, "monthly_min": 8277, "monthly_max": 9272.99, "assumed_awe": 2025.00, "weekly_employee": 89.10, "weekly_employer": 178.20, "weekly_total": 267.30, "class_z": 13.37 },
+          { "class": "XII", "weekly_min": 2140, "weekly_max": 2379.99, "monthly_min": 9273, "monthly_max": 10312.99, "assumed_awe": 2260.00, "weekly_employee": 99.40, "weekly_employer": 198.80, "weekly_total": 298.20, "class_z": 14.91 },
+          { "class": "XIII", "weekly_min": 2380, "weekly_max": 2629.99, "monthly_min": 10313, "monthly_max": 11396.99, "assumed_awe": 2505.00, "weekly_employee": 110.20, "weekly_employer": 220.40, "weekly_total": 330.60, "class_z": 16.53 },
+          { "class": "XIV", "weekly_min": 2630, "weekly_max": 2919.99, "monthly_min": 11397, "monthly_max": 12652.99, "assumed_awe": 2775.00, "weekly_employee": 122.10, "weekly_employer": 244.20, "weekly_total": 366.30, "class_z": 18.32 },
+          { "class": "XV", "weekly_min": 2920, "weekly_max": 3137.99, "monthly_min": 12653, "monthly_max": 13599.99, "assumed_awe": 3029.00, "weekly_employee": 133.30, "weekly_employer": 266.60, "weekly_total": 399.90, "class_z": 20.00 },
+          { "class": "XVI", "weekly_min": 3138, "weekly_max": null, "monthly_min": 13600, "monthly_max": null, "assumed_awe": 3138.00, "weekly_employee": 138.10, "weekly_employer": 276.20, "weekly_total": 414.30, "class_z": 20.72, "class_z_correction": "NIBTT's page prints 220.72. That is a typo — a stray leading '2'. Class Z is exactly 5.00% of weekly_total for every class I-XV (XV: 20.00/399.90). 414.30 x 0.05 = 20.72. DO NOT propagate NIBTT's typo." }
+        ]
+      }
+    },
+    "class_z": {
+      "value": "employment injury coverage only, employer-paid, ~5.00% of the class weekly total",
+      "applies_to": ["employed person under 16", "employed person in receipt of retirement pension", "employed person aged 65 and over"],
+      "unpaid_apprentice": { "value": 1.00, "unit": "TTD/week" },
+      "source": "https://www.nibtt.net/Contribution_Rates/rates.html",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "notes": "Confirmed by the founder: a retiree drawing NIS pension who returns to work pays the reduced Class Z rate. It buys employment-injury cover only — no further retirement benefit accrues, which is why it is ~5%."
+    },
+    "benefit_rates": {
+      "_rule": "SINGLE CURRENT TABLE, applied at QUALIFICATION date — NOT era-selected like contributions. NIBTT's own wording proves it: 'Rates ... for persons qualifying on or after 7th January 2008.'",
+      "_critical_warning": "NIBTT PUBLISHES BENEFIT RATES IN TWO PLACES WITH DIFFERENT VALUES AND DOES NOT RECONCILE THEM. The Benefits section (/benefits_09/tables/retire_invalidity_rates.htm) serves a STALE 2008 table and is the one its own Retirement pages link to. The CURRENT table lives under /Contribution_Rates/. Always use the 2016 table.",
+      "current": {
+        "effective": "2016-09-05",
+        "source": "https://www.nibtt.net/Contribution_Rates/Benefit_rates_retire_and_invalid_sep2016.html",
+        "retrieved": "2026-07-16",
+        "status": "VERIFIED",
+        "title": "Basic Retirement and Invalidity Pension Rates 2016",
+        "basic_monthly": {
+          "I": 566.72, "II": 733.83, "III": 870.18, "IV": 1011.07,
+          "V": 1135.12, "VI": 1332.50, "VII": 1573.00, "VIII": 1813.50,
+          "IX": 2080.00, "X": 2353.00, "XI": 2632.50, "XII": 2938.00,
+          "XIII": 3256.50, "XIV": 3607.50, "XV": 3938.00, "XVI": 4079.40
+        },
+        "basic_weekly": {
+          "I": 130.78, "II": 169.35, "III": 200.81, "IV": 233.32,
+          "V": 261.95, "VI": 307.50, "VII": 363.00, "VIII": 418.50,
+          "IX": 480.00, "X": 543.00, "XI": 607.50, "XII": 678.00,
+          "XIII": 751.50, "XIV": 832.50, "XV": 908.77, "XVI": 941.40
+        }
+      },
+      "superseded_2008": {
+        "effective": "2008-01-07",
+        "ran_through": "2013",
+        "source": "https://www.nibtt.net/benefits_09/tables/retire_invalidity_rates.htm",
+        "status": "STALE_DO_NOT_USE",
+        "basic_monthly": { "I": 335.83, "XVI": 2475.70 },
+        "increment_monthly": { "I": 4.90, "XVI": 46.76 },
+        "warning": "THE PUBLIC CALCULATORS CURRENTLY HOLD THESE VALUES. They understate the pension ~40%, which OVERSTATES the retirement gap, which sells more product. That is the self-serving direction, wearing the client's own authority in a self-serve model. THIS IS THE PRIORITY FIX.",
+        "_history_note": "The 2014 Benefit Tables PDF prints 2013 and 2014 side by side; its 2013 column equals this table exactly, proving the 2008 rates ran through 2013. Progression Class I monthly: 335.83 (2008-13) -> 419.79 (2014) -> 566.72 (2016)."
+      },
+      "increments": {
+        "status": "BLOCKING_UNRESOLVED",
+        "_problem": "The 2016 table publishes BASICS ONLY — no increment column. The 2013 table (benefits_09/tables/2013/retire_invalidity_rates.htm) publishes INCREMENTS ONLY. NIBTT appears to publish only what changed in each revision.",
+        "known": [
+          { "effective": "2008-01-07", "monthly": { "I": 4.90, "XVI": 46.76 }, "weekly": { "I": 1.13, "XVI": 10.79 } },
+          { "effective": "2013-03-04", "monthly": { "I": 6.11, "XVI": 56.33 }, "weekly": { "I": 1.41, "XVI": 13.00 } }
+        ],
+        "readings": {
+          "a": "2013 increments still stand — 2014 and 2016 revised only basics. Current = 2016 basics + 2013 increments.",
+          "b": "Increments were revised in 2016 but not published on the site."
+        },
+        "warning": "DO NOT GUESS. Reading (a) fits the publish-only-what-changed pattern, but this project has twice been burned by a plausible inference. Confirm with NIBTT directly or from the Legal Notices (Amendments/NIBTTAct_amend.html, Legal Notices 25-30) before the pension formula ships.",
+        "engine_behaviour": "Until resolved: compute the BASIC pension and the minimum, and REFUSE to compute increments rather than guess. Surface 'increment value unconfirmed' rather than silently using 2013."
+      },
+      "formula": {
+        "value": "monthly_pension = basic_monthly[class] + floor(max(0, contributions - 750) / 25) * increment_monthly[class]",
+        "then": "monthly_pension = max(monthly_pension, minimum_pension)",
+        "status": "VERIFIED",
+        "vote": "3-0",
+        "source": "NIBTT retirement pages + NIBTT training transcript"
+      }
+    },
+    "averaging_basis": {
+      "value": "WHOLE_WORKING_LIFE",
+      "status": "VERIFIED",
+      "source": "NIBTT training session transcript (June 2022), verbatim",
+      "quote": "the manner in which we calculate the averages. Do you guys understand that it's not based on your last value of contributions, but your average value throughout your lifetime?",
+      "warning": "NOT final salary. NOT last 7 years. The '7 years' rule people remember is a QUALIFYING condition (employed 5 of the last 7 years), not the averaging window. Two different rules — implement both, separately."
+    },
+    "qualifying_conditions": {
+      "value": {
+        "pension": { "contributions": 750, "note": "may include paid, Voluntary, Age Credits and/or Benefit Credits — not just paid weeks" },
+        "alternative_a": "150 total contributions with 50 in the last 3 years",
+        "alternative_b": "employed 5 of the last 7 years"
+      },
+      "status": "VERIFIED",
+      "source": "NIBTT retirement pages + training transcript"
+    },
+    "minimum_pension": {
+      "value": 3000,
+      "unit": "TTD/month",
+      "effective": "2012-02-01",
+      "source": "https://www.nibtt.net/benefits_09/ben_retirement_II.html",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "quote": "The board shall pay with effect from February 1, 2012 the sum of $3,000.00 monthly, as a pension to each person qualifying for a Retirement Pension",
+      "notes": "Applies only to persons QUALIFYING for a Retirement Pension (750+ contributions). Unindexed since 2012 — the 9th Actuarial Review explicitly recommended holding it there. Binds for classes I-XII; XIII-XVI now exceed it on basics alone. A challenge claiming the minimum attaches to the GRANT rather than the PENSION was refuted 0-3."
+    },
+    "retirement_grant": {
+      "value": "3 x monetary value of total contributions",
+      "minimum": 3000,
+      "unit": "TTD lump sum",
+      "effective": "2008-07-01",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "notes": "For persons with FEWER than 750 contributions. Excluded from SCP assessed income (not monthly income)."
+    },
+    "retirement_age": {
+      "value": 60,
+      "claim_rules": {
+        "60_to_64": "must cease insurable employment to claim; may return to insurable employment before 65 and keep the pension",
+        "65": "payable whether or not the person retires"
+      },
+      "phase_up": {
+        "from": "2028-01-01",
+        "rule": "+1 year every 2 years",
+        "to": 65,
+        "reaching_65": 2036,
+        "status": "VERIFIED",
+        "vote": "3-0"
+      },
+      "source": "https://www.nibtt.net/benefits_09/ben_retirement.html",
+      "retrieved": "2026-07-16"
+    }
+  },
+
+  "scp": {
+    "_name": "Senior Citizens' Pension",
+    "_regulator": "Ministry of the People, Social Development and Family Services",
+    "bands": {
+      "value": [
+        { "assessed_income_up_to": 2500, "pays": 3500 },
+        { "assessed_income_up_to": 3500, "pays": 2500 },
+        { "assessed_income_up_to": 4500, "pays": 1500 },
+        { "assessed_income_up_to": 5500, "pays": 500 },
+        { "assessed_income_up_to": null, "pays": 0 }
+      ],
+      "unit": "TTD/month",
+      "source": "https://www.social.gov.tt/senior-citizens-pension",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE",
+      "warning": "Income must not exceed 5,500/month — above that is a HARD DISQUALIFICATION, not a taper to zero. NOTE: this rests on ONE Ministry page. An earlier verification round refuted these exact bands 1-2 before the source was scraped. A second source would be welcome.",
+      "form_discrepancy": "The linked SCP application form (2020) still states income must not exceed $4,500. The maintained page says $5,500. Prefer the page over the PDF."
+    },
+    "assessed_income_includes_nis_pension": {
+      "value": true,
+      "source": "https://www.social.gov.tt/wp-content/uploads/2020/10/Senior-Citizens-Pension-Form-updated.pdf",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED",
+      "evidence": "Application form requires 'Evidence of National Insurance Benefits / other Pension / Benefits' (item 6) and asks 'Are you a Government or other pensioner? If so, how much is your monthly pension?' (item 31).",
+      "excludes": ["one-time NIS Retirement Grant (not monthly income)"],
+      "notes": "Confirmed by the founder. An earlier research round declared this unanswerable; the answer was on the Ministry's own form."
+    },
+    "eligibility": {
+      "age": 65,
+      "residency": "20 years immediately preceding the claim (absences not exceeding 5 years in aggregate) OR 50 years in aggregate (not necessarily consecutive)",
+      "basis": "s.4(1) Senior Citizens' Pension Act Chap. 32:02",
+      "status": "VERIFIED",
+      "vote": "3-0"
+    },
+    "cliff_edges": {
+      "value": [2500, 3500, 4500, 5500],
+      "unit": "TTD/month assessed income",
+      "status": "DERIVED",
+      "warning": "Hard thresholds. At 5,501 assessed income SCP goes to ZERO — one extra dollar costs 500/month. The engine MUST refuse to land a client just over a cliff without flagging it.",
+      "modal_case": "No NIS -> SCP 3,500 -> total 3,500. NIS minimum 3,000 -> SCP 2,500 -> total 5,500. A 3,000 NIS pension delivers 2,000. Since classes I-XII land at the 3,000 minimum, this is the COMMON case, not an edge case. Note SCP's maximum (3,500) EXCEEDS the NIS minimum pension (3,000)."
+    }
+  },
+
+  "annuities": {
+    "statutory_maturity_floor": {
+      "value": 50,
+      "unit": "age",
+      "basis": "Income Tax Act — an approved pension fund plan or approved deferred annuity plan cannot provide for retirement or maturity before age 50",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "engine_rule": "REFUSE to model maturity below 50 — it is not legal, not merely disadvantageous."
+    },
+    "exemption_window": {
+      "value": { "min_age": 50, "max_age": 70 },
+      "basis": "s.8(1)(ta) ITA, inserted by Finance Act 2026 cl.21(a)",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "engine_rule": "WARN (do not refuse) when a proposed annuity maturity exceeds 70 — legal, but forfeits the exemption. NOTE: this rule cannot fire on a Registered Destiny, whose only maturity options are 50/55/60/65/70. It matters for Unregistered."
+    },
+    "income_exemption": {
+      "value": "exempt from income tax",
+      "effective": "2026-01-01",
+      "basis": "Act No. 16 of 2026 (Finance Act 2026), assented 2026-06-25, gazetted 2026-06-29, Gazette Vol. 65 No. 111",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "variants": {
+        "s8_1_ta_annuity": {
+          "applies_to": "approved deferred annuity plan under s.28",
+          "conditions": ["purchased by an individual resident in Trinidad and Tobago", "matures between the ages of fifty and seventy"]
+        },
+        "s8_1_tb_pension_fund": {
+          "applies_to": "approved pension fund plan under s.28, upon maturity",
+          "conditions": ["purchased by a T&T resident"],
+          "warning": "NO AGE WINDOW. The two exemptions are DIFFERENT SHAPES. A planner treating them alike will get one wrong."
+        }
+      },
+      "retroactive_scope": {
+        "basis": "s.8(1B) ITA",
+        "value": "applies to plans approved BEFORE, ON, or AFTER 2026-01-01",
+        "commercial_note": "The exemption is NOT limited to new business. Every approved annuity already on the book falls inside the new treatment if it meets the conditions. This is a review trigger across the whole book."
+      }
+    },
+    "early_surrender_tax": {
+      "value": 0.25,
+      "basis": "s.28(10) Income Tax Act — obliges a trustee/trust corporation/company to deduct or withhold",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "warning": "The 25% CANNOT be cited to s.28(9). Finance Act 2026 cl.21(c) replaced s.28(9) with a bare avoidance-of-doubt provision specifying NO rate: 'any sum received when an approved pension fund plan or an approved deferred annuity plan is surrendered before the date of retirement or maturity shall be subject to tax.'",
+      "notes": "Only premiums refunded; accumulated gains forfeited; BIR approval required for surrender."
+    },
+    "bir_approval_required": {
+      "value": true,
+      "basis": "s.28 ITA",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "notes": "Approved vs non-approved must be a first-class distinction in the data model. Only BIR-approved annuities qualify for the deduction and the exemption."
+    },
+    "s134_6a_deferred_compensation": {
+      "value": "one-third of chargeable income",
+      "status": "UNVERIFIED_1995_SOURCE",
+      "source": "Tatil Cashbuilder III Product Specification (1995)",
+      "quote": "The maximum premium is one-third of the chargeable income of the employee. ... this together with other tax savings plans must not exceed 1/3 of assessable income.",
+      "warning": "If still current, s.134(6A) corporate deferred compensation runs on a ONE-THIRD-OF-INCOME limit, NOT the TT$60,000 cap — a far larger allowance for high earners, and the envelope optimizer would be materially wrong to ignore it. But this is a 1995 document. DO NOT ENCODE until verified against current law. Lead: the 'Corporation Tax Training' document in the resources folder."
+    }
+  },
+
+  "estate": {
+    "estate_tax": { "value": 0, "status": "VERIFIED", "vote": "3-0", "notes": "T&T has NO inheritance, estate, or gift taxes. Estate duty repealed." },
+    "capital_gains_tax": { "value": "none on most assets", "status": "VERIFIED", "notes": "Do not import US/AU estate-liquidity or CGT planning framings — they do not apply here." },
+    "engine_rule": "OMIT the US estate-tax liquidity driver from the needs formula. The T&T estate pitch is PROBATE BYPASS and asset titling/succession (Succession Act Ch. 9:02), not liquidity for tax. Optional: a stamp-duty calculator for gifts/conveyances."
+  },
+
+  "conventions": {
+    "_note": "T&T market conventions — local norms, not universal truths. Sourced from the standard fact-finding instruments.",
+    "rental_income_months": { "value": 120, "source": "Tatil Life Client Financial Profile (needs formula)", "status": "MARKET_CONVENTION" },
+    "income_continuation_to_age": { "value": 21, "source": "Tatil Life Client Financial Profile — 'Continuation of Income until Last child attains age 21'", "status": "MARKET_CONVENTION" },
+    "emergency_fund_multiple": { "value": 6, "unit": "x gross monthly income", "source": "Maritime Financial Fact Finder", "status": "MARKET_CONVENTION", "notes": "Note: 6x GROSS INCOME, not months of expenses as in US convention." },
+    "benchmark_allocation": {
+      "value": { "tax": 0.15, "loans": 0.25, "retirement": 0.10, "life_insurance": 0.05, "general_insurance": 0.05, "savings_investment": 0.10, "living_expenses": 0.30 },
+      "status": "VERIFIED_MARKET_STANDARD",
+      "source": "Identical across PALIG Personal Net Worth Calculator (2012) and Maritime Financial Fact Finder",
+      "notes": "Two independent T&T insurers, thirteen years apart, identical. This is convention, not house style."
+    },
+    "budget_bands": {
+      "value": [{ "label": "5-9%", "note": "tight budget" }, { "label": "10-15%", "note": "most clients — the anchor" }, { "label": "16-25%", "note": "a fortunate few" }],
+      "unit": "fraction of income toward solving needs",
+      "source": "Guardian Life Confidential Financial Questionnaire",
+      "status": "MARKET_CONVENTION",
+      "notes": "Elicit budget as a PERCENTAGE BAND with this social-proof anchor, not as a dollar figure. The middle band reads as the norm, the top flatters, the bottom gives permission."
+    }
+  }
+};
+/**
+ * Canonical Trinidad & Tobago parameter tables — shared loader.
+ *
+ * ONE source of truth for BOTH the planning engine and the public calculators.
+ * The public calculators are Meeting Zero: the client reaches their own conclusion
+ * there and refers in. If those numbers are wrong, the client builds conviction on
+ * a bad figure — which is harder to correct than no figure at all. So this file is
+ * load-bearing, not hygiene.
+ *
+ * RULES
+ *  1. Never hardcode a T&T parameter anywhere else. Import from here.
+ *  2. Every value carries: effective date, source URL, retrieved date, status.
+ *  3. Provenance is PER-PARAMETER, not per-page. Agencies contradict themselves.
+ *  4. Never silently use a value whose status is BLOCKING_UNRESOLVED or PROVISIONAL.
+ *     Surface the uncertainty to the user instead.
+ *
+ * Usage (browser / calculators):
+ *     <script type="module">
+ *       import { P, nisPension, incomeTax, healthSurcharge, scpBenefit } from './tt-parameters.js';
+ *     <\/script>
+ *
+ * Usage (node / engine):
+ *     import { P, nisPension } from './parameters/tt-parameters.js';
+ */
+
+const P = DATA;
+
+/** Statuses that must never be used silently. */
+const UNSAFE = new Set(["BLOCKING_UNRESOLVED", "PROVISIONAL", "UNVERIFIED_1995_SOURCE", "STALE_DO_NOT_USE"]);
+
+class ParameterError extends Error {}
+
+/** Throw if a parameter node is not safe to compute with. */
+function assertSafe(node, name) {
+  if (node && UNSAFE.has(node.status)) {
+    throw new ParameterError(
+      `Parameter "${name}" has status ${node.status} and must not be used silently. ` +
+      (node.warning ?? "See tt-parameters.json.")
+    );
+  }
+  return node;
+}
+
+const ROMAN = ["I","II","III","IV","V","VI","VII","VIII","IX","X","XI","XII","XIII","XIV","XV","XVI"];
+
+/* ------------------------------------------------------------------ NIS */
+
+/** Map monthly insurable earnings to an NIS earnings class (roman numeral). */
+function nisClassForMonthly(monthly, tableDate = "2016-09-05") {
+  const t = P.nis.contribution_tables[tableDate];
+  if (!t) throw new ParameterError(`No NIS contribution table for ${tableDate}`);
+  for (const c of t.classes) {
+    const lo = c.monthly_min ?? -Infinity;
+    const hi = c.monthly_max ?? Infinity;
+    if (monthly >= lo && monthly <= hi) return c.class;
+  }
+  return "XVI"; // above the ceiling
+}
+
+/** The NIS contribution table in force today. Contributions are era-selected. */
+const CURRENT_NIS_TABLE = "2026-01-05";
+
+/** Normalise a pay figure to monthly. */
+function toMonthly(amount, period = "month") {
+  const per = String(period).toLowerCase();
+  if (per.startsWith("week") || per === "w") return (amount * 52) / 12;
+  if (per.startsWith("fortnight") || per.startsWith("biweek") || per === "f") return (amount * 26) / 12;
+  if (per.startsWith("month") || per === "m") return amount;
+  if (per.startsWith("year") || per.startsWith("annual") || per === "y" || per === "a") return amount / 12;
+  throw new ParameterError(`Unknown pay period "${period}"`);
+}
+
+/**
+ * Employee NIS contribution derived from earnings alone.
+ *
+ * WHY THIS EXISTS: a prospect almost never knows their NIS figure. It is on the
+ * TD4 and the payslip, and neither is in the room. Earnings they always know.
+ * NIS is a step function of earnings class, so this is exact for anyone paid a
+ * regular wage — not an approximation — provided the earnings are their
+ * *insurable* earnings.
+ *
+ * LIMITS, which the caller should surface rather than bury:
+ *  - Exact only for the classed weekly contribution. Irregular earnings that move
+ *    between classes week to week will differ.
+ *  - Assumes a full contribution year (52 weeks). Part-year employment is lower.
+ *  - Self-employed and unemployed persons are not in this table at all.
+ *
+ * @returns {{class:string, weeklyEmployee:number, annualEmployee:number,
+ *            deductible70:number, atCeiling:boolean, monthly:number,
+ *            weeksPerYear:number, tableDate:string, source:string}}
+ */
+function nisFromEarnings(amount, period = "month", tableDate = CURRENT_NIS_TABLE) {
+  const t = assertSafe(P.nis.contribution_tables[tableDate], `nis.contribution_tables.${tableDate}`);
+  if (!t) throw new ParameterError(`No NIS contribution table for ${tableDate}`);
+  if (t._incomplete) {
+    throw new ParameterError(
+      `NIS table ${tableDate} is incomplete and must not be used: ${t._incomplete}`
+    );
+  }
+
+  const monthly = toMonthly(amount, period);
+  const weeks = P.nis.contribution_tables._weeks_per_year.value;
+
+  // Below Class I there is no insurable earnings class.
+  const first = t.classes[0];
+  if (monthly < first.monthly_min) {
+    return {
+      class: null, weeklyEmployee: 0, annualEmployee: 0, deductible70: 0,
+      atCeiling: false, monthly, weeksPerYear: weeks, tableDate, source: t.source,
+      note: `Monthly earnings below the Class I floor of ${first.monthly_min} — no insurable earnings class.`,
+    };
+  }
+
+  const row =
+    t.classes.find((c) => monthly >= (c.monthly_min ?? -Infinity) && monthly <= (c.monthly_max ?? Infinity)) ??
+    t.classes[t.classes.length - 1];
+
+  const annualEmployee = row.weekly_employee * weeks;
+  return {
+    class: row.class,
+    weeklyEmployee: row.weekly_employee,
+    annualEmployee,
+    deductible70: annualEmployee * P.income_tax.nis_deductible_portion.value,
+    atCeiling: row.monthly_max === null,
+    monthly,
+    weeksPerYear: weeks,
+    tableDate,
+    source: t.source,
+  };
+}
+
+/**
+ * NIS retirement pension.
+ *
+ * IMPORTANT: averaging is WHOLE WORKING LIFE, not final salary and not the last
+ * 7 years. Pass the lifetime average of monthly insurable earnings.
+ *
+ * Increments are BLOCKING_UNRESOLVED — the 2016 schedule publishes basics only.
+ * By default we compute basic + minimum and REPORT that increments are unconfirmed,
+ * rather than guessing. Pass { allowIncrements: true } only once NIBTT confirms.
+ */
+function nisPension(lifetimeAvgMonthlyEarnings, totalContributions, opts = {}) {
+  const { allowIncrements = false } = opts;
+  const min = P.nis.minimum_pension.value;
+  const threshold = P.nis.qualifying_conditions.value.pension.contributions; // 750
+
+  if (totalContributions < threshold) {
+    return {
+      type: "GRANT",
+      note: `Fewer than ${threshold} contributions — a one-time Retirement Grant, not a pension.`,
+      formula: P.nis.retirement_grant.value,
+      minimum: P.nis.retirement_grant.minimum,
+      countsTowardScp: false, // a grant is not monthly income
+    };
+  }
+
+  const cls = nisClassForMonthly(lifetimeAvgMonthlyEarnings);
+  const cur = P.nis.benefit_rates.current;
+  const basic = cur.basic_monthly[cls];
+
+  const incNode = P.nis.benefit_rates.increments;
+  const excess = Math.max(0, totalContributions - threshold);
+  const increments = Math.floor(excess / 25);
+
+  let amount = basic;
+  let incrementApplied = false;
+  let caveat = null;
+
+  if (increments > 0) {
+    if (allowIncrements) {
+      const inc2013 = incNode.known.find((k) => k.effective === "2013-03-04");
+      const incVal = inc2013?.monthly?.[cls];
+      if (incVal == null) {
+        caveat = `Increment value for class ${cls} is not published. Basic pension only.`;
+      } else {
+        amount = basic + increments * incVal;
+        incrementApplied = true;
+        caveat = "Increments computed from the 2013 schedule — UNCONFIRMED for 2016+. See tt-parameters.json.";
+      }
+    } else {
+      caveat =
+        `This person has ${increments} increment${increments === 1 ? "" : "s"} ` +
+        `(${excess} contributions above ${threshold}), but NIBTT has not published a 2016 increment schedule. ` +
+        `Showing the basic pension and minimum only — the true figure may be higher.`;
+    }
+  }
+
+  const applied = Math.max(amount, min);
+  return {
+    type: "PENSION",
+    class: cls,
+    basic,
+    increments,
+    incrementApplied,
+    beforeMinimum: amount,
+    monthly: applied,
+    minimumApplied: applied === min && amount < min,
+    caveat,
+    countsTowardScp: true, // confirmed: SCP form items 6 & 31
+    effective: cur.effective,
+    source: cur.source,
+  };
+}
+
+/* ------------------------------------------------------------------ SCP */
+
+/** Senior Citizens' Pension from assessed monthly income. NIS pension counts. */
+function scpBenefit(assessedMonthlyIncome, age) {
+  const elig = P.scp.eligibility;
+  if (age < elig.age) {
+    return { eligible: false, monthly: 0, reason: `SCP requires age ${elig.age}.` };
+  }
+  for (const b of P.scp.bands.value) {
+    if (b.assessed_income_up_to === null || assessedMonthlyIncome <= b.assessed_income_up_to) {
+      const cliffs = P.scp.cliff_edges.value;
+      const nearCliff = cliffs.find((c) => assessedMonthlyIncome > c - 100 && assessedMonthlyIncome <= c);
+      return {
+        eligible: b.pays > 0,
+        monthly: b.pays,
+        residencyRequirement: elig.residency,
+        nearCliff: nearCliff ?? null,
+        cliffWarning: nearCliff
+          ? `Assessed income is within $100 of the ${nearCliff} threshold. Crossing it reduces SCP.`
+          : null,
+        source: P.scp.bands.source,
+      };
+    }
+  }
+  return { eligible: false, monthly: 0 };
+}
+
+/** Combined NIS + SCP retirement floor — these MUST be modelled together. */
+function retirementFloor(lifetimeAvgMonthlyEarnings, totalContributions, age, otherMonthlyIncome = 0) {
+  const nis = nisPension(lifetimeAvgMonthlyEarnings, totalContributions);
+  const nisMonthly = nis.type === "PENSION" ? nis.monthly : 0;
+  const assessed = otherMonthlyIncome + (nis.countsTowardScp ? nisMonthly : 0);
+  const scp = scpBenefit(assessed, age);
+  return {
+    nis,
+    scp,
+    assessedIncome: assessed,
+    totalMonthly: nisMonthly + scp.monthly + otherMonthlyIncome,
+    note:
+      "NIS retirement pension counts as SCP assessed income (grant does not). " +
+      "A 3,000 NIS pension typically delivers 2,000 net of the SCP reduction.",
+  };
+}
+
+/* ------------------------------------------------------- Income tax & levies */
+
+/** Health surcharge. Returns 0 for exempt persons — MATERIAL for retirement clients. */
+function healthSurcharge(monthlyEmoluments, age, onlyIncomeIsPension = false) {
+  if (age < 16) return { weekly: 0, exempt: "under 16" };
+  if (age >= 60) return { weekly: 0, exempt: "aged 60 and over" };
+  if (onlyIncomeIsPension) return { weekly: 0, exempt: "only income is pension" };
+  const [hi, lo] = P.health_surcharge.rates.value;
+  return {
+    weekly: monthlyEmoluments > hi.monthly_emoluments_over ? hi.weekly_rate : lo.weekly_rate,
+    exempt: null,
+    source: P.health_surcharge.rates.source,
+  };
+}
+
+/** Chargeable income and PAYE. */
+function incomeTax({ grossAnnual, nisContributionsAnnual = 0, approvedContributionsAnnual = 0, otherDeductions = 0 }) {
+  const allowance = P.income_tax.personal_allowance.value;
+  const nisPortion = P.income_tax.nis_deductible_portion.value; // 0.70
+  const cap = P.income_tax.combined_deduction_cap.value;        // 60,000
+
+  const nisDeductible = nisContributionsAnnual * nisPortion;
+  const cappedCombined = Math.min(nisDeductible + approvedContributionsAnnual, cap);
+
+  const chargeable = Math.max(0, grossAnnual - allowance - cappedCombined - otherDeductions);
+
+  let tax = 0, remaining = chargeable, prev = 0;
+  for (const band of P.income_tax.paye_bands.value) {
+    const ceiling = band.up_to ?? Infinity;
+    const slice = Math.max(0, Math.min(remaining, ceiling - prev));
+    tax += slice * band.rate;
+    remaining -= slice;
+    prev = ceiling;
+    if (remaining <= 0) break;
+  }
+
+  return {
+    chargeable,
+    tax,
+    allowance,
+    nisDeductible,
+    combinedDeductionUsed: cappedCombined,
+    combinedDeductionCap: cap,
+    headroom: Math.max(0, cap - cappedCombined),
+    capReached: cappedCombined >= cap,
+    note: "Combined cap is a SINGLE AGGREGATE across pension, approved annuity and 70% of NIS — not per-product.",
+  };
+}
+
+/* ------------------------------------------------------------- Annuities */
+
+/** Validate a proposed annuity maturity age. Floor is legal; 70 is the exemption edge. */
+function checkAnnuityMaturity(age, { registered = true } = {}) {
+  const floor = P.annuities.statutory_maturity_floor.value; // 50
+  const win = P.annuities.exemption_window.value;           // {50,70}
+  if (age < floor) {
+    return { ok: false, severity: "ILLEGAL", message: `An approved plan cannot mature before age ${floor}.` };
+  }
+  if (registered && age > win.max_age) {
+    return {
+      ok: true,
+      severity: "WARN",
+      message: `Maturity at ${age} is legal but falls outside the ${win.min_age}-${win.max_age} window, forfeiting the s.8(1)(ta) income-tax exemption.`,
+    };
+  }
+  return { ok: true, severity: "OK", message: null };
+}
+
+/* --------------------------------------------------------- Provenance API */
+
+/** Walk the tree and return every parameter whose status is not clean. */
+function auditParameters(node = P, path = []) {
+  const out = [];
+  if (node && typeof node === "object") {
+    if (typeof node.status === "string" && node.status !== "VERIFIED") {
+      out.push({ path: path.join("."), status: node.status, warning: node.warning ?? null });
+    }
+    for (const [k, v] of Object.entries(node)) {
+      if (k.startsWith("_")) continue;
+      if (v && typeof v === "object") out.push(...auditParameters(v, [...path, k]));
+    }
+  }
+  return out;
+}
+
+const S = { period:'month', pen:0, exist:0, payeKnown:0, prem:0 };
+const $ = id => document.getElementById(id);
+const n = id => { const v = parseFloat($(id).value); return (isNaN(v)||v<0)?0:v; };
+const money = v => (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+
+const CAP = P.income_tax.combined_deduction_cap.value;
+const PA  = P.income_tax.personal_allowance.value;
+$('capTxt').textContent = CAP.toLocaleString('en-US');
+$('provLine').textContent =
+  `Personal allowance ${money(PA)}; income tax 25% up to $1,000,000 of chargeable income and 30% above; ` +
+  `combined deduction limit ${money(CAP)} across NIS, approved pension plans and approved annuities; ` +
+  `NIS at ${(P.nis.contribution_tables[CURRENT_NIS_TABLE].rate*100).toFixed(1)}% on the earnings-class table in force from ${CURRENT_NIS_TABLE}. All figures in TTD.`;
+
+function model(newPremium){
+  const gross = toMonthly(n('earn'), S.period) * 12;
+  const nis   = nisFromEarnings(n('earn'), S.period);
+  const existingApproved = (S.pen ? n('pension') : 0) + (S.exist ? n('existing') : 0);
+  const before = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                             approvedContributionsAnnual: existingApproved });
+  const after  = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                             approvedContributionsAnnual: existingApproved + newPremium });
+  const paye = S.payeKnown ? n('paye') : before.tax;
+  const hs = healthSurcharge(gross/12, 40);
+  return { gross, nis, before, after, paye,
+           refundBefore: Math.max(0, paye - before.tax),
+           refundAfter:  Math.max(0, paye - after.tax),
+           get uplift(){ return this.refundAfter - this.refundBefore; },
+           taxSaved: before.tax - after.tax,
+           headroom: before.headroom,
+           hsAnnual: hs.weekly * 52 };
+}
+
+function render(){
+  const prem = S.prem;
+  const m = model(prem);
+  const relieved = Math.min(prem, m.headroom);
+  const wasted   = Math.max(0, prem - m.headroom);
+
+  $('nEarn').textContent = money(m.gross);
+  $('nNis').textContent  = money(m.nis.annualEmployee);
+  $('nNisSub').textContent = m.nis.class ? `Class ${m.nis.class}${m.nis.atCeiling?' — the ceiling':''}` : 'below the NIS floor';
+  $('nTax').textContent = money(m.before.tax);
+  $('nTaxSub').textContent = m.before.tax>0 ? 'a year, as things stand' : 'you pay no income tax';
+  $('nHs').textContent = money(m.hsAnnual);
+
+  $('roomBig').textContent = money(m.headroom);
+  const nis70 = m.nis.deductible70;
+  const pen = S.pen ? n('pension') : 0, ex = S.exist ? n('existing') : 0;
+  const scaleMax = Math.max(CAP, nis70 + pen + ex + prem);
+  let h='';
+  [['nis',nis70],['pen',pen],['exist',ex],['ann',relieved],['over',wasted]].forEach(([c,v])=>{
+    if(v<=0) return; const w=v/scaleMax*100;
+    h += `<div class="seg ${c}" style="width:${w}%">${w>14?`<span>${money(v)}</span>`:''}</div>`;
+  });
+  const free = Math.max(0, CAP - Math.min(CAP, nis70+pen+ex+prem));
+  if(free>0) h += `<div class="seg free" style="width:${free/scaleMax*100}%">${free/scaleMax*100>16?`<span>${money(free)} free</span>`:''}</div>`;
+  $('meter').innerHTML = h;
+
+  const nw=$('noteWarn'), ng=$('noteGood');
+  nw.className='note warn'; ng.className='note good';
+  if(wasted>0){
+    nw.className='note warn show';
+    nw.innerHTML = `<b>${money(wasted)} of this would be wasted.</b> You only have ${money(m.headroom)} of room left — NIS and the plans you already have take up the rest. Anything above that is still your savings, but it will not cut your tax.`;
+  } else if(m.headroom<=0){
+    nw.className='note warn show';
+    nw.innerHTML = `<b>You have no room left.</b> NIS and your existing plans already use the full ${money(CAP)}. An annuity would still build your retirement, but it cannot reduce your tax this year.`;
+  } else if(prem>0 && prem<m.headroom){
+    ng.className='note good show';
+    ng.innerHTML = `<b>You still have ${money(m.headroom-prem)} of unused room.</b> Going up to ${money(m.headroom)} would bring back roughly ${money((m.headroom-prem)*(m.before.chargeable>1e6?0.30:0.25))} more.`;
+  } else if(prem>0){
+    ng.className='note good show';
+    ng.innerHTML = `<b>You are using every dollar of room.</b> The whole premium cuts your tax.`;
+  }
+
+  $('premTxt').textContent = money(prem);
+  $('premMo').textContent  = prem>0 ? `a year — ${money(prem/12)} a month` : 'a year';
+
+  $('heroBig').textContent   = money(m.uplift);
+  $('taxBefore').textContent = money(m.before.tax);
+  $('taxAfter').textContent  = money(m.after.tax);
+  if(prem<=0) $('heroCap').textContent = 'Move the slider above to see what comes back to you.';
+  else if(m.uplift<=0 && m.taxSaved>0) $('heroCap').textContent = `Your tax falls by ${money(m.taxSaved)}, but you can only get back what was actually taken off your pay.`;
+  else if(m.uplift<=0) $('heroCap').textContent = 'At this income there is no income tax to reduce.';
+  else $('heroCap').textContent = S.payeKnown
+      ? `comes back to you, on top of the ${money(m.refundBefore)} you were already due.`
+      : `comes back to you as a refund when you file, because the tax on your pay was worked out without this annuity.`;
+
+  $('fPrem').textContent = money(prem);
+  $('fPremMo').textContent = prem>0 ? money(prem/12)+' a month' : ' ';
+  $('fNet').textContent = money(prem - m.taxSaved);
+  $('fNetMo').textContent = prem>0 ? money((prem-m.taxSaved)/12)+' a month' : ' ';
+  if(prem>0 && m.taxSaved>0){
+    const c = Math.round((prem-m.taxSaved)/prem*100);
+    $('fCents').textContent = c+'¢'; $('fCentsN').textContent = `the other ${100-c}¢ comes back`;
+  } else { $('fCents').textContent='—'; $('fCentsN').textContent=' '; }
+  const marg = m.before.chargeable>1e6?30:25;
+  $('fRate').textContent = marg+'%';
+  $('fRateN').textContent = marg===30?'above $1,000,000':'below $1,000,000';
+
+  const rows = [
+    ['sec','Money in'],
+    ['Pay for the year', m.gross, m.gross],
+    ['sec','Taken off before tax'],
+    ['Personal allowance — everyone gets this', -PA, -PA],
+    ['NIS — 70% of what you paid', -nis70, -nis70],
+    ['Pension or savings plan at work', -pen, -pen],
+    ['Annuity you already have', -ex, -ex],
+    ['hl','New annuity', 0, -relieved],
+    ['tot','Income your tax is worked out on', m.before.chargeable, m.after.chargeable],
+    ['sec','The tax'],
+    ['tot','Income tax for the year', m.before.tax, m.after.tax],
+    ['Tax already taken off your pay', -m.paye, -m.paye],
+    ['grand','MONEY BACK TO YOU', m.refundBefore, m.refundAfter],
+  ];
+  $('tbody').innerHTML = rows.map(r=>{
+    if(r[0]==='sec') return `<tr class="sec"><td colspan="3">${r[1]}</td></tr>`;
+    let cls='',label,b,a;
+    if(['hl','tot','grand'].includes(r[0])){ cls=r[0]; label=r[1]; b=r[2]; a=r[3]; }
+    else { label=r[0]; b=r[1]; a=r[2]; }
+    return `<tr class="${cls}"><td>${label}</td><td class="n">${money(b)}</td><td class="n">${money(a)}</td></tr>`;
+  }).join('');
+
+  const rng=$('prem');
+  const want = Math.max(CAP, Math.ceil((m.headroom+10000)/10000)*10000);
+  if(+rng.max !== want) rng.max = want;
+  if(Math.abs(+rng.value - prem) > 0.5) rng.value = prem;
+}
+
+['earn','pension','existing','paye'].forEach(id=>$(id).addEventListener('input',render));
+$('prem').addEventListener('input',e=>{ S.prem = parseFloat(e.target.value)||0; render(); });
+$('periods').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('periods').children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  S.period=b.dataset.p;
+  $('earn').value = {week:1200,fortnight:2400,month:5000,year:60000}[S.period];
+  $('earn').step  = {week:50,fortnight:100,month:100,year:1000}[S.period];
+  render();
+});
+document.querySelectorAll('.yn').forEach(g=>{
+  g.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...g.children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const q=g.dataset.q, on=b.dataset.v==='1';
+    S[q==='paye'?'payeKnown':q] = on?1:0;
+    $('amt-'+q).classList.toggle('show',on);
+    if(q==='paye' && on && n('paye')===0) $('paye').value = Math.round(model(0).before.tax);
+    render();
+  });
+});
+document.querySelectorAll('.chips button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const s=b.dataset.set;
+    S.prem = s==='fill' ? model(0).headroom : parseFloat(s);
+    render();
+  });
+});
+render();
+</script>
+</body>
+</html>

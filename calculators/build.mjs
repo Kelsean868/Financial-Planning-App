@@ -8,7 +8,7 @@
  *
  *   node calculators/build.mjs
  */
-import { readFileSync, writeFileSync, mkdirSync } from "node:fs";
+import { readFileSync, writeFileSync, mkdirSync, readdirSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 import { dirname, join } from "node:path";
 
@@ -17,7 +17,10 @@ const root = join(here, "..");
 
 const json = readFileSync(join(root, "parameters/tt-parameters.json"), "utf8");
 const js   = readFileSync(join(root, "parameters/tt-parameters.js"), "utf8");
-const src  = readFileSync(join(here, "annuity-illustrator.src.html"), "utf8");
+// Every *.src.html in this folder is a skin over the same engine. Add a file,
+// get a build; no change here needed.
+const sources = readdirSync(here).filter((f) => f.endsWith(".src.html")).sort();
+if (!sources.length) throw new Error("no *.src.html files to build");
 
 // Strip the module plumbing: the JSON import becomes an inline literal, and the
 // export keywords go, leaving plain top-level declarations in the page scope.
@@ -50,13 +53,17 @@ if (inlined.includes("</script")) {
   throw new Error("inlined payload still contains a literal </script>");
 }
 
-if (src.indexOf("/*__PARAMETERS__*/") === -1) {
-  throw new Error("source is missing the /*__PARAMETERS__*/ token");
-}
+mkdirSync(join(here, "dist"), { recursive: true });
+
+for (const file of sources) {
+  const src = readFileSync(join(here, file), "utf8");
+  if (src.indexOf("/*__PARAMETERS__*/") === -1) {
+    throw new Error(`${file} is missing the /*__PARAMETERS__*/ token`);
+  }
 // NOTE: replacer must be a FUNCTION. The parameter tables contain dollar signs
 // ("TT$30,000", "$4,500"), and String.replace would interpret $&, $', $1 etc in
 // a string replacement as substitution patterns and silently corrupt the output.
-const out = src.replace("/*__PARAMETERS__*/", () => inlined);
+  const out = src.replace("/*__PARAMETERS__*/", () => inlined);
 
 // Guard: the generated page must not still contain a static import STATEMENT.
 // Match only at the start of a line, so prose like "Import from here." in the
@@ -70,7 +77,7 @@ if (leftoverImport) {
   );
 }
 
-mkdirSync(join(here, "dist"), { recursive: true });
-const dest = join(here, "dist/annuity-illustrator.html");
-writeFileSync(dest, out);
-console.log(`built ${dest}  (${(out.length / 1024).toFixed(0)} KB)`);
+  const dest = join(here, "dist", file.replace(".src.html", ".html"));
+  writeFileSync(dest, out);
+  console.log(`built ${dest.split("/").pop()}  (${(out.length / 1024).toFixed(0)} KB)`);
+}
