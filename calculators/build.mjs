@@ -15,8 +15,14 @@ import { dirname, join } from "node:path";
 const here = dirname(fileURLToPath(import.meta.url));
 const root = join(here, "..");
 
-const json = readFileSync(join(root, "parameters/tt-parameters.json"), "utf8");
-const js   = readFileSync(join(root, "parameters/tt-parameters.js"), "utf8");
+// Read as UTF-8 and normalise to LF. The regexes below use ^...$ with /m; on a
+// CRLF checkout (git core.autocrlf=true on Windows) they match a different amount
+// of trailing whitespace, so the generated file differed by a blank line between
+// platforms. Normalising at read time makes the build byte-identical everywhere.
+const readLF = (p) => readFileSync(p, "utf8").replace(/\r\n/g, "\n");
+
+const json = readLF(join(root, "parameters/tt-parameters.json"));
+const js   = readLF(join(root, "parameters/tt-parameters.js"));
 // Every *.src.html in this folder is a skin over the same engine. Add a file,
 // get a build; no change here needed.
 const sources = readdirSync(here).filter((f) => f.endsWith(".src.html")).sort();
@@ -56,7 +62,7 @@ if (inlined.includes("</script")) {
 mkdirSync(join(here, "dist"), { recursive: true });
 
 for (const file of sources) {
-  const src = readFileSync(join(here, file), "utf8");
+  const src = readLF(join(here, file));
   if (src.indexOf("/*__PARAMETERS__*/") === -1) {
     throw new Error(`${file} is missing the /*__PARAMETERS__*/ token`);
   }
