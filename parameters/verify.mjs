@@ -150,6 +150,29 @@ console.log("\n=== s.134(6) corporate deferred compensation ===");
   is(low.binding, "gross_emoluments", "gross limb binds when chargeable is nil");
 }
 
+console.log("\n=== Banded relief: a deduction straddling $1,000,000 ===");
+{
+  const PA = P.income_tax.personal_allowance.value;
+  // Bands themselves
+  for (const c of [999999, 1000000, 1000001, 2000000]) {
+    const r = incomeTax({ grossAnnual: c + PA });
+    const want = c <= 1e6 ? c * 0.25 : 250000 + (c - 1e6) * 0.30;
+    eq(r.tax, want, `chargeable ${c.toLocaleString()} taxed correctly across the bands`);
+  }
+  // A premium that crosses the line is relieved at a BLEND, not the marginal rate.
+  const gross = 1120000, prem = 53830.20;
+  const nis = nisFromEarnings(gross, "year");
+  const a = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee });
+  const b = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                        approvedContributionsAnnual: prem });
+  is(a.chargeable > 1e6 && b.chargeable < 1e6, true, "this case really does straddle the threshold");
+  const actual = a.tax - b.tax;
+  const flat30 = prem * 0.30;
+  eq(actual, 250000 + (a.chargeable - 1e6) * 0.30 - b.chargeable * 0.25 + 0, "saving equals the true banded difference");
+  is(actual < flat30, true, `blended saving ${actual.toFixed(0)} is BELOW the flat-30% assumption ${flat30.toFixed(0)}`);
+  console.log(`  note  effective relief ${(actual / prem * 100).toFixed(2)}% — flat 30% would overstate by ${(flat30 - actual).toFixed(2)}`);
+}
+
 console.log("\n=== Parameters needing attention (audit) ===");
 for (const a of auditParameters()) console.log(`  [${a.status}] ${a.path}`);
 

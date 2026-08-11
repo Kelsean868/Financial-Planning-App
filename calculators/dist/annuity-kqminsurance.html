@@ -1455,7 +1455,13 @@ function render(){
   if(free>0) h += `<div class="seg free" style="width:${free/scaleMax*100}%">${free/scaleMax*100>16?`<span>${money(free)} free</span>`:''}</div>`;
   $('meter').innerHTML = h;
 
-  const marginRate = m.before.chargeable > 1e6 ? 0.30 : 0.25;
+  // Tax is banded: 25% on chargeable income up to 1,000,000 and 30% above. A
+  // deduction that straddles that line is therefore relieved at a BLEND, not at
+  // the marginal rate. Ask the engine what the tax actually is instead of
+  // multiplying by a single rate — the flat assumption overstated the saving by
+  // about 2,700 on a straddling income.
+  const saveAt = x => m.before.tax - model(x).after.tax;
+  const marginRate = m.before.chargeable > 1e6 ? 0.30 : 0.25;   // display only
   const mult2 = PREM_MULT[S.premPeriod], word2 = PREM_WORD[S.premPeriod];
 
   const nw=$('noteWarn'), ng=$('noteGood'), sp=$('splitBlock');
@@ -1463,7 +1469,7 @@ function render(){
 
   if(prem>0 && prem<maxUseful){
     ng.className='note good show';
-    ng.innerHTML = `<b>You could put in ${money(maxUseful-prem)} more and still get relief on all of it.</b> Going up to ${money(maxUseful)} a year would bring back roughly ${money((maxUseful-prem)*marginRate)} more.`;
+    ng.innerHTML = `<b>You could put in ${money(maxUseful-prem)} more and still get relief on all of it.</b> Going up to ${money(maxUseful)} a year would bring back roughly ${money(saveAt(maxUseful) - saveAt(prem))} more.`;
   } else if(prem>0 && unregistered<=0.5 && maxUseful>0){
     ng.className='note good show';
     ng.innerHTML = `<b>Every dollar of this cuts your tax.</b> You are getting relief on the full amount.`;
@@ -1479,7 +1485,7 @@ function render(){
 
     const capBinds = m.headroom < m.before.chargeable;
     $('srRegWhy').innerHTML = registered>0
-      ? `Every dollar here comes off your taxable income and cuts your tax by ${money(registered*marginRate)}. ${capBinds
+      ? `Every dollar here comes off your taxable income and cuts your tax by ${money(saveAt(registered))}. ${capBinds
           ? `This is all the room you have left under the ${money(CAP)} limit that NIS and your existing plans already share.`
           : `Past this point your taxable income is already down to zero, so there is no more tax to save.`}`
       : `There is no tax benefit available to you right now, so nothing needs to go into a registered plan.`;
@@ -1498,11 +1504,11 @@ function render(){
   $('routesBlock').hidden = !showRoutes;
   if(showRoutes){
     const corpRate = P.corporation_tax.ordinary_rate.value;   // 0.30
-    const youSave  = maxUseful * marginRate;
+    const youSave  = saveAt(maxUseful);
     const coSave   = s134.max * corpRate;
     $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
     $('tuCoAmt').textContent  = money(coSave);
-    $('tuYouNote').innerHTML  = `Paying ${money(maxUseful)} a year into a personal registered annuity, out of income you have already been taxed on. Relief at ${Math.round(marginRate*100)}%, and the income is <b>tax-free</b> when it matures.`;
+    $('tuYouNote').innerHTML  = `Paying ${money(maxUseful)} a year into a personal registered annuity, out of income you have already been taxed on. Relief works out at ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}% on that amount, and the income is <b>tax-free</b> when it matures.`;
     $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. It is <b>not</b> treated as a taxable benefit in your hands &mdash; you are taxed when it pays out, not when it is funded. Larger relief going in, but the income <b>is taxed</b> at maturity.`;
 
     // The business levy trap: payable only where it exceeds corporation tax, so a
@@ -1560,9 +1566,21 @@ function render(){
     const c = Math.round((prem-m.taxSaved)/prem*100);
     $('fCents').textContent = c+'¢'; $('fCentsN').textContent = `the other ${100-c}¢ comes back`;
   } else { $('fCents').textContent='—'; $('fCentsN').textContent=' '; }
-  const marg = m.before.chargeable>1e6?30:25;
-  $('fRate').textContent = marg+'%';
-  $('fRateN').textContent = marg===30?'above $1,000,000':'below $1,000,000';
+  // Show the relief ACTUALLY obtained on this premium, not the marginal band.
+  // A deduction that crosses 1,000,000 is relieved partly at 30% and partly at
+  // 25%, so quoting a single band rate misstates it.
+  const spansBand = m.before.chargeable > 1e6 && m.after.chargeable < 1e6;
+  if(prem>0 && registered>0 && m.taxSaved>0){
+    const eff = m.taxSaved / registered;
+    $('fRate').textContent = (eff*100).toFixed(eff*100 % 1 ? 1 : 0)+'%';
+    $('fRateN').textContent = spansBand
+      ? 'blended — part at 30%, part at 25%'
+      : (m.before.chargeable>1e6 ? 'above $1,000,000' : 'below $1,000,000');
+  } else {
+    const marg = m.before.chargeable>1e6?30:25;
+    $('fRate').textContent = marg+'%';
+    $('fRateN').textContent = marg===30?'above $1,000,000':'below $1,000,000';
+  }
 
   const rows = [
     ['sec','Money in'],
