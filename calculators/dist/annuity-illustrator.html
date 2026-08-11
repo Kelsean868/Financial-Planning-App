@@ -882,6 +882,15 @@ const DATA = {
         "do_not_generalise": "This is specific to s.134(6). The e-Tax individual return carries a distinct line, 'Employer's contribution to Fund (Taxable Benefit)', which is non-zero for OTHER fund types. Never infer from this that employer contributions are untaxed generally - model the fund type, not the payer.",
         "engine_rule": "Show the corporation-tax saving gross. Do NOT net a personal benefit charge against it."
       },
+      "combines_with_personal_cap": {
+        "value": true,
+        "confirmed": "2026-08-11",
+        "status": "VERIFIED_PRACTICE_UNCITED",
+        "basis": "Confirmed by the practitioner from his own quotation practice: a client may hold a personal approved annuity up to the 60,000 combined cap AND have a company fund a s.134(6) plan in the same year. They are not alternatives.",
+        "interaction": "They are not independent either. The one-third limb is measured on CHARGEABLE income, and the personal annuity is deducted in arriving at it - so every dollar of personal contribution reduces the s.134(6) ceiling by one third of a dollar. The practitioner's own live corporate calculator already models this, deducting the personal annuity before taking the third.",
+        "ordering_rule": "ALWAYS fill the personal allowance first. A dollar of personal contribution saves 25c-30c of income tax and costs only (1/3 x 30c) = 10c of corporate relief, a net gain of 15-20c. The order would only reverse if personal relief fell below one third of the corporation tax rate, i.e. below 10%, which cannot occur while the lowest band is 25%. Worked example at 600,000 gross: personal-first yields 58,458 of total relief against 50,383 for company-only.",
+        "floor_note": "The 20%-of-gross limb does not shrink with the personal deduction, so once one third of chargeable falls below it the personal contribution costs no corporate ceiling at all."
+      },
       "open_questions": [
         "No statutory text located. Do not cite a subsection to a client on this basis. Lead: the 52pp 'Corporation Tax Training' document."
       ],

@@ -173,6 +173,35 @@ console.log("\n=== Banded relief: a deduction straddling $1,000,000 ===");
   console.log(`  note  effective relief ${(actual / prem * 100).toFixed(2)}% — flat 30% would overstate by ${(flat30 - actual).toFixed(2)}`);
 }
 
+console.log("\n=== s.134(6) interacts with the personal cap — order matters ===");
+{
+  const node = P.annuities.s134_6a_deferred_compensation;
+  is(node.combines_with_personal_cap.value, true, "personal cap and s.134(6) can both be used in the same year");
+
+  const gross = 600000;
+  const nis = nisFromEarnings(gross, "year");
+  const base = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee });
+  const personalCap = base.headroom;
+  const corpAt = (p) => {
+    const after = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                              approvedContributionsAnnual: p });
+    return s134MaxContribution({ grossAnnual: gross, chargeableIncome: after.chargeable });
+  };
+  const c0 = corpAt(0), c1 = corpAt(personalCap);
+  eq(c0.max - c1.max, personalCap / 3, "each personal dollar costs exactly one third of a dollar of corporate ceiling");
+  is(personalCap + c1.max > c0.max, true, "taking both still yields MORE total capacity than company-only");
+
+  const corpRate = P.corporation_tax.ordinary_rate.value;
+  const personalFirst = (base.tax - incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                                                approvedContributionsAnnual: personalCap }).tax) + c1.max * corpRate;
+  const companyOnly = c0.max * corpRate;
+  is(personalFirst > companyOnly, true,
+     `personal-first saves more tax (${personalFirst.toFixed(0)} vs ${companyOnly.toFixed(0)})`);
+  const lowestPersonalRate = P.income_tax.paye_bands.value[0].rate;
+  is(lowestPersonalRate > corpRate / 3, true,
+     "the ordering rule holds for every band: personal relief always exceeds one third of the corporation tax rate");
+}
+
 console.log("\n=== Parameters needing attention (audit) ===");
 for (const a of auditParameters()) console.log(`  [${a.status}] ${a.path}`);
 
