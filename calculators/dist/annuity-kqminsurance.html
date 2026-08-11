@@ -129,6 +129,16 @@ input[type=range]::-moz-range-thumb{width:24px;height:24px;border-radius:50%;bac
 .rf .v{font-size:20px;font-weight:600}
 .rf .n{font-size:11.5px;color:#8b9daa;margin-top:2px}
 
+/* no-tax honest answer */
+.notax{background:#3d2f16;color:#f4ecdd;padding:52px 0}
+.notax h2{color:#fff;margin-bottom:12px;font-size:30px}
+.notax > .wrap > p{color:#dcccb0;max-width:64ch;font-size:16.5px}
+.nt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px;margin-top:26px}
+.nt-card{background:rgba(255,255,255,.06);border:1px solid rgba(232,196,119,.28);border-radius:10px;padding:18px}
+.nt-card .t{font-weight:600;color:var(--gold);margin-bottom:6px;font-size:15px}
+.nt-card .d{font-size:14px;color:#e0d3bd;line-height:1.55}
+.nt-foot{margin-top:24px;padding-top:18px;border-top:1px solid rgba(232,196,119,.22);font-size:15px;color:#dcccb0;max-width:70ch}
+
 /* detail */
 details{margin-top:22px;background:#fff;border:1px solid var(--line);border-radius:10px}
 summary{padding:16px 22px;cursor:pointer;font-weight:600;font-size:15px;list-style:none;display:flex;justify-content:space-between;align-items:center}
@@ -256,23 +266,55 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
       </div>
     </div>
 
-    <div class="card step">
+    <div class="card step" id="step3">
       <div class="step-h"><span class="step-n">3</span><h2>What if you put money aside?</h2></div>
-      <p class="step-note">Drag to try an amount. This money stays yours &mdash; it goes into your own retirement plan, not to the government.</p>
-      <div class="slider-row"><span class="amt num" id="premTxt">$0</span><span class="per" id="premMo">a year</span></div>
-      <input type="range" id="prem" min="0" max="60000" step="250" value="0" aria-label="Annual annuity premium">
+      <p class="step-note">Type an amount, or drag the slider to try different figures. This money stays yours &mdash; it goes into your own retirement plan, not to the government.</p>
+      <div class="earn">
+        <div class="earn-in"><span class="cur">$</span><input type="number" id="prem" value="0" min="0" step="50" aria-label="How much you would put aside"></div>
+        <div class="periods" id="premPeriods">
+          <button data-p="month" class="on">a month</button>
+          <button data-p="quarter">a quarter</button>
+          <button data-p="half">every 6 months</button>
+          <button data-p="year">a year</button>
+        </div>
+      </div>
+      <input type="range" id="premRange" min="0" max="5000" step="25" value="0" aria-label="Slide to change the amount">
+      <div class="slider-row" style="margin-top:14px">
+        <span class="amt num" id="premTxt">$0</span><span class="per" id="premMo">a year in total</span>
+      </div>
       <div class="chips">
         <button data-set="fill">Use all my room</button>
-        <button data-set="6000">$500 a month</button>
-        <button data-set="12000">$1,000 a month</button>
-        <button data-set="24000">$2,000 a month</button>
+        <button data-set="useful">Most that cuts my tax</button>
         <button data-set="0">Clear</button>
       </div>
     </div>
   </div>
 </section>
 
-<section class="result">
+<section class="notax" id="noTaxBlock" hidden>
+  <div class="wrap">
+    <div class="kicker" style="color:#f0c98a">An honest answer</div>
+    <h2 id="ntHead">A registered annuity would not cut your tax right now</h2>
+    <p id="ntWhy"></p>
+    <div class="nt-grid">
+      <div class="nt-card">
+        <div class="t">Why the tax break does nothing for you</div>
+        <div class="d">The whole point of a <b>registered</b> annuity is that the money you put in comes off your taxable income. If you are not paying income tax, there is nothing for it to come off. The deduction would be worth exactly $0 to you.</div>
+      </div>
+      <div class="nt-card">
+        <div class="t">What would change it</div>
+        <div class="d" id="ntChange"></div>
+      </div>
+      <div class="nt-card">
+        <div class="t">Saving is still worth doing</div>
+        <div class="d">None of this means don't save. It means a registered annuity is the wrong <i>wrapper</i> for you today &mdash; you would be accepting the lock-in rules without getting the benefit you are locking up for.</div>
+      </div>
+    </div>
+    <p class="nt-foot">I would rather tell you this now than sell you something that does not fit. If you want to talk about what would suit you instead, the offer below still stands.</p>
+  </div>
+</section>
+
+<section class="result" id="resultBlock">
   <div class="wrap">
     <div class="kicker">What you get back</div>
     <div class="rbig num" id="heroBig">$0</div>
@@ -316,8 +358,8 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
 
 <section class="cta">
   <div class="wrap">
-    <h2>Worth a conversation?</h2>
-    <p>If the number above got your attention, the next step is working out what actually fits your situation &mdash; your age, your existing plans, and when you want it to mature. A conversation costs nothing.</p>
+    <h2 id="ctaHead">Worth a conversation?</h2>
+    <p id="ctaBody">If the number above got your attention, the next step is working out what actually fits your situation &mdash; your age, your existing plans, and when you want it to mature. A conversation costs nothing.</p>
     <div class="cta-btns">
       <a class="btn btn-gold" href="https://outlook.office.com/bookwithme/user/745fdf2a17a54ab38060ce6cafdda8e2@tatil.co.tt?anonymous&amp;ep=plink" target="_blank" rel="noopener">Book a consultation</a>
       <a class="btn btn-line" href="https://wa.me/18687981014" target="_blank" rel="noopener">WhatsApp me</a>
@@ -1133,7 +1175,12 @@ function auditParameters(node = P, path = []) {
   return out;
 }
 
-const S = { period:'month', pen:0, exist:0, payeKnown:0, prem:0 };
+// S.prem is always the ANNUAL figure — the single source of truth. The input and
+// slider show it divided by the chosen frequency, so switching frequency changes
+// how the same commitment is expressed, never how much it is.
+const PREM_MULT = { month:12, quarter:4, half:2, year:1 };
+const PREM_WORD = { month:'a month', quarter:'a quarter', half:'every 6 months', year:'a year' };
+const S = { period:'month', pen:0, exist:0, payeKnown:0, prem:0, premPeriod:'month' };
 const $ = id => document.getElementById(id);
 const n = id => { const v = parseFloat($(id).value); return (isNaN(v)||v<0)?0:v; };
 const money = v => (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
@@ -1166,8 +1213,12 @@ function model(newPremium){
 }
 
 function render(){
-  const prem = S.prem;
-  const m = model(prem);
+  let prem = S.prem;
+  let m = model(prem);
+  // If there is no tax to reduce we hide the premium step entirely, so the meter,
+  // the table and the totals must not keep showing a premium the visitor can no
+  // longer see or change. Recompute at zero rather than leaving a stale figure.
+  if(m.before.tax <= 0 && prem !== 0){ prem = 0; m = model(0); }
   const relieved = Math.min(prem, m.headroom);
   const wasted   = Math.max(0, prem - m.headroom);
 
@@ -1191,24 +1242,54 @@ function render(){
   if(free>0) h += `<div class="seg free" style="width:${free/scaleMax*100}%">${free/scaleMax*100>16?`<span>${money(free)} free</span>`:''}</div>`;
   $('meter').innerHTML = h;
 
+  // Relief is limited by BOTH the shared cap and the tax actually payable. Whichever
+  // runs out first is the real ceiling — telling someone to "use all your room" when
+  // their tax hits zero first would be advice that costs them money for nothing.
+  const maxUseful = Math.max(0, Math.min(m.headroom, m.before.chargeable));
+  const marginRate = m.before.chargeable > 1e6 ? 0.30 : 0.25;
+
   const nw=$('noteWarn'), ng=$('noteGood');
   nw.className='note warn'; ng.className='note good';
-  if(wasted>0){
+  if(m.before.tax<=0){
+    /* handled by the no-tax panel below; no note needed here */
+  } else if(wasted>0){
     nw.className='note warn show';
     nw.innerHTML = `<b>${money(wasted)} of this would be wasted.</b> You only have ${money(m.headroom)} of room left — NIS and the plans you already have take up the rest. Anything above that is still your savings, but it will not cut your tax.`;
   } else if(m.headroom<=0){
     nw.className='note warn show';
     nw.innerHTML = `<b>You have no room left.</b> NIS and your existing plans already use the full ${money(CAP)}. An annuity would still build your retirement, but it cannot reduce your tax this year.`;
-  } else if(prem>0 && prem<m.headroom){
+  } else if(prem>maxUseful+0.5){
+    nw.className='note warn show';
+    nw.innerHTML = `<b>Past ${money(maxUseful)} a year you get no further tax relief.</b> At that point your taxable income is already down to zero — there is no more tax left to save. You still have room under the ${money(CAP)} limit, but putting more in would not increase your refund.`;
+  } else if(prem>0 && prem<maxUseful){
     ng.className='note good show';
-    ng.innerHTML = `<b>You still have ${money(m.headroom-prem)} of unused room.</b> Going up to ${money(m.headroom)} would bring back roughly ${money((m.headroom-prem)*(m.before.chargeable>1e6?0.30:0.25))} more.`;
+    ng.innerHTML = `<b>You could put in ${money(maxUseful-prem)} more and still get relief on all of it.</b> Going up to ${money(maxUseful)} a year would bring back roughly ${money((maxUseful-prem)*marginRate)} more.`;
   } else if(prem>0){
     ng.className='note good show';
-    ng.innerHTML = `<b>You are using every dollar of room.</b> The whole premium cuts your tax.`;
+    ng.innerHTML = `<b>Every dollar of this cuts your tax.</b> You are getting relief on the full amount.`;
   }
 
+  /* ---- the honest answer: no tax means the deduction is worth nothing ---- */
+  const noTax = m.before.tax <= 0;
+  $('noTaxBlock').hidden = !noTax;
+  $('resultBlock').hidden = noTax;
+  $('step3').hidden = noTax;
+  if(noTax){
+    const taxStarts = PA + m.before.combinedDeductionUsed;
+    $('ntWhy').innerHTML = `On ${money(m.gross)} a year you are not paying income tax at all. Your personal allowance of ${money(PA)}, plus the 70% of your NIS you are allowed to claim (${money(nis70)})${(pen+ex)>0?`, plus the ${money(pen+ex)} already going into your existing plans`:''}, covers your whole income. There is no tax bill left for an annuity to reduce.`;
+    $('ntChange').innerHTML = `On your current deductions, income tax starts at roughly <b>${money(taxStarts)}</b> a year &mdash; about ${money(taxStarts/12)} a month. Below that a registered annuity buys you no tax relief at all. If you have income this page does not know about, or your pay rises, come back and run it again.`;
+    $('ctaHead').textContent = 'Still worth a conversation';
+    $('ctaBody').textContent = 'A registered annuity is not the right fit for you today, but that is only one product. There are ways to save for retirement that do not depend on a tax break you cannot use. Happy to walk you through them.';
+  } else {
+    $('ctaHead').textContent = 'Worth a conversation?';
+    $('ctaBody').textContent = 'If the number above got your attention, the next step is working out what actually fits your situation — your age, your existing plans, and when you want it to mature. A conversation costs nothing.';
+  }
+
+  const mult = PREM_MULT[S.premPeriod];
   $('premTxt').textContent = money(prem);
-  $('premMo').textContent  = prem>0 ? `a year — ${money(prem/12)} a month` : 'a year';
+  $('premMo').textContent  = prem>0
+    ? `a year in total — ${money(prem/mult)} ${PREM_WORD[S.premPeriod]}`
+    : 'a year in total';
 
   $('heroBig').textContent   = money(m.uplift);
   $('taxBefore').textContent = money(m.before.tax);
@@ -1255,14 +1336,33 @@ function render(){
     return `<tr class="${cls}"><td>${label}</td><td class="n">${money(b)}</td><td class="n">${money(a)}</td></tr>`;
   }).join('');
 
-  const rng=$('prem');
-  const want = Math.max(CAP, Math.ceil((m.headroom+10000)/10000)*10000);
-  if(+rng.max !== want) rng.max = want;
-  if(Math.abs(+rng.value - prem) > 0.5) rng.value = prem;
+  /* keep the number box and the slider in step with S.prem, in the chosen frequency */
+  const maxAnnual = Math.max(CAP, Math.ceil((m.headroom+10000)/10000)*10000);
+  const rng = $('premRange'), box = $('prem');
+  const perPeriod = prem / mult;
+  const wantMax  = Math.ceil(maxAnnual / mult);
+  const wantStep = mult >= 12 ? 25 : mult >= 4 ? 50 : mult >= 2 ? 100 : 250;
+  if(+rng.max !== wantMax)   rng.max = wantMax;
+  if(+rng.step !== wantStep){ rng.step = wantStep; box.step = wantStep; }
+  if(Math.abs(+rng.value - perPeriod) > 0.5) rng.value = perPeriod;
+  if(document.activeElement !== box && Math.abs(parseFloat(box.value||0) - perPeriod) > 0.5){
+    box.value = Math.round(perPeriod);
+  }
 }
 
 ['earn','pension','existing','paye'].forEach(id=>$(id).addEventListener('input',render));
-$('prem').addEventListener('input',e=>{ S.prem = parseFloat(e.target.value)||0; render(); });
+$('prem').addEventListener('input',e=>{
+  S.prem = (parseFloat(e.target.value)||0) * PREM_MULT[S.premPeriod]; render();
+});
+$('premRange').addEventListener('input',e=>{
+  S.prem = (parseFloat(e.target.value)||0) * PREM_MULT[S.premPeriod]; render();
+});
+$('premPeriods').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('premPeriods').children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  S.premPeriod = b.dataset.p;   // S.prem (annual) deliberately unchanged
+  render();
+});
 $('periods').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   [...$('periods').children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
@@ -1284,8 +1384,10 @@ document.querySelectorAll('.yn').forEach(g=>{
 });
 document.querySelectorAll('.chips button').forEach(b=>{
   b.addEventListener('click',()=>{
-    const s=b.dataset.set;
-    S.prem = s==='fill' ? model(0).headroom : parseFloat(s);
+    const s=b.dataset.set, m=model(0);
+    if(s==='fill')        S.prem = m.headroom;
+    else if(s==='useful') S.prem = Math.max(0, Math.min(m.headroom, m.before.chargeable));
+    else                  S.prem = parseFloat(s)||0;
     render();
   });
 });
