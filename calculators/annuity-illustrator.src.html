@@ -115,6 +115,34 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
 .legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
 
+/* allocation + two-up */
+.alloc{margin-top:18px;border:1.5px solid var(--green);border-radius:10px;overflow:hidden;display:none}
+.alloc.show{display:block}
+.alloc-h{background:var(--green);color:#fff;padding:11px 15px;font-weight:600;font-size:14px}
+.alloc-b{padding:15px;background:#F4FAF7}
+.alloc-rows{display:grid;gap:9px}
+.ar{display:grid;grid-template-columns:1fr auto;gap:5px 14px;align-items:baseline;background:#fff;
+  border:1px solid var(--rule);border-radius:8px;padding:12px 14px}
+.ar.zero{opacity:.55}
+.ar .k{font-weight:600;font-size:13.5px}
+.ar .v{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--green);text-align:right}
+.ar .w{grid-column:1/-1;font-size:12px;color:var(--muted);line-height:1.5}
+.alloc-foot{margin-top:12px;font-size:12px;line-height:1.6;background:#fff;border-left:3px solid var(--green);
+  border-radius:7px;padding:10px 13px}
+.two-up{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+.tu{border-radius:10px;padding:18px;border:1.5px solid}
+.tu-you{background:#F2F9F6;border-color:var(--green)}
+.tu-co{background:#FDF8EE;border-color:var(--gold)}
+.tu-tag{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.tu-you .tu-tag{color:var(--green)}.tu-co .tu-tag{color:var(--gold)}
+.tu-amt{font-family:'Fraunces',serif;font-size:32px;font-weight:600;line-height:1}
+.tu-you .tu-amt{color:var(--green)}.tu-co .tu-amt{color:var(--gold)}
+.tu-lab{font-size:12.5px;color:var(--muted);margin-top:3px}
+.tu-note{font-size:12px;color:var(--ink2);margin-top:8px;line-height:1.5}
+.tu-caveat{margin-top:13px;padding:11px 14px;background:#FBF0EC;border-left:3px solid var(--red);
+  border-radius:7px;font-size:12px;line-height:1.6;color:#7A2B1F;display:none}
+.tu-caveat.show{display:block}
+
 /* slider */
 .slider-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:4px}
 .slider-row .amt{font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;color:var(--green);min-width:150px}
@@ -238,6 +266,12 @@ tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
     <p class="step-note">These decide how much room you have left. Answer what you know &mdash; leave the rest as no.</p>
 
     <div class="q">
+      <div class="q-t"><div class="t">Could a company fund a plan for this client?</div>
+        <div class="d">They own a company, or the employer would agree. A sole trader in their own name does not qualify &mdash; s.134(6) needs a company.</div></div>
+      <div class="yn" data-q="owner"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+    </div>
+
+    <div class="q">
       <div class="q-t"><div class="t">Are you in a pension or savings plan at work?</div>
         <div class="d">Sometimes called a provident fund or superannuation plan</div></div>
       <div class="yn" data-q="pen"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
@@ -349,6 +383,30 @@ tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
     </div>
   </section>
 
+  <section class="card" id="routesBlock" hidden style="margin-top:26px;border-top:3px solid var(--green)">
+    <div class="card-h"><h2>Third route: employer-funded s.134(6)</h2><div class="tag">Company owners</div></div>
+    <p class="card-note">Runs on a share of income rather than the $60,000 cap, funded by the company out of pre-tax money. Employer-owned, so it forfeits the Finance Act 2026 maturity exemption.</p>
+    <div class="alloc" id="allocBlock">
+      <div class="alloc-h">Recommended split of <span id="alTotal">$0</span> a year</div>
+      <div class="alloc-b">
+        <div class="alloc-rows">
+          <div class="ar" id="arPers"><div class="k">1 &middot; Personal registered</div><div class="v num" id="alPers">$0</div><div class="w" id="alPersWhy"></div></div>
+          <div class="ar" id="arCorp"><div class="k">2 &middot; Company s.134(6)</div><div class="v num" id="alCorp">$0</div><div class="w" id="alCorpWhy"></div></div>
+          <div class="ar" id="arUnreg"><div class="k">3 &middot; Unregistered</div><div class="v num" id="alUnreg">$0</div><div class="w" id="alUnregWhy"></div></div>
+        </div>
+        <div class="alloc-foot" id="alFoot"></div>
+      </div>
+    </div>
+    <div class="two-up">
+      <div class="tu tu-you"><div class="tu-tag">Client personally</div><div class="tu-amt num" id="tuYouAmt">$0</div>
+        <div class="tu-lab">income tax refunded</div><div class="tu-note" id="tuYouNote"></div></div>
+      <div class="tu tu-co"><div class="tu-tag">Their company</div><div class="tu-amt num" id="tuCoAmt">$0</div>
+        <div class="tu-lab">corporation tax saved</div><div class="tu-note" id="tuCoNote"></div></div>
+    </div>
+    <div class="tu-caveat" id="tuCaveat"></div>
+    <p style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.6" id="rtBasis"></p>
+  </section>
+
   <!-- DETAIL -->
   <details>
     <summary>Show me the tax return detail</summary>
@@ -390,7 +448,7 @@ tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
 // headroom by up to one step and report a few dollars as still unused.
 const PREM_MULT = { month:12, quarter:4, half:2, year:1 };
 const PREM_WORD = { month:'a month', quarter:'a quarter', half:'every 6 months', year:'a year' };
-const S = { period:'month', pen:0, exist:0, payeKnown:0, prem:0, premPeriod:'month' };
+const S = { period:'month', pen:0, exist:0, payeKnown:0, owner:0, prem:0, premPeriod:'month' };
 const $ = id => document.getElementById(id);
 const n = id => { const v = parseFloat($(id).value); return (isNaN(v)||v<0)?0:v; };
 const money = v => (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
@@ -503,6 +561,56 @@ function render(){
       : `No relief is available, so nothing needs to sit in a registered plan.`;
     $('splitFoot').innerHTML = `The extra ${money(unregistered)} in a <b>registered</b> plan earns no deduction while still binding the 50\u201370 maturity window and taxing early surrender in full. `
       + `Counter-argument to weigh with the client: registered income is exempt at maturity under the Finance Act 2026 and unregistered is not \u2014 turns on age and expected retirement tax.`;
+  }
+
+  /* ---- third route: employer-funded s.134(6) ---- */
+  const chargeableAfterPersonal = model(maxUseful).after.chargeable;
+  const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: chargeableAfterPersonal });
+  const s134NoPersonal = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
+  const alPers  = Math.min(prem, maxUseful);
+  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.max);
+  const alUnreg = Math.max(0, prem - alPers - alCorp);
+
+  const showRoutes = m.before.tax > 0 && S.owner === 1;
+  $('routesBlock').hidden = !showRoutes;
+  if(showRoutes){
+    const corpRate2 = P.corporation_tax.ordinary_rate.value;
+    const ab = $('allocBlock');
+    ab.className = prem > 0 ? 'alloc show' : 'alloc';
+    if(prem > 0){
+      const pStar = Math.max(0, Math.min(maxUseful, (3*prem - m.before.chargeable)/2));
+      const cStar = s134MaxContribution({ grossAnnual:m.gross, chargeableIncome: model(pStar).after.chargeable }).max;
+      const bestThisYear = saveAt(pStar) + Math.min(Math.max(0,prem-pStar), cStar)*corpRate2;
+      const thisWay      = saveAt(alPers) + alCorp*corpRate2;
+      const giveUp       = Math.max(0, bestThisYear - thisWay);
+      $('alTotal').textContent = money(prem);
+      $('alPers').textContent  = money(alPers);
+      $('alCorp').textContent  = money(alCorp);
+      $('alUnreg').textContent = money(alUnreg);
+      $('arPers').className  = 'ar' + (alPers  > 0.5 ? '' : ' zero');
+      $('arCorp').className  = 'ar' + (alCorp  > 0.5 ? '' : ' zero');
+      $('arUnreg').className = 'ar' + (alUnreg > 0.5 ? '' : ' zero');
+      $('alPersWhy').innerHTML = alPers > 0.5
+        ? `Fill first. Relieves ${money(saveAt(alPers))} of income tax \u2014 marginally less than the company route would on the same money \u2014 but this is the only one of the three whose income is <b>exempt at maturity</b>.`
+        : `No personal room left after NIS and existing plans.`;
+      $('alCorpWhy').innerHTML = alCorp > 0.5
+        ? `Saves the company ${money(alCorp*corpRate2)} at ${Math.round(corpRate2*100)}%. Ceiling ${money(s134.max)} once the personal allowance is filled \u2014 ${money(s134NoPersonal.max)} before it, since the one-third limb is measured on chargeable income.`
+        : `Not needed \u2014 the personal allowance absorbs the whole amount.`;
+      $('alUnregWhy').innerHTML = alUnreg > 0.5
+        ? `Beyond both ceilings. No relief, but no lock-in either.`
+        : `Nothing left over.`;
+      $('alFoot').innerHTML = `Total relieved: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax. `
+        + `${giveUp>1 ? `Shifting ${money(maxUseful-pStar)} to the company would relieve ${money(giveUp)} more this year, but its income would then be taxable at maturity.` : ``}`;
+    }
+    const youSave = saveAt(maxUseful), coSave = s134.max * corpRate2;
+    $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
+    $('tuCoAmt').textContent  = money(coSave);
+    $('tuYouNote').innerHTML  = `${money(maxUseful)} from taxed income. Effective relief ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}%, and <b>exempt at maturity</b> under s.8(1)(ta).`;
+    $('tuCoNote').innerHTML   = `${money(s134.max)} from company pre-tax money. Under s.134(6) it is <b>not</b> a taxable benefit in the client's hands. Larger relief in, but <b>taxable at maturity</b>.`;
+    const levy = P.corporation_tax.business_levy;
+    $('tuCaveat').className = 'tu-caveat show';
+    $('tuCaveat').innerHTML = `<b>Test before quoting.</b> The saving assumes the company has taxable profit to absorb the contribution. Business levy is ${(levy.value*100).toFixed(1)}% of gross receipts and a company effectively pays the greater of it or corporation tax \u2014 so relief stops once corporation tax reaches the levy. Companies within ${levy.exemptions.new_company_years} years of registration, or under ${money(levy.exemptions.turnover_threshold)} of receipts, have no levy floor.`;
+    $('rtBasis').innerHTML = `s.134(6) excludes employer retirement provision from the benefit-in-kind charge; s.134(6A) requires BIR approval of the contract. Neither subsection states a limit \u2014 the greater of one third of chargeable income (${money(s134.byChargeable)}) or 20% of gross (${money(s134.byGross)}) is market practice, not a quoted rule.`;
   }
 
   const noTax = m.before.tax <= 0;
@@ -624,7 +732,7 @@ document.querySelectorAll('.yn').forEach(g=>{
     [...g.children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
     const q=g.dataset.q, on=b.dataset.v==='1';
     S[q === 'paye' ? 'payeKnown' : q] = on?1:0;
-    $('amt-'+q).classList.toggle('show',on);
+    const amt=document.getElementById('amt-'+q); if(amt) amt.classList.toggle('show',on);  // 'owner' has no amount box
     if(q==='paye' && on && n('paye')===0) $('paye').value = Math.round(model(0).before.tax);
     render();
   });

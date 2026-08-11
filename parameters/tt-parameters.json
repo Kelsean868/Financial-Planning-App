@@ -485,9 +485,10 @@
       "warning": "Employer-owned and employer-funded, so it FAILS the 'purchased by an individual who is a resident' condition in s.8(1)(ta). Income from a s.134(6) plan is therefore NOT covered by the Finance Act 2026 maturity exemption. Source: ATTIC guidance reported in the Trinidad Express, 2026. Do not present s.134(6) as a strictly larger version of a personal registered annuity — the deduction is bigger, the maturity treatment is worse.",
       "employee_taxable_benefit": {
         "value": false,
-        "status": "VERIFIED_PRACTICE_UNCITED",
+        "status": "VERIFIED",
         "confirmed": "2026-08-11",
-        "basis": "Confirmed by the practitioner. The employer's contribution to a s.134(6) approved deferred compensation plan is NOT assessed as a taxable benefit in the employee's hands; the employee is taxed when the benefit is paid out, not when it is funded.",
+        "statutory_basis": "s.134(6) Income Tax Act Chap. 75:01 — see statutory_text below. The practitioner confirmed it from practice first; the section was located afterwards and agrees.",
+        "basis": "Confirmed by the practitioner, and now grounded in statute. The employer's contribution to a s.134(6) approved deferred compensation plan is NOT assessed as a taxable benefit in the employee's hands; the employee is taxed when the benefit is paid out, not when it is funded.",
         "do_not_generalise": "This is specific to s.134(6). The e-Tax individual return carries a distinct line, 'Employer's contribution to Fund (Taxable Benefit)', which is non-zero for OTHER fund types. Never infer from this that employer contributions are untaxed generally - model the fund type, not the payer.",
         "engine_rule": "Show the corporation-tax saving gross. Do NOT net a personal benefit charge against it."
       },
@@ -503,8 +504,22 @@
         "company_only_is_always_worst": "Skipping the personal plan entirely is the weakest of the three options on both axes: 50,383.02 against 57,308.49 in the worked case, a shortfall of 7,212.73, and it forfeits the maturity exemption on the whole amount.",
         "floor_note": "The 20%-of-gross limb does not shrink with the personal deduction, so once one third of chargeable falls below it the personal contribution costs no corporate ceiling at all."
       },
+      "statutory_text": {
+        "status": "VERIFIED",
+        "retrieved": "2026-08-11",
+        "source": "Income Tax Act Chap. 75:01, s.134, via https://www.oas.org/juridico/english/mesicic3_tto_income_tax.pdf",
+        "section_heading": "s.134 — Benefits in kind to be taken into account",
+        "s134_6": "Subsection (1) shall not apply to expense incurred by the company in or in connection with the provision for a director or employee himself or for his spouse, children or dependants of any pension, annuity, lump sum, gratuity or other like benefit to be given on his death or retirement.",
+        "s134_6A": "Subsection (6) shall not apply where the employer contributes to a fund or contracts with any person to provide the benefit referred to in that subsection unless the fund or contract is approved by the Board.",
+        "what_it_actually_does": "s.134(1) charges company expenditure on a director or employee to that person as income in kind. s.134(6) EXCLUDES retirement provision from that charge; s.134(6A) withdraws the exclusion unless the fund or contract is BIR-approved. So the subsection the market names the product after is the one that stops the EMPLOYEE being taxed on the contribution — it is not the employer's deduction provision and it is not a contribution limit.",
+        "citable_for": [
+          "the employer contribution not being a taxable benefit in the employee's hands (s.134(6)) — this is the statutory basis for employee_taxable_benefit above, which was previously practice-only",
+          "the requirement that the fund or contract be BIR-approved (s.134(6A))"
+        ],
+        "NOT_citable_for": "THE LIMIT. Neither subsection contains any numerical cap — no one third, no 20%, no figure at all. The one-third/20% rule therefore does NOT come from s.134(6). It is most likely a condition of Board approval under s.134(6A), or it sits in the employer's deduction rules. Never attribute the limit to s.134(6) in client-facing material."
+      },
       "open_questions": [
-        "No statutory text located. Do not cite a subsection to a client on this basis. Lead: the 52pp 'Corporation Tax Training' document."
+        "WHERE DOES THE LIMIT COME FROM? Not s.134(6) or (6A) — confirmed by reading them. Probably a Board approval condition under s.134(6A) or the employer's deduction provisions. Until located, the one-third/20% figure stays market practice and must not be cited to a section. Lead: the 52pp 'Corporation Tax Training' document."
       ],
       "conditions": [
         "Employer owns the policy and is the applicant; employer takes the deduction against corporation tax",

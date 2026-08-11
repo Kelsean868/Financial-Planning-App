@@ -672,7 +672,7 @@ function render(){
     $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
     $('tuCoAmt').textContent  = money(coSave);
     $('tuYouNote').innerHTML  = `Paying ${money(maxUseful)} a year into a personal registered annuity, out of income you have already been taxed on. Relief works out at ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}% on that amount, and the income is <b>tax-free</b> when it matures.`;
-    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. It is <b>not</b> treated as a taxable benefit in your hands &mdash; you are taxed when it pays out, not when it is funded. Larger relief going in, but the income <b>is taxed</b> at maturity.`;
+    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. Under s.134(6) it is <b>not</b> treated as a taxable benefit in your hands &mdash; you are taxed when it pays out, not when it is funded. Larger relief going in, but the income <b>is taxed</b> at maturity.`;
 
     // The business levy trap: payable only where it exceeds corporation tax, so a
     // high-turnover thin-margin company gets nothing from the deduction.
@@ -721,7 +721,7 @@ function render(){
     $('rtPersonal').textContent = money(maxUseful);
     $('rtCorporate').textContent= money(s134.max);
     $('rtBasis').innerHTML = `The company figure is the greater of one third of your chargeable income (${money(s134.byChargeable)}) and 20% of your gross pay (${money(s134.byGross)}) &mdash; here the ${s134.binding==='gross_emoluments'?'20% of gross':'one-third'} figure is the larger. `
-      + `This limit comes from how the market applies section 134(6) &mdash; it is consistent across two insurers' published material and my own earlier calculator, but it is not quoted from the Act itself, so treat it as a planning figure and not a legal citation.`;
+      + `Section 134(6) of the Income Tax Act is what makes the company's contribution tax-free in your hands rather than taxed as a benefit &mdash; and s.134(6A) requires the contract to be approved by the Board of Inland Revenue. The <i>limit</i> itself does not appear in either subsection; it is how the market applies the rule, consistent across two insurers' published material, so treat the ceiling as a planning figure rather than a quoted rule.`;
   }
 
   const noTax = m.before.tax <= 0;
