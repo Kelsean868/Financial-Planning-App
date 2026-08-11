@@ -855,10 +855,16 @@ const DATA = {
       "employer_owned": true,
       "maturity_exemption_applies": false,
       "warning": "Employer-owned and employer-funded, so it FAILS the 'purchased by an individual who is a resident' condition in s.8(1)(ta). Income from a s.134(6) plan is therefore NOT covered by the Finance Act 2026 maturity exemption. Source: ATTIC guidance reported in the Trinidad Express, 2026. Do not present s.134(6) as a strictly larger version of a personal registered annuity — the deduction is bigger, the maturity treatment is worse.",
+      "employee_taxable_benefit": {
+        "value": false,
+        "status": "VERIFIED_PRACTICE_UNCITED",
+        "confirmed": "2026-08-11",
+        "basis": "Confirmed by the practitioner. The employer's contribution to a s.134(6) approved deferred compensation plan is NOT assessed as a taxable benefit in the employee's hands; the employee is taxed when the benefit is paid out, not when it is funded.",
+        "do_not_generalise": "This is specific to s.134(6). The e-Tax individual return carries a distinct line, 'Employer's contribution to Fund (Taxable Benefit)', which is non-zero for OTHER fund types. Never infer from this that employer contributions are untaxed generally - model the fund type, not the payer.",
+        "engine_rule": "Show the corporation-tax saving gross. Do NOT net a personal benefit charge against it."
+      },
       "open_questions": [
-        "Is the employer's contribution a taxable benefit to the employee? The e-Tax return carries a line 'Employer's contribution to Fund (Taxable Benefit)', so it is for SOME funds. Unresolved for s.134(6).",
-        "No statutory text located. Do not cite a subsection to a client on this basis.",
-        "Lead for both: the 52pp 'Corporation Tax Training' document."
+        "No statutory text located. Do not cite a subsection to a client on this basis. Lead: the 52pp 'Corporation Tax Training' document."
       ],
       "conditions": [
         "Employer owns the policy and is the applicant; employer takes the deduction against corporation tax",

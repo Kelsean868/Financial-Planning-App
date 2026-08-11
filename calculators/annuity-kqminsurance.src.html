@@ -621,7 +621,7 @@ function render(){
     $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
     $('tuCoAmt').textContent  = money(coSave);
     $('tuYouNote').innerHTML  = `Paying ${money(maxUseful)} a year into a personal registered annuity, out of income you have already been taxed on. Relief at ${Math.round(marginRate*100)}%, and the income is <b>tax-free</b> when it matures.`;
-    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. Larger relief &mdash; but the income <b>is taxed</b> when it matures.`;
+    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. It is <b>not</b> treated as a taxable benefit in your hands &mdash; you are taxed when it pays out, not when it is funded. Larger relief going in, but the income <b>is taxed</b> at maturity.`;
 
     // The business levy trap: payable only where it exceeds corporation tax, so a
     // high-turnover thin-margin company gets nothing from the deduction.
