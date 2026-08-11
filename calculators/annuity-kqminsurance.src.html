@@ -652,13 +652,21 @@ function render(){
      order would only reverse if personal relief fell below 10%, which cannot
      happen. So the ceiling below is measured AFTER the personal allowance is
      filled, which is what the recommendation tells them to do. */
-  const chargeableAfterPersonal = model(maxUseful).after.chargeable;
-  const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: chargeableAfterPersonal });
-  const s134NoPersonal = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
+  // BIR Form 134 shares ONE ceiling between the company and the employee, and the
+  // employee side includes their 70% NIS. So the company allowance is not stacked
+  // on top of the personal cap — filling the personal cap spends the same budget.
+  const exAnn = S.exist ? n('existing') : 0, exPen = S.pen ? n('pension') : 0;
+  const ceilingWith = (personalAnnuity) => s134FormCeiling({
+    salary: m.gross,
+    approvedAnnuity: personalAnnuity + exAnn,
+    approvedPension: exPen,
+    nisAnnual: m.nis.annualEmployee,
+  });
 
-  /* ---- recommended allocation of whatever they said they want to put aside ---- */
   const alPers  = Math.min(prem, maxUseful);
-  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.max);
+  const s134    = ceilingWith(alPers);
+  const s134NoPersonal = ceilingWith(0);
+  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.maxNewCompany);
   const alUnreg = Math.max(0, prem - alPers - alCorp);
   // Only for someone who actually has a company behind them — for an employee the
   // corporation-tax saving is the EMPLOYER's money, not theirs, and showing it as
@@ -668,11 +676,11 @@ function render(){
   if(showRoutes){
     const corpRate = P.corporation_tax.ordinary_rate.value;   // 0.30
     const youSave  = saveAt(maxUseful);
-    const coSave   = s134.max * corpRate;
+    const coSave   = s134.maxNewCompany * corpRate;
     $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
     $('tuCoAmt').textContent  = money(coSave);
     $('tuYouNote').innerHTML  = `Paying ${money(maxUseful)} a year into a personal registered annuity, out of income you have already been taxed on. Relief works out at ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}% on that amount, and the income is <b>tax-free</b> when it matures.`;
-    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. Under s.134(6) it is <b>not</b> treated as a taxable benefit in your hands &mdash; you are taxed when it pays out, not when it is funded. Larger relief going in, but the income <b>is taxed</b> at maturity.`;
+    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.maxNewCompany)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. Under s.134(6) it is <b>not</b> treated as a taxable benefit in your hands &mdash; you are taxed when it pays out, not when it is funded. Larger relief going in, but the income <b>is taxed</b> at maturity.`;
 
     // The business levy trap: payable only where it exceeds corporation tax, so a
     // high-turnover thin-margin company gets nothing from the deduction.
@@ -680,7 +688,7 @@ function render(){
     $('tuCaveat').className = 'tu-caveat show';
     $('tuCaveat').innerHTML = `<b>Two things this assumes.</b> First, that your company has enough taxable profit to absorb the contribution &mdash; the saving is only real if there is corporation tax to reduce. The <b>business levy</b> is ${(levy.value*100).toFixed(1)}% of gross receipts, and a company effectively pays whichever is greater &mdash; corporation tax or the levy. So once a deduction pushes your corporation tax down to the levy, anything further saves nothing. Companies in their first ${levy.exemptions.new_company_years} years from registration, or with receipts under ${money(levy.exemptions.turnover_threshold)}, have no levy at all and are not affected. Second, the two columns are each route at its own maximum, <b>not</b> a running total &mdash; the split above shows what taking both together actually looks like, since filling your personal allowance lowers the company ceiling.`;
 
-    $('rtHead').textContent = s134.max > maxUseful + 1
+    $('rtHead').textContent = s134.maxNewCompany > maxUseful + 1
       ? 'There is a third route, and for you it is much larger'
       : 'There is a third route worth knowing about';
     /* allocation panel — only once they have said how much they want to put aside */
@@ -700,27 +708,28 @@ function render(){
         ? `Fill this first. It saves ${money(saveAt(alPers))} of income tax now &mdash; slightly less than the company plan would on the same money &mdash; but this is the only one of the three whose income is <b>tax-free when it matures</b>. That is worth far more than the small difference in relief today.`
         : `Nothing here &mdash; your personal room is already used by NIS and your existing plans.`;
       $('alCorpWhy').innerHTML = alCorp > 0.5
-        ? `Saves your company ${money(alCorp*corpRate2)} in corporation tax at ${Math.round(corpRate2*100)}%. The ceiling is ${money(s134.max)} once your personal allowance is filled &mdash; it was ${money(s134NoPersonal.max)} before, because the one-third limb is measured on chargeable income and your personal deduction lowers it.`
+        ? `Saves your company ${money(alCorp*corpRate2)} in corporation tax at ${Math.round(corpRate2*100)}%. The ceiling is ${money(s134.maxNewCompany)} once your personal allowance is filled &mdash; it would be ${money(s134NoPersonal.maxNewCompany)} without it. BIR Form 134 tests your contributions and the company's against a <i>single</i> limit, so the personal plan spends part of the same budget.`
         : `Not needed &mdash; the whole amount fits in your personal allowance.`;
       $('alUnregWhy').innerHTML = alUnreg > 0.5
         ? `Beyond both ceilings. No deduction, but no lock-in either, and it keeps the money out of a wrapper that would restrict it for nothing.`
         : `Nothing left over &mdash; both routes absorbed the full amount.`;
-      // The true this-year optimum sits at the crossover where the company ceiling
-      // exactly absorbs the remainder. Compute it — do not assume a flat spread
-      // between the two rates, because shifting money also moves the ceiling.
-      const pStar = Math.max(0, Math.min(maxUseful, (3*prem - m.before.chargeable)/2));
-      const cStar = s134MaxContribution({ grossAnnual:m.gross,
-                      chargeableIncome: model(pStar).after.chargeable }).max;
-      const bestThisYear = saveAt(pStar) + Math.min(Math.max(0,prem-pStar), cStar)*corpRate2;
-      const thisWay      = saveAt(alPers) + alCorp*corpRate2;
-      const giveUp       = Math.max(0, bestThisYear - thisWay);
-      $('alFoot').innerHTML = `Total tax saved this way: <b>${money(thisWay)}</b> &mdash; ${money(saveAt(alPers))} off your income tax and ${money(alCorp*corpRate2)} off your company's corporation tax. ${giveUp>1 ? `Shifting ${money(maxUseful-pStar)} of that from the personal plan to the company would save ${money(giveUp)} more tax this year,` : `Weighting it further toward the company would save marginally more tax this year,`} but its income would then be taxable at maturity &mdash; which costs more than it gains for anyone who will be paying tax in retirement. Skipping the personal plan altogether is the weakest option of the three.`;
+      // Under BIR Form 134 the company and the employee share one ceiling, so
+      // filling the personal cap genuinely costs company room. Company-first is
+      // better for THIS YEAR's relief; personal-first is better once the maturity
+      // exemption is counted. Compute both rather than assert either.
+      const coFirstCeil  = s134NoPersonal.maxNewCompany;
+      const reliefCoFirst = Math.min(prem, coFirstCeil) * corpRate2;
+      const thisWay       = saveAt(alPers) + alCorp*corpRate2;
+      const giveUp        = Math.max(0, reliefCoFirst - thisWay);
+      const exemptAtMaturity = alPers;
+      $('alFoot').innerHTML = `Tax saved this year: <b>${money(thisWay)}</b> &mdash; ${money(saveAt(alPers))} off your income tax and ${money(alCorp*corpRate2)} off your company's corporation tax.`
+        + (giveUp>1 ? ` <b>Putting it all through the company instead would save ${money(giveUp)} more this year</b>, because the company and you share one ceiling and your personal plan uses part of it. The reason to do it this way anyway: the ${money(exemptAtMaturity)} in your personal plan is <b>exempt from tax when it matures</b>, and the company plan is not. At a 25% retirement rate that is worth about ${money(exemptAtMaturity*0.25)} even if the fund never grows &mdash; more than the ${money(giveUp)} given up. If you expect to pay little or no tax in retirement, the company route wins instead.` : ``);
     }
 
     $('rtCap').textContent      = CAP.toLocaleString('en-US');
     $('rtPersonal').textContent = money(maxUseful);
-    $('rtCorporate').textContent= money(s134.max);
-    $('rtBasis').innerHTML = `The company figure is the greater of one third of your chargeable income (${money(s134.byChargeable)}) and 20% of your gross pay (${money(s134.byGross)}) &mdash; here the ${s134.binding==='gross_emoluments'?'20% of gross':'one-third'} figure is the larger. `
+    $('rtCorporate').textContent= money(s134.maxNewCompany);
+    $('rtBasis').innerHTML = `The company figure is the greater of one third of your chargeable income (${money(s134.form.line9)}) and 20% of your gross pay (${money(s134.form.line10)}) &mdash; here the ${s134.binding==='gross_emoluments'?'20% of gross':'one-third'} figure is the larger. `
       + `Section 134(6) of the Income Tax Act is what makes the company's contribution tax-free in your hands rather than taxed as a benefit &mdash; and s.134(6A) requires the contract to be approved by the Board of Inland Revenue. The <i>limit</i> itself does not appear in either subsection; it is how the market applies the rule, consistent across two insurers' published material, so treat the ceiling as a planning figure rather than a quoted rule.`;
   }
 

@@ -1,6 +1,6 @@
 // Sanity + drift checks for the canonical parameter tables.
 //   node parameters/verify.mjs
-import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly, s134MaxContribution } from "./tt-parameters.js";
+import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly, s134MaxContribution, s134FormCeiling } from "./tt-parameters.js";
 
 let fails = 0;
 const eq = (a, b, msg) => {
@@ -222,6 +222,36 @@ console.log("\n=== s.134(6) interacts with the personal cap — order matters ==
   eq(breakeven, 1 - 0.70 / 0.75, "breakeven retirement tax rate is 6.67%");
   is(personalRate > breakeven, true,
      "T&T's own lowest band (25%) is far above the breakeven, so personal wins on lifetime value");
+}
+
+console.log("\n=== BIR Form 134 reproduced line by line ===");
+{
+  const nis = nisFromEarnings(600000, "year").annualEmployee;
+  const r = s134FormCeiling({ salary: 600000, approvedAnnuity: 53830.20, nisAnnual: nis });
+  eq(r.form.line1, 600000, "line 1 total emolument income (no existing company plan)");
+  eq(r.form.line7, 60000, "line 7 employee contributions capped at 60,000");
+  eq(r.form.line8, 450000, "line 8 chargeable income = assessable less line 7");
+  eq(r.form.line9, 150000, "line 9 one third of chargeable income");
+  eq(r.form.line10, 120000, "line 10 twenty per cent of emolument income");
+  eq(r.ceiling, 150000, "ceiling is the GREATER of line 9 and line 11");
+  eq(r.maxNewCompany, 90000, "company room = ceiling less the employee's own contributions");
+
+  // The ceiling is SHARED — this is the correction the form forced.
+  const none = s134FormCeiling({ salary: 600000, approvedAnnuity: 0, nisAnnual: nis });
+  is(none.maxNewCompany > r.maxNewCompany, true,
+     `filling the personal cap reduces company room (${none.maxNewCompany.toFixed(0)} -> ${r.maxNewCompany.toFixed(0)})`);
+
+  // Existing company contributions raise emolument income but are not new room.
+  const withExisting = s134FormCeiling({ salary: 600000, existingCompanyContribs: 40000,
+                                         approvedAnnuity: 53830.20, nisAnnual: nis });
+  eq(withExisting.form.line1, 640000, "line 1(b) adds contributions ALREADY being made");
+  eq(withExisting.maxNewCompany, withExisting.maxTotalCompany - 40000,
+     "what is already in force is not offered again as new room");
+
+  // The deprecated function must not creep back in.
+  const oldWay = s134MaxContribution({ grossAnnual: 600000, chargeableIncome: 450000 });
+  is(Math.abs(oldWay.max - r.maxNewCompany) > 1, true,
+     `the superseded function still disagrees (${oldWay.max.toFixed(0)} vs ${r.maxNewCompany.toFixed(0)}) — do not call it`);
 }
 
 console.log("\n=== Parameters needing attention (audit) ===");

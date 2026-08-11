@@ -564,11 +564,21 @@ function render(){
   }
 
   /* ---- third route: employer-funded s.134(6) ---- */
-  const chargeableAfterPersonal = model(maxUseful).after.chargeable;
-  const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: chargeableAfterPersonal });
-  const s134NoPersonal = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
+  // BIR Form 134 shares ONE ceiling between the company and the employee, and the
+  // employee side includes their 70% NIS. So the company allowance is not stacked
+  // on top of the personal cap — filling the personal cap spends the same budget.
+  const exAnn = S.exist ? n('existing') : 0, exPen = S.pen ? n('pension') : 0;
+  const ceilingWith = (personalAnnuity) => s134FormCeiling({
+    salary: m.gross,
+    approvedAnnuity: personalAnnuity + exAnn,
+    approvedPension: exPen,
+    nisAnnual: m.nis.annualEmployee,
+  });
+
   const alPers  = Math.min(prem, maxUseful);
-  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.max);
+  const s134    = ceilingWith(alPers);
+  const s134NoPersonal = ceilingWith(0);
+  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.maxNewCompany);
   const alUnreg = Math.max(0, prem - alPers - alCorp);
 
   const showRoutes = m.before.tax > 0 && S.owner === 1;
@@ -594,23 +604,23 @@ function render(){
         ? `Fill first. Relieves ${money(saveAt(alPers))} of income tax \u2014 marginally less than the company route would on the same money \u2014 but this is the only one of the three whose income is <b>exempt at maturity</b>.`
         : `No personal room left after NIS and existing plans.`;
       $('alCorpWhy').innerHTML = alCorp > 0.5
-        ? `Saves the company ${money(alCorp*corpRate2)} at ${Math.round(corpRate2*100)}%. Ceiling ${money(s134.max)} once the personal allowance is filled \u2014 ${money(s134NoPersonal.max)} before it, since the one-third limb is measured on chargeable income.`
+        ? `Saves the company ${money(alCorp*corpRate2)} at ${Math.round(corpRate2*100)}%. Ceiling ${money(s134.maxNewCompany)} with the personal allowance filled, ${money(s134NoPersonal.maxNewCompany)} without \u2014 Form 134 tests both sides against one limit.`
         : `Not needed \u2014 the personal allowance absorbs the whole amount.`;
       $('alUnregWhy').innerHTML = alUnreg > 0.5
         ? `Beyond both ceilings. No relief, but no lock-in either.`
         : `Nothing left over.`;
-      $('alFoot').innerHTML = `Total relieved: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax. `
-        + `${giveUp>1 ? `Shifting ${money(maxUseful-pStar)} to the company would relieve ${money(giveUp)} more this year, but its income would then be taxable at maturity.` : ``}`;
+      $('alFoot').innerHTML = `Relieved this year: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax.`
+        + (giveUp>1 ? ` Company-only would relieve ${money(giveUp)} more this year \u2014 Form 134 shares one ceiling, so the personal plan spends company room. Against that: ${money(exemptAtMaturity)} sits exempt at maturity, worth ~${money(exemptAtMaturity*0.25)} at a 25% retirement rate before any growth. Reverses if the client pays no tax in retirement.` : ``);
     }
-    const youSave = saveAt(maxUseful), coSave = s134.max * corpRate2;
+    const youSave = saveAt(maxUseful), coSave = s134.maxNewCompany * corpRate2;
     $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
     $('tuCoAmt').textContent  = money(coSave);
     $('tuYouNote').innerHTML  = `${money(maxUseful)} from taxed income. Effective relief ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}%, and <b>exempt at maturity</b> under s.8(1)(ta).`;
-    $('tuCoNote').innerHTML   = `${money(s134.max)} from company pre-tax money. Under s.134(6) it is <b>not</b> a taxable benefit in the client's hands. Larger relief in, but <b>taxable at maturity</b>.`;
+    $('tuCoNote').innerHTML   = `${money(s134.maxNewCompany)} from company pre-tax money. Under s.134(6) it is <b>not</b> a taxable benefit in the client's hands. Larger relief in, but <b>taxable at maturity</b>.`;
     const levy = P.corporation_tax.business_levy;
     $('tuCaveat').className = 'tu-caveat show';
     $('tuCaveat').innerHTML = `<b>Test before quoting.</b> The saving assumes the company has taxable profit to absorb the contribution. Business levy is ${(levy.value*100).toFixed(1)}% of gross receipts and a company effectively pays the greater of it or corporation tax \u2014 so relief stops once corporation tax reaches the levy. Companies within ${levy.exemptions.new_company_years} years of registration, or under ${money(levy.exemptions.turnover_threshold)} of receipts, have no levy floor.`;
-    $('rtBasis').innerHTML = `s.134(6) excludes employer retirement provision from the benefit-in-kind charge; s.134(6A) requires BIR approval of the contract. Neither subsection states a limit \u2014 the greater of one third of chargeable income (${money(s134.byChargeable)}) or 20% of gross (${money(s134.byGross)}) is market practice, not a quoted rule.`;
+    $('rtBasis').innerHTML = `s.134(6) excludes employer retirement provision from the benefit-in-kind charge; s.134(6A) requires BIR approval of the contract. Neither subsection states a limit \u2014 the greater of one third of chargeable income (${money(s134.form.line9)}) or 20% of gross (${money(s134.form.line10)}) is market practice, not a quoted rule.`;
   }
 
   const noTax = m.before.tax <= 0;

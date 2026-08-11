@@ -919,8 +919,9 @@ const DATA = {
     "s134_6a_deferred_compensation": {
       "limit": { "chargeable_income_divisor": 3, "gross_emoluments_share": 0.20, "take": "greater" },
       "unit": "TTD/year, per employee",
-      "status": "VERIFIED_MARKET_STANDARD",
-      "vote": "2-0",
+      "status": "VERIFIED",
+      "vote": "3-0",
+      "authority": "BIR Computation Form 134 — see limit_source below. Was VERIFIED_MARKET_STANDARD while only insurer material supported it.",
       "retrieved": "2026-08-11",
       "basis": "NOT read from the statute. Three independent implementations agree on the shape: the greater of one-third of chargeable income, or 20% of gross emoluments.",
       "sources": [
@@ -967,9 +968,28 @@ const DATA = {
         ],
         "NOT_citable_for": "THE LIMIT. Neither subsection contains any numerical cap — no one third, no 20%, no figure at all. The one-third/20% rule therefore does NOT come from s.134(6). It is most likely a condition of Board approval under s.134(6A), or it sits in the employer's deduction rules. Never attribute the limit to s.134(6) in client-facing material."
       },
-      "open_questions": [
-        "WHERE DOES THE LIMIT COME FROM? Not s.134(6) or (6A) — confirmed by reading them. Probably a Board approval condition under s.134(6A) or the employer's deduction provisions. Until located, the one-third/20% figure stays market practice and must not be cited to a section. Lead: the 52pp 'Corporation Tax Training' document."
-      ],
+      "limit_source": {
+        "status": "VERIFIED",
+        "found": "2026-08-11",
+        "document": "BIR COMPUTATION FORM 134 — 'GOVERNMENT OF THE REPUBLIC OF TRINIDAD AND TOBAGO / REQUEST FOR BOARD OF INLAND REVENUE APPROVAL / DETAILS OF CONTRIBUTIONS TO FUND OR CONTRACT IN ACCORDANCE WITH SECTION 134(6A) AND (6B) OF THE INCOME TAX ACT CHAPTER 75:01'",
+        "held_at": "C:/Users/noryk/Downloads/BIR COMPUTATION FORM 134 - Formatted - Open with Libre 1.xlsx (practitioner's copy of the BIR-issued form)",
+        "the_rule": "Front of form, note under line 12: 'Maximum Contributions to be made are the greater of Line 9 OR Line 11.' Line 9 = one third of chargeable income; Line 11 = 20% of total emolument income. This is the source of the one-third/20% rule — it is a BOARD APPROVAL condition under s.134(6A)/(6B), exactly as suspected, not a provision of s.134(6).",
+        "note": "The form also cites s.134(6B), which this module has not yet read. Locate it.",
+        "supersedes": "This displaces the 1995 Tatil spec and the insurer marketing pages as the authority for the limit."
+      },
+      "form_logic_DIVERGES_FROM_THIS_MODULE": {
+        "status": "RESOLVED",
+        "resolved": "2026-08-11",
+        "resolution": "s134FormCeiling() now reproduces the form line by line and is what the calculators call. s134MaxContribution() is deprecated and must not be used. Both readings below were confirmed by the practitioner: the employee's 70% NIS does count inside line 8, and line 1(b) means contributions the company is ALREADY making, not the one being applied for — so the limit is not self-referential.",
+        "warning": "HISTORICAL — kept so the correction stays visible. The former s134MaxContribution() did not reproduce the BIR form.",
+        "difference_1_combined_ceiling": "The form tests ONE combined figure. Line 8 = line 6 (company contributions) + line 7 (employee contributions to approved plans, which the form defines as overleaf 6(a)(i)-(iii) AND 6(b), i.e. INCLUDING the employee's 70% NIS). That total is compared against the greater of the two limbs. This module instead treats the company ceiling as available ON TOP of the personal contribution.",
+        "difference_2_emolument_feedback": "Overleaf line 1 is 'Emolument Income (Inclusive of contributions to S.134(6) plans)', and the sheet sets 1(b) = the company contribution. So the company's own contribution inflates the base for the 20% limb — the limit is self-referential and must be solved iteratively, not evaluated once.",
+        "worked_impact": "Salary 600,000, personal annuity at the full 53,830.20 headroom. This module: company ceiling 150,000, total registered 203,830.20. The form: company ceiling 135,000, total registered 188,830.20 — this module OVERSTATES by 15,000. But with NO personal annuity the form gives 242,660.40 against this module's 167,943.40, an UNDERSTATEMENT of 74,717. The error changes sign, so it cannot be patched with a margin.",
+        "open_questions_for_the_practitioner": [
+          "Does the employee's 70% NIS really count inside line 8? The form's own cross-reference to '6(a)(i) to (iii) and 6(b)' says yes, and 6(b) is NIS.",
+          "Does the company contribution really inflate emolument income for the 20% limb, as cell I65=I37 implies?"
+        ]
+      },
       "conditions": [
         "Employer owns the policy and is the applicant; employer takes the deduction against corporation tax",
         "Each policy must be BIR-approved before issue",
@@ -1321,36 +1341,90 @@ function checkAnnuityMaturity(age, { registered = true } = {}) {
 }
 
 /**
- * Maximum annual s.134(6) corporate deferred-compensation contribution.
+ * s.134(6) contribution ceiling, computed the way BIR COMPUTATION FORM 134 does.
  *
- * This is EMPLOYER money against an EMPLOYER-OWNED policy — it is not a bigger
- * version of the personal $60,000 allowance, and the employee cannot elect it
- * alone. It also forfeits the Finance Act 2026 maturity exemption, because an
- * employer-owned plan fails the "purchased by an individual" test in s.8(1)(ta).
- * Callers MUST surface that trade-off rather than presenting the larger number
- * as strictly better.
+ * The form is "Request for Board of Inland Revenue Approval — Details of
+ * Contributions to Fund or Contract in accordance with Section 134(6A) and (6B)".
+ * Its own line numbers are used below so a result can be checked against a filed
+ * form line by line.
  *
- * NOT read from the statute — three independent industry implementations agree
- * on the shape (see `sources` on the parameter node). Safe to compute with;
- * do NOT cite a subsection to a client on this basis.
+ * THE RULE (front of form, note under line 12):
+ *   "Maximum Contributions to be made are the greater of Line 9 OR Line 11."
  *
- * @returns {{max:number, byChargeable:number, byGross:number, binding:string,
- *            maturityExemptionApplies:boolean, employerOwned:boolean}}
+ * TWO THINGS THAT ARE EASY TO GET WRONG, both confirmed with the practitioner:
+ *  1. Line 8 is a COMBINED total — company contributions PLUS the employee's own
+ *     contributions to approved plans, and the form defines the employee figure as
+ *     overleaf "6(a)(i) to (iii) and 6(b)", which INCLUDES the employee's 70% NIS.
+ *     The company allowance is therefore NOT stacked on top of the personal cap;
+ *     they share one ceiling.
+ *  2. Overleaf line 1(b), "Emolument Income (inclusive of contributions to S.134(6)
+ *     plans)", means contributions the company is ALREADY making — not the new one
+ *     being applied for. The limit is not self-referential.
+ *
+ * @param {object} i
+ * @param {number} i.salary                  overleaf line 1(a)
+ * @param {number} [i.existingCompanyContribs] overleaf line 1(b) — already in force
+ * @param {number} [i.otherIncome]           overleaf line 2
+ * @param {number} [i.tertiary]              overleaf line 4(2)
+ * @param {number} [i.firstTimeHome]         overleaf line 4(3)
+ * @param {number} [i.widowsOrphans]         overleaf line 6(a)(i)
+ * @param {number} [i.approvedPension]       overleaf line 6(a)(ii)
+ * @param {number} [i.approvedAnnuity]       overleaf line 6(a)(iii) — the personal annuity
+ * @param {number} [i.nisAnnual]             employee's full NIS; 70% goes to line 6(b)
+ */
+function s134FormCeiling(i) {
+  const node = P.annuities.s134_6a_deferred_compensation;
+  assertSafe(node, "annuities.s134_6a_deferred_compensation");
+
+  const salary   = Math.max(0, i.salary || 0);
+  const existing = Math.max(0, i.existingCompanyContribs || 0);
+
+  const line1  = salary + existing;                       // TOTAL EMOLUMENT INCOME
+  const line3  = line1 + (i.otherIncome || 0);            // TOTAL NET INCOME
+  const line5  = Math.max(0, line3                        // ASSESSABLE INCOME
+                   - P.income_tax.personal_allowance.value
+                   - (i.tertiary || 0)
+                   - (i.firstTimeHome || 0));
+
+  const nis70  = (i.nisAnnual || 0) * P.income_tax.nis_deductible_portion.value;  // 6(b)
+  const line6  = (i.widowsOrphans || 0) + (i.approvedPension || 0)
+                 + (i.approvedAnnuity || 0) + nis70;
+  const line7  = Math.min(line6, P.income_tax.combined_deduction_cap.value);      // capped at 60,000
+  const line8  = Math.max(0, line5 - line7);                                      // CHARGEABLE INCOME
+  const line9  = line8 / node.limit.chargeable_income_divisor;                    // one third
+  const line10 = line1 * node.limit.gross_emoluments_share;                       // 20% of emoluments
+
+  const ceiling = Math.max(line9, line10);
+  // Front line 7 is the RAW employee total (not the 60,000-capped figure).
+  const employeeContribs = line6;
+  const maxTotalCompany  = Math.max(0, ceiling - employeeContribs);
+
+  return {
+    ceiling,
+    maxNewCompany: Math.max(0, maxTotalCompany - existing),
+    maxTotalCompany,
+    employeeContribs,
+    binding: line10 >= line9 ? "gross_emoluments" : "chargeable_income",
+    maturityExemptionApplies: node.maturity_exemption_applies, // false
+    employerOwned: node.employer_owned,                        // true
+    form: { line1, line5, line6, line7, line8, line9, line10 },
+  };
+}
+
+/**
+ * @deprecated Superseded by s134FormCeiling(), which reproduces BIR Form 134.
+ * This treated the company allowance as stacking on top of the personal cap and
+ * ignored the employee's contributions entirely. Retained only so the difference
+ * stays visible in the diff; do not call it.
  */
 function s134MaxContribution({ grossAnnual, chargeableIncome }) {
   const node = P.annuities.s134_6a_deferred_compensation;
-  assertSafe(node, "annuities.s134_6a_deferred_compensation");
   const byChargeable = Math.max(0, chargeableIncome) / node.limit.chargeable_income_divisor;
   const byGross      = Math.max(0, grossAnnual) * node.limit.gross_emoluments_share;
-  const max          = Math.max(byChargeable, byGross);
-  return {
-    max,
-    byChargeable,
-    byGross,
-    binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
-    maturityExemptionApplies: node.maturity_exemption_applies, // false
-    employerOwned: node.employer_owned,                        // true
-  };
+  return { max: Math.max(byChargeable, byGross), byChargeable, byGross,
+           binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
+           maturityExemptionApplies: node.maturity_exemption_applies,
+           employerOwned: node.employer_owned };
 }
 
 /* --------------------------------------------------------- Provenance API */
@@ -1492,11 +1566,21 @@ function render(){
   }
 
   /* ---- third route: employer-funded s.134(6) ---- */
-  const chargeableAfterPersonal = model(maxUseful).after.chargeable;
-  const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: chargeableAfterPersonal });
-  const s134NoPersonal = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
+  // BIR Form 134 shares ONE ceiling between the company and the employee, and the
+  // employee side includes their 70% NIS. So the company allowance is not stacked
+  // on top of the personal cap — filling the personal cap spends the same budget.
+  const exAnn = S.exist ? n('existing') : 0, exPen = S.pen ? n('pension') : 0;
+  const ceilingWith = (personalAnnuity) => s134FormCeiling({
+    salary: m.gross,
+    approvedAnnuity: personalAnnuity + exAnn,
+    approvedPension: exPen,
+    nisAnnual: m.nis.annualEmployee,
+  });
+
   const alPers  = Math.min(prem, maxUseful);
-  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.max);
+  const s134    = ceilingWith(alPers);
+  const s134NoPersonal = ceilingWith(0);
+  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.maxNewCompany);
   const alUnreg = Math.max(0, prem - alPers - alCorp);
 
   const showRoutes = m.before.tax > 0 && S.owner === 1;
@@ -1522,23 +1606,23 @@ function render(){
         ? `Fill first. Relieves ${money(saveAt(alPers))} of income tax \u2014 marginally less than the company route would on the same money \u2014 but this is the only one of the three whose income is <b>exempt at maturity</b>.`
         : `No personal room left after NIS and existing plans.`;
       $('alCorpWhy').innerHTML = alCorp > 0.5
-        ? `Saves the company ${money(alCorp*corpRate2)} at ${Math.round(corpRate2*100)}%. Ceiling ${money(s134.max)} once the personal allowance is filled \u2014 ${money(s134NoPersonal.max)} before it, since the one-third limb is measured on chargeable income.`
+        ? `Saves the company ${money(alCorp*corpRate2)} at ${Math.round(corpRate2*100)}%. Ceiling ${money(s134.maxNewCompany)} with the personal allowance filled, ${money(s134NoPersonal.maxNewCompany)} without \u2014 Form 134 tests both sides against one limit.`
         : `Not needed \u2014 the personal allowance absorbs the whole amount.`;
       $('alUnregWhy').innerHTML = alUnreg > 0.5
         ? `Beyond both ceilings. No relief, but no lock-in either.`
         : `Nothing left over.`;
-      $('alFoot').innerHTML = `Total relieved: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax. `
-        + `${giveUp>1 ? `Shifting ${money(maxUseful-pStar)} to the company would relieve ${money(giveUp)} more this year, but its income would then be taxable at maturity.` : ``}`;
+      $('alFoot').innerHTML = `Relieved this year: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax.`
+        + (giveUp>1 ? ` Company-only would relieve ${money(giveUp)} more this year \u2014 Form 134 shares one ceiling, so the personal plan spends company room. Against that: ${money(exemptAtMaturity)} sits exempt at maturity, worth ~${money(exemptAtMaturity*0.25)} at a 25% retirement rate before any growth. Reverses if the client pays no tax in retirement.` : ``);
     }
-    const youSave = saveAt(maxUseful), coSave = s134.max * corpRate2;
+    const youSave = saveAt(maxUseful), coSave = s134.maxNewCompany * corpRate2;
     $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
     $('tuCoAmt').textContent  = money(coSave);
     $('tuYouNote').innerHTML  = `${money(maxUseful)} from taxed income. Effective relief ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}%, and <b>exempt at maturity</b> under s.8(1)(ta).`;
-    $('tuCoNote').innerHTML   = `${money(s134.max)} from company pre-tax money. Under s.134(6) it is <b>not</b> a taxable benefit in the client's hands. Larger relief in, but <b>taxable at maturity</b>.`;
+    $('tuCoNote').innerHTML   = `${money(s134.maxNewCompany)} from company pre-tax money. Under s.134(6) it is <b>not</b> a taxable benefit in the client's hands. Larger relief in, but <b>taxable at maturity</b>.`;
     const levy = P.corporation_tax.business_levy;
     $('tuCaveat').className = 'tu-caveat show';
     $('tuCaveat').innerHTML = `<b>Test before quoting.</b> The saving assumes the company has taxable profit to absorb the contribution. Business levy is ${(levy.value*100).toFixed(1)}% of gross receipts and a company effectively pays the greater of it or corporation tax \u2014 so relief stops once corporation tax reaches the levy. Companies within ${levy.exemptions.new_company_years} years of registration, or under ${money(levy.exemptions.turnover_threshold)} of receipts, have no levy floor.`;
-    $('rtBasis').innerHTML = `s.134(6) excludes employer retirement provision from the benefit-in-kind charge; s.134(6A) requires BIR approval of the contract. Neither subsection states a limit \u2014 the greater of one third of chargeable income (${money(s134.byChargeable)}) or 20% of gross (${money(s134.byGross)}) is market practice, not a quoted rule.`;
+    $('rtBasis').innerHTML = `s.134(6) excludes employer retirement provision from the benefit-in-kind charge; s.134(6A) requires BIR approval of the contract. Neither subsection states a limit \u2014 the greater of one third of chargeable income (${money(s134.form.line9)}) or 20% of gross (${money(s134.form.line10)}) is market practice, not a quoted rule.`;
   }
 
   const noTax = m.before.tax <= 0;

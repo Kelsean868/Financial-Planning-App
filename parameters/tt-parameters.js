@@ -317,36 +317,90 @@ export function checkAnnuityMaturity(age, { registered = true } = {}) {
 }
 
 /**
- * Maximum annual s.134(6) corporate deferred-compensation contribution.
+ * s.134(6) contribution ceiling, computed the way BIR COMPUTATION FORM 134 does.
  *
- * This is EMPLOYER money against an EMPLOYER-OWNED policy — it is not a bigger
- * version of the personal $60,000 allowance, and the employee cannot elect it
- * alone. It also forfeits the Finance Act 2026 maturity exemption, because an
- * employer-owned plan fails the "purchased by an individual" test in s.8(1)(ta).
- * Callers MUST surface that trade-off rather than presenting the larger number
- * as strictly better.
+ * The form is "Request for Board of Inland Revenue Approval — Details of
+ * Contributions to Fund or Contract in accordance with Section 134(6A) and (6B)".
+ * Its own line numbers are used below so a result can be checked against a filed
+ * form line by line.
  *
- * NOT read from the statute — three independent industry implementations agree
- * on the shape (see `sources` on the parameter node). Safe to compute with;
- * do NOT cite a subsection to a client on this basis.
+ * THE RULE (front of form, note under line 12):
+ *   "Maximum Contributions to be made are the greater of Line 9 OR Line 11."
  *
- * @returns {{max:number, byChargeable:number, byGross:number, binding:string,
- *            maturityExemptionApplies:boolean, employerOwned:boolean}}
+ * TWO THINGS THAT ARE EASY TO GET WRONG, both confirmed with the practitioner:
+ *  1. Line 8 is a COMBINED total — company contributions PLUS the employee's own
+ *     contributions to approved plans, and the form defines the employee figure as
+ *     overleaf "6(a)(i) to (iii) and 6(b)", which INCLUDES the employee's 70% NIS.
+ *     The company allowance is therefore NOT stacked on top of the personal cap;
+ *     they share one ceiling.
+ *  2. Overleaf line 1(b), "Emolument Income (inclusive of contributions to S.134(6)
+ *     plans)", means contributions the company is ALREADY making — not the new one
+ *     being applied for. The limit is not self-referential.
+ *
+ * @param {object} i
+ * @param {number} i.salary                  overleaf line 1(a)
+ * @param {number} [i.existingCompanyContribs] overleaf line 1(b) — already in force
+ * @param {number} [i.otherIncome]           overleaf line 2
+ * @param {number} [i.tertiary]              overleaf line 4(2)
+ * @param {number} [i.firstTimeHome]         overleaf line 4(3)
+ * @param {number} [i.widowsOrphans]         overleaf line 6(a)(i)
+ * @param {number} [i.approvedPension]       overleaf line 6(a)(ii)
+ * @param {number} [i.approvedAnnuity]       overleaf line 6(a)(iii) — the personal annuity
+ * @param {number} [i.nisAnnual]             employee's full NIS; 70% goes to line 6(b)
+ */
+export function s134FormCeiling(i) {
+  const node = P.annuities.s134_6a_deferred_compensation;
+  assertSafe(node, "annuities.s134_6a_deferred_compensation");
+
+  const salary   = Math.max(0, i.salary || 0);
+  const existing = Math.max(0, i.existingCompanyContribs || 0);
+
+  const line1  = salary + existing;                       // TOTAL EMOLUMENT INCOME
+  const line3  = line1 + (i.otherIncome || 0);            // TOTAL NET INCOME
+  const line5  = Math.max(0, line3                        // ASSESSABLE INCOME
+                   - P.income_tax.personal_allowance.value
+                   - (i.tertiary || 0)
+                   - (i.firstTimeHome || 0));
+
+  const nis70  = (i.nisAnnual || 0) * P.income_tax.nis_deductible_portion.value;  // 6(b)
+  const line6  = (i.widowsOrphans || 0) + (i.approvedPension || 0)
+                 + (i.approvedAnnuity || 0) + nis70;
+  const line7  = Math.min(line6, P.income_tax.combined_deduction_cap.value);      // capped at 60,000
+  const line8  = Math.max(0, line5 - line7);                                      // CHARGEABLE INCOME
+  const line9  = line8 / node.limit.chargeable_income_divisor;                    // one third
+  const line10 = line1 * node.limit.gross_emoluments_share;                       // 20% of emoluments
+
+  const ceiling = Math.max(line9, line10);
+  // Front line 7 is the RAW employee total (not the 60,000-capped figure).
+  const employeeContribs = line6;
+  const maxTotalCompany  = Math.max(0, ceiling - employeeContribs);
+
+  return {
+    ceiling,
+    maxNewCompany: Math.max(0, maxTotalCompany - existing),
+    maxTotalCompany,
+    employeeContribs,
+    binding: line10 >= line9 ? "gross_emoluments" : "chargeable_income",
+    maturityExemptionApplies: node.maturity_exemption_applies, // false
+    employerOwned: node.employer_owned,                        // true
+    form: { line1, line5, line6, line7, line8, line9, line10 },
+  };
+}
+
+/**
+ * @deprecated Superseded by s134FormCeiling(), which reproduces BIR Form 134.
+ * This treated the company allowance as stacking on top of the personal cap and
+ * ignored the employee's contributions entirely. Retained only so the difference
+ * stays visible in the diff; do not call it.
  */
 export function s134MaxContribution({ grossAnnual, chargeableIncome }) {
   const node = P.annuities.s134_6a_deferred_compensation;
-  assertSafe(node, "annuities.s134_6a_deferred_compensation");
   const byChargeable = Math.max(0, chargeableIncome) / node.limit.chargeable_income_divisor;
   const byGross      = Math.max(0, grossAnnual) * node.limit.gross_emoluments_share;
-  const max          = Math.max(byChargeable, byGross);
-  return {
-    max,
-    byChargeable,
-    byGross,
-    binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
-    maturityExemptionApplies: node.maturity_exemption_applies, // false
-    employerOwned: node.employer_owned,                        // true
-  };
+  return { max: Math.max(byChargeable, byGross), byChargeable, byGross,
+           binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
+           maturityExemptionApplies: node.maturity_exemption_applies,
+           employerOwned: node.employer_owned };
 }
 
 /* --------------------------------------------------------- Provenance API */

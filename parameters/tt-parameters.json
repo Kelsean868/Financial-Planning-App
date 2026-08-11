@@ -529,8 +529,10 @@
         "supersedes": "This displaces the 1995 Tatil spec and the insurer marketing pages as the authority for the limit."
       },
       "form_logic_DIVERGES_FROM_THIS_MODULE": {
-        "status": "BLOCKING_REVIEW",
-        "warning": "The engine's s134MaxContribution() does NOT reproduce the BIR form. Two structural differences, both material. Do not treat the corporate ceiling as reliable until reconciled.",
+        "status": "RESOLVED",
+        "resolved": "2026-08-11",
+        "resolution": "s134FormCeiling() now reproduces the form line by line and is what the calculators call. s134MaxContribution() is deprecated and must not be used. Both readings below were confirmed by the practitioner: the employee's 70% NIS does count inside line 8, and line 1(b) means contributions the company is ALREADY making, not the one being applied for — so the limit is not self-referential.",
+        "warning": "HISTORICAL — kept so the correction stays visible. The former s134MaxContribution() did not reproduce the BIR form.",
         "difference_1_combined_ceiling": "The form tests ONE combined figure. Line 8 = line 6 (company contributions) + line 7 (employee contributions to approved plans, which the form defines as overleaf 6(a)(i)-(iii) AND 6(b), i.e. INCLUDING the employee's 70% NIS). That total is compared against the greater of the two limbs. This module instead treats the company ceiling as available ON TOP of the personal contribution.",
         "difference_2_emolument_feedback": "Overleaf line 1 is 'Emolument Income (Inclusive of contributions to S.134(6) plans)', and the sheet sets 1(b) = the company contribution. So the company's own contribution inflates the base for the 20% limb — the limit is self-referential and must be solved iteratively, not evaluated once.",
         "worked_impact": "Salary 600,000, personal annuity at the full 53,830.20 headroom. This module: company ceiling 150,000, total registered 203,830.20. The form: company ceiling 135,000, total registered 188,830.20 — this module OVERSTATES by 15,000. But with NO personal annuity the form gives 242,660.40 against this module's 167,943.40, an UNDERSTATEMENT of 74,717. The error changes sign, so it cannot be patched with a margin.",
