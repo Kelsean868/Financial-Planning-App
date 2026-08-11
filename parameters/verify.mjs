@@ -127,7 +127,12 @@ console.log("\n=== The headroom that actually matters for an annuity sale ===");
 console.log("\n=== s.134(6) corporate deferred compensation ===");
 {
   const node = P.annuities.s134_6a_deferred_compensation;
-  is(node.status, "VERIFIED_MARKET_STANDARD", "upgraded off the 1995-only source");
+  is(node.status, "VERIFIED", "upgraded to VERIFIED once the BIR form was found");
+  is(!!node.limit_source, true, "the limit now names its issuing document");
+  is(node.limit_source.document.includes("BOARD OF INLAND REVENUE APPROVAL"), true,
+     "authority is the BIR approval form, not insurer marketing");
+  is(!!node.form_logic_DIVERGES_FROM_THIS_MODULE, true,
+     "the divergence between s134MaxContribution() and the form is recorded, not silently carried");
   is(node.sources.length >= 3, true, "three independent implementations recorded");
   is(node.employer_owned, true, "flagged as employer-owned");
   is(node.maturity_exemption_applies, false, "does NOT get the Finance Act 2026 maturity exemption");
