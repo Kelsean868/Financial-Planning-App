@@ -95,6 +95,23 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .seg.unreg{background:repeating-linear-gradient(115deg,var(--goldd) 0 9px,#c08f2c 9px 18px)}
 .seg.over{background:repeating-linear-gradient(115deg,var(--bad) 0 8px,#b04531 8px 16px)}
 
+/* two-up personal vs company */
+.two-up{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;margin-top:22px}
+.tu{border-radius:11px;padding:20px;border:1.5px solid}
+.tu-you{background:#f0f6f6;border-color:var(--tealb)}
+.tu-co{background:#fdf8ee;border-color:var(--goldd)}
+.tu-tag{font-size:11px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;margin-bottom:6px}
+.tu-you .tu-tag{color:var(--tealb)}
+.tu-co .tu-tag{color:var(--goldd)}
+.tu-amt{font-family:Georgia,serif;font-size:36px;font-weight:500;line-height:1}
+.tu-you .tu-amt{color:var(--tealb)}
+.tu-co .tu-amt{color:var(--goldd)}
+.tu-lab{font-size:13.5px;color:var(--mut);margin-top:4px}
+.tu-note{font-size:12.5px;color:var(--ink);margin-top:9px;line-height:1.5}
+.tu-caveat{margin-top:14px;padding:12px 15px;background:#fbf0ed;border-left:4px solid var(--bad);
+  border-radius:8px;font-size:12.5px;line-height:1.6;color:#7d2a1c;display:none}
+.tu-caveat.show{display:block}
+
 /* split recommendation */
 .split{margin-top:18px;border:1.5px solid var(--goldd);border-radius:10px;overflow:hidden;display:none}
 .split.show{display:block}
@@ -240,7 +257,13 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
 
     <div class="card step">
       <div class="step-h"><span class="step-n">2</span><h2>Three quick questions</h2></div>
-      <p class="step-note">These decide how much room you actually have. Answer what you know &mdash; leave the rest as no.</p>
+      <p class="step-note">These decide how much room you actually have, and whether a second route is open to you. Answer what you know &mdash; leave the rest as no.</p>
+
+      <div class="q">
+        <div class="q-t"><div class="t">Do you own a company, or would your employer consider funding a plan for you?</div>
+          <div class="d">A company can fund a plan under section 134(6). A sole trader trading in their own name does not qualify &mdash; it needs a company.</div></div>
+        <div class="yn" data-q="owner"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      </div>
 
       <div class="q">
         <div class="q-t"><div class="t">Are you in a pension or savings plan at work?</div>
@@ -402,6 +425,22 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
       <p style="margin-top:10px;color:var(--mut);max-width:66ch;font-size:14.5px">
         Everything above assumes you are paying the premium yourself. If you own a business &mdash; or your employer would agree to it &mdash; a company can fund a plan on your behalf under <b>section 134(6)</b> of the Income Tax Act. It runs on a share of income rather than the $<span id="rtCap">60,000</span> limit, and the company pays it out of pre-tax money rather than you paying out of taxed income. It is not simply a bigger version of the same thing.
       </p>
+      <div class="two-up">
+        <div class="tu tu-you">
+          <div class="tu-tag">You personally</div>
+          <div class="tu-amt num" id="tuYouAmt">$0</div>
+          <div class="tu-lab">back to you as a tax refund</div>
+          <div class="tu-note" id="tuYouNote"></div>
+        </div>
+        <div class="tu tu-co">
+          <div class="tu-tag">Your company</div>
+          <div class="tu-amt num" id="tuCoAmt">$0</div>
+          <div class="tu-lab">saved in corporation tax</div>
+          <div class="tu-note" id="tuCoNote"></div>
+        </div>
+      </div>
+      <div class="tu-caveat" id="tuCaveat"></div>
+
       <div style="overflow-x:auto;margin-top:20px">
         <table style="min-width:600px">
           <thead><tr>
@@ -1338,7 +1377,7 @@ function auditParameters(node = P, path = []) {
 // how the same commitment is expressed, never how much it is.
 const PREM_MULT = { month:12, quarter:4, half:2, year:1 };
 const PREM_WORD = { month:'a month', quarter:'a quarter', half:'every 6 months', year:'a year' };
-const S = { period:'month', pen:0, exist:0, payeKnown:0, prem:0, premPeriod:'month' };
+const S = { period:'month', pen:0, exist:0, payeKnown:0, owner:0, prem:0, premPeriod:'month' };
 const $ = id => document.getElementById(id);
 const n = id => { const v = parseFloat($(id).value); return (isNaN(v)||v<0)?0:v; };
 const money = v => (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
@@ -1446,13 +1485,26 @@ function render(){
   /* ---- the honest answer: no tax means the deduction is worth nothing ---- */
   /* ---- third route: employer-funded s.134(6) ---- */
   const s134 = s134MaxContribution({ grossAnnual: m.gross, chargeableIncome: m.before.chargeable });
-  // Show it whenever there is tax to plan around. Do NOT gate on the corporate
-  // figure being larger — it often is not at middling incomes, but the company
-  // paying out of pre-tax money is an advantage regardless of the ceiling, and a
-  // business owner should still learn the route exists.
-  const showRoutes = m.before.tax > 0;
+  // Only for someone who actually has a company behind them — for an employee the
+  // corporation-tax saving is the EMPLOYER's money, not theirs, and showing it as
+  // "you save" would be false.
+  const showRoutes = m.before.tax > 0 && S.owner === 1;
   $('routesBlock').hidden = !showRoutes;
   if(showRoutes){
+    const corpRate = P.corporation_tax.ordinary_rate.value;   // 0.30
+    const youSave  = maxUseful * marginRate;
+    const coSave   = s134.max * corpRate;
+    $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
+    $('tuCoAmt').textContent  = money(coSave);
+    $('tuYouNote').innerHTML  = `Paying ${money(maxUseful)} a year into a personal registered annuity, out of income you have already been taxed on. Relief at ${Math.round(marginRate*100)}%, and the income is <b>tax-free</b> when it matures.`;
+    $('tuCoNote').innerHTML   = `Your company paying ${money(s134.max)} a year into a plan it owns, before it pays corporation tax at ${Math.round(corpRate*100)}%. Larger relief &mdash; but the income <b>is taxed</b> when it matures.`;
+
+    // The business levy trap: payable only where it exceeds corporation tax, so a
+    // high-turnover thin-margin company gets nothing from the deduction.
+    const levy = P.corporation_tax.business_levy;
+    $('tuCaveat').className = 'tu-caveat show';
+    $('tuCaveat').innerHTML = `<b>Two things this assumes.</b> First, that your company has enough taxable profit to absorb the contribution &mdash; the saving is only real if there is corporation tax to reduce. If your company pays the <b>business levy</b> (${(levy.value*100).toFixed(1)}% of gross revenue, which applies only when it exceeds your corporation tax) the deduction may save you nothing at all. Second, these are two separate routes shown side by side, <b>not</b> a total &mdash; whether you can use both in the same year needs checking against your own figures.`;
+
     $('rtHead').textContent = s134.max > maxUseful + 1
       ? 'There is a third route, and for you it is much larger'
       : 'There is a third route worth knowing about';
@@ -1570,7 +1622,8 @@ document.querySelectorAll('.yn').forEach(g=>{
     [...g.children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
     const q=g.dataset.q, on=b.dataset.v==='1';
     S[q==='paye'?'payeKnown':q] = on?1:0;
-    $('amt-'+q).classList.toggle('show',on);
+    const amt = document.getElementById('amt-'+q);   // 'owner' has no amount box
+    if(amt) amt.classList.toggle('show',on);
     if(q==='paye' && on && n('paye')===0) $('paye').value = Math.round(model(0).before.tax);
     render();
   });
