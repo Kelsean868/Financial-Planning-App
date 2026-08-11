@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What could an annuity do for your tax?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2ECE1; --paper2:#E9E1D2; --card:#FFFFFF;
+  --ink:#14202E; --ink2:#2A3D52; --muted:#6E7B8A; --mutedp:#8A7F6E;
+  --rule:#D9CFBB; --gold:#B8862B; --goldl:#E3B455;
+  --green:#1B6B4F; --greenl:#2E9B72; --red:#A5382A;
+  --shadow:0 1px 2px rgba(20,32,46,.05),0 10px 30px -14px rgba(20,32,46,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.45;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E")}
+.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:860px;margin:0 auto;padding:44px 24px 90px}
+
+/* header */
+.eyebrow{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--mutedp);font-weight:600;margin-bottom:12px}
+h1{font-family:'Fraunces',serif;font-size:clamp(32px,5.4vw,54px);font-weight:600;line-height:1.02;letter-spacing:-.025em}
+h1 em{font-style:italic;color:var(--gold);font-weight:500}
+.sub{font-size:15.5px;color:var(--ink2);margin-top:16px;max-width:56ch}
+
+/* step */
+.step{margin-top:38px;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:26px 28px;box-shadow:var(--shadow)}
+.step-h{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.step-n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);font-weight:600;letter-spacing:.1em;border:1px solid var(--goldl);border-radius:99px;padding:2px 9px;flex:none}
+.step-h h2{font-family:'Fraunces',serif;font-size:23px;font-weight:600;letter-spacing:-.015em}
+.step-note{font-size:13px;color:var(--muted);margin-bottom:20px;max-width:62ch}
+
+/* earnings input */
+.earn{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
+.earn-in{flex:1;min-width:230px;position:relative}
+.earn-in .cur{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:24px;color:var(--mutedp)}
+.earn-in input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;padding:14px 16px 14px 42px;
+  border:1.5px solid var(--rule);border-radius:10px;background:var(--paper);color:var(--ink);-moz-appearance:textfield}
+.earn-in input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(184,134,43,.14)}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.periods{display:flex;background:var(--paper2);border:1px solid var(--rule);border-radius:10px;padding:4px;gap:2px}
+.periods button{flex:1;border:none;background:none;font-family:inherit;font-size:13px;color:var(--ink2);padding:9px 15px;
+  border-radius:7px;cursor:pointer;transition:.15s;white-space:nowrap;font-weight:500}
+.periods button.on{background:var(--ink);color:#fff;box-shadow:0 2px 6px rgba(20,32,46,.25)}
+.periods button:not(.on):hover{background:rgba(20,32,46,.07)}
+
+/* right-now strip */
+.now{margin-top:22px;background:var(--ink);border-radius:11px;padding:20px 22px;color:#DCE4EC;position:relative;overflow:hidden}
+.now::after{content:'';position:absolute;right:-70px;top:-90px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(184,134,43,.2),transparent 68%)}
+.now-h{font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:#93A7BC;font-weight:600;margin-bottom:14px}
+.now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:16px;position:relative;z-index:2}
+.nc .l{font-size:11px;color:#8FA3B8;margin-bottom:4px}
+.nc .v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500}
+.nc .n{font-size:10.5px;color:#7B8DA0;margin-top:2px}
+.nc.hi .v{color:var(--goldl)}
+
+/* questions */
+.q{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #EFE8DA;flex-wrap:wrap}
+.q:last-of-type{border-bottom:none}
+.q-t{flex:1;min-width:210px}
+.q-t .t{font-size:14.5px;font-weight:500}
+.q-t .d{font-size:12px;color:var(--muted);margin-top:2px}
+.yn{display:flex;background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:3px;gap:2px;flex:none}
+.yn button{border:none;background:none;font-family:inherit;font-size:12.5px;padding:7px 18px;border-radius:6px;cursor:pointer;color:var(--ink2);font-weight:500}
+.yn button.on{background:var(--ink);color:#fff}
+.q-amt{width:100%;margin-top:11px;display:none}
+.q-amt.show{display:block}
+.q-amt label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px}
+.q-amt .ai{position:relative;max-width:250px}
+.q-amt .ai .cur{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mutedp)}
+.q-amt input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;padding:9px 12px 9px 28px;
+  border:1.5px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);-moz-appearance:textfield}
+.q-amt input:focus{outline:none;border-color:var(--gold)}
+
+/* room meter */
+.room{margin-top:20px}
+.room-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;flex-wrap:wrap;gap:8px}
+.room-top .big{font-family:'Fraunces',serif;font-size:29px;font-weight:600;color:var(--green)}
+.room-top .lab{font-size:12px;color:var(--muted)}
+.meter{height:38px;border-radius:8px;overflow:hidden;display:flex;background:var(--paper2);border:1px solid var(--rule)}
+.seg{height:100%;display:flex;align-items:center;justify-content:center;transition:width .5s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.seg span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#fff;white-space:nowrap;padding:0 5px}
+.seg.nis{background:#4A6076}.seg.pen{background:#65798E}.seg.exist{background:#7E8FA1}
+.seg.ann{background:repeating-linear-gradient(115deg,var(--green) 0 11px,#1F7A5A 11px 22px)}
+.seg.over{background:repeating-linear-gradient(115deg,var(--red) 0 8px,#B8493A 8px 16px)}
+.seg.free{flex:1}.seg.free span{color:var(--mutedp)}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+
+/* slider */
+.slider-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:4px}
+.slider-row .amt{font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;color:var(--green);min-width:150px}
+.slider-row .per{font-size:13px;color:var(--muted)}
+input[type=range]{width:100%;-webkit-appearance:none;background:transparent;cursor:pointer;margin-top:14px}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:var(--paper2);border:1px solid var(--rule);border-radius:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--green);
+  margin-top:-11px;border:3px solid #fff;box-shadow:0 2px 8px rgba(27,107,79,.45)}
+input[type=range]::-moz-range-track{height:6px;background:var(--paper2);border:1px solid var(--rule);border-radius:6px}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--green);border:3px solid #fff}
+.chips{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.chips button{background:var(--paper2);border:1px solid var(--rule);color:var(--ink2);font-family:inherit;font-size:12px;
+  padding:7px 13px;border-radius:99px;cursor:pointer;transition:.15s}
+.chips button:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* result */
+.result{margin-top:38px;background:var(--ink);border-radius:16px;padding:34px 32px;color:#EAF0F6;position:relative;overflow:hidden;
+  box-shadow:0 26px 64px -30px rgba(20,32,46,.75)}
+.result::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--goldl),var(--greenl))}
+.result::after{content:'';position:absolute;right:-100px;top:-130px;width:440px;height:440px;border-radius:50%;
+  background:radial-gradient(circle,rgba(46,155,114,.22),transparent 68%)}
+.r-h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#93A7BC;font-weight:600;margin-bottom:22px;position:relative;z-index:2}
+.r-hero{position:relative;z-index:2}
+.r-hero .big{font-family:'Fraunces',serif;font-size:clamp(44px,8.5vw,80px);font-weight:700;color:var(--goldl);line-height:.95;letter-spacing:-.03em}
+.r-hero .cap{font-size:16px;color:#C3D2E0;margin-top:12px;max-width:46ch}
+.r-cols{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;margin-top:28px;padding-top:24px;
+  border-top:1px solid #2C3E52;position:relative;z-index:2}
+.r-col .l{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:#8FA3B8;margin-bottom:6px}
+.r-col .v{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500}
+.r-col.g .v{color:var(--greenl);font-weight:600}
+.r-arrow{font-size:22px;color:var(--gold);opacity:.6}
+.r-foot{display:flex;gap:0;margin-top:24px;padding-top:20px;border-top:1px solid #2C3E52;flex-wrap:wrap;position:relative;z-index:2}
+.rf{flex:1;min-width:150px;padding-right:18px}
+.rf+.rf{border-left:1px solid #2C3E52;padding-left:18px}
+.rf .l{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8FA3B8;margin-bottom:4px}
+.rf .v{font-family:'IBM Plex Mono',monospace;font-size:19px}
+.rf .n{font-size:10.5px;color:#7B8DA0;margin-top:3px}
+
+.note{margin-top:16px;padding:13px 16px;border-radius:9px;font-size:12.5px;line-height:1.55;display:none;border-left:3px solid}
+.note.show{display:block}
+.note.warn{background:#FBF0EC;border-color:var(--red);color:#7A2B1F}
+.note.good{background:#EDF6F1;border-color:var(--green);color:#144C38}
+.note b{font-weight:600}
+
+/* detail */
+details{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow)}
+summary{padding:17px 24px;cursor:pointer;font-size:14px;font-weight:500;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';font-family:'IBM Plex Mono',monospace;font-size:19px;color:var(--gold)}
+details[open] summary::after{content:'–'}
+details[open] summary{border-bottom:1px solid var(--rule)}
+.dbody{padding:20px 24px 24px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:480px}
+th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mutedp);font-weight:600;text-align:right;padding:0 0 9px;border-bottom:1.5px solid var(--ink)}
+th:first-child{text-align:left}
+td{padding:6px 0;border-bottom:1px solid #F0E9DB;color:var(--ink2)}
+td.n{text-align:right;font-family:'IBM Plex Mono',monospace;width:118px;padding-left:16px}
+tr.sec td{padding-top:16px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mutedp);font-weight:600}
+tr.tot td{font-weight:600;background:#FAF6EE;color:var(--ink)}
+tr.hl td{background:#F2FAF6}tr.hl td:first-child{color:var(--green);font-weight:600}
+tr.grand td{background:var(--ink);color:#fff;font-weight:700;font-size:14px}
+tr.grand td:first-child{border-radius:5px 0 0 5px;padding-left:10px}
+tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
+
+/* maturity */
+.mat{margin-top:24px;background:linear-gradient(145deg,#14332A,#0D231C);border-radius:14px;padding:28px 30px;color:#CFE8DC}
+.mat h2{font-family:'Fraunces',serif;font-size:24px;color:#fff;font-weight:600;letter-spacing:-.015em}
+.mat .tag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--greenl);font-weight:600;margin-bottom:9px}
+.mat p{font-size:13.5px;color:#93B5A6;margin-top:10px;max-width:62ch}
+.conds{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:20px}
+.cond{background:rgba(255,255,255,.05);border:1px solid rgba(46,155,114,.28);border-radius:9px;padding:13px 14px}
+.cond .t{font-size:12.5px;font-weight:600;color:#fff;margin-bottom:4px}
+.cond .d{font-size:11px;color:#8FB5A4;line-height:1.45}
+.mat-foot{margin-top:16px;padding-top:13px;border-top:1px solid rgba(46,155,114,.2);font-size:11px;color:#7FA694}
+
+.prov{margin-top:30px;font-size:11px;color:var(--mutedp);line-height:1.65;border-top:1px solid var(--rule);padding-top:18px}
+.prov b{color:var(--ink2)}
+.prov code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--paper2);padding:1px 5px;border-radius:3px}
+@media(max-width:600px){
+  .r-cols{grid-template-columns:1fr}.r-arrow{display:none}
+  .wrap{padding:30px 16px 70px}.step{padding:20px 18px}
+}
+@media print{body::before{display:none}.chips,input[type=range]{display:none}details{page-break-inside:avoid}details:not([open]) .dbody{display:block}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Trinidad &amp; Tobago &middot; Income year 2026</div>
+  <h1>You are already paying this tax.<br><em>Some of it can come back.</em></h1>
+  <p class="sub">Tell us what you earn. We will work out what is coming out of your pay right now, and what a registered annuity would change. No paperwork needed &mdash; you do not need your TD4 in front of you.</p>
+
+  <!-- STEP 1 -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">01</span><h2>What do you earn?</h2></div>
+    <p class="step-note">Your pay before anything is taken out. If you get a payslip from an employer, use the gross figure.</p>
+    <div class="earn">
+      <div class="earn-in"><span class="cur">$</span><input type="number" id="earn" value="20000" min="0" step="100"></div>
+      <div class="periods" id="periods">
+        <button data-p="week">a week</button>
+        <button data-p="fortnight">a fortnight</button>
+        <button data-p="month" class="on">a month</button>
+        <button data-p="year">a year</button>
+      </div>
+    </div>
+
+    <div class="now">
+      <div class="now-h">What is happening to your pay right now</div>
+      <div class="now-grid">
+        <div class="nc"><div class="l">You earn</div><div class="v num" id="nEarn">$0</div><div class="n">a year</div></div>
+        <div class="nc"><div class="l">NIS taken out</div><div class="v num" id="nNis">$0</div><div class="n" id="nNisSub">&nbsp;</div></div>
+        <div class="nc hi"><div class="l">Income tax</div><div class="v num" id="nTax">$0</div><div class="n" id="nTaxSub">a year</div></div>
+        <div class="nc"><div class="l">Health surcharge</div><div class="v num" id="nHs">$0</div><div class="n" id="nHsSub">a year</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">02</span><h2>Three quick questions</h2></div>
+    <p class="step-note">These decide how much room you have left. Answer what you know &mdash; leave the rest as no.</p>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Are you in a pension or savings plan at work?</div>
+        <div class="d">Sometimes called a provident fund or superannuation plan</div></div>
+      <div class="yn" data-q="pen"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      <div class="q-amt" id="amt-pen"><label>How much do <em>you</em> put in each year? (not your employer's share)</label>
+        <div class="ai"><span class="cur">$</span><input type="number" id="pension" value="0" min="0" step="500"></div></div>
+    </div>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Do you already have an annuity?</div>
+        <div class="d">An approved deferred annuity you are already paying into</div></div>
+      <div class="yn" data-q="exist"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      <div class="q-amt" id="amt-exist"><label>How much do you pay in each year?</label>
+        <div class="ai"><span class="cur">$</span><input type="number" id="existing" value="0" min="0" step="500"></div></div>
+    </div>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Do you know the exact tax taken off your pay last year?</div>
+        <div class="d">It is on your TD4. If you don't know, we assume it was deducted correctly</div></div>
+      <div class="yn" data-q="paye"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      <div class="q-amt" id="amt-paye"><label>Total income tax deducted per TD4</label>
+        <div class="ai"><span class="cur">$</span><input type="number" id="paye" value="0" min="0" step="500"></div></div>
+    </div>
+
+    <div class="room">
+      <div class="room-top">
+        <span class="big num" id="roomBig">$0</span>
+        <span class="lab">of room left before you hit the $<span id="capTxt">60,000</span> limit that everyone shares</span>
+      </div>
+      <div class="meter" id="meter"></div>
+      <div class="legend">
+        <span><i style="background:#4A6076"></i>NIS</span>
+        <span><i style="background:#65798E"></i>Work pension</span>
+        <span><i style="background:#7E8FA1"></i>Annuity you have</span>
+        <span><i style="background:repeating-linear-gradient(115deg,#1B6B4F 0 5px,#1F7A5A 5px 10px)"></i>New annuity</span>
+        <span><i style="background:repeating-linear-gradient(115deg,#A5382A 0 4px,#B8493A 4px 8px)"></i>Wasted</span>
+      </div>
+      <div class="note warn" id="noteWarn"></div>
+      <div class="note good" id="noteGood"></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">03</span><h2>What if you put money aside?</h2></div>
+    <p class="step-note">Drag to try an amount. This is money that stays yours &mdash; it goes into your own retirement plan, not to the government.</p>
+    <div class="slider-row">
+      <span class="amt num" id="premTxt">$0</span>
+      <span class="per" id="premMo">a year</span>
+    </div>
+    <input type="range" id="prem" min="0" max="60000" step="250" value="0">
+    <div class="chips">
+      <button data-set="fill">Use all my room</button>
+      <button data-set="6000">$500 a month</button>
+      <button data-set="12000">$1,000 a month</button>
+      <button data-set="24000">$2,000 a month</button>
+      <button data-set="0">Clear</button>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="result">
+    <div class="r-h">What you get back</div>
+    <div class="r-hero">
+      <div class="big num" id="heroBig">$0</div>
+      <div class="cap" id="heroCap">Move the slider above to see what comes back to you.</div>
+    </div>
+    <div class="r-cols">
+      <div class="r-col"><div class="l">Your tax now</div><div class="v num" id="taxBefore">$0</div></div>
+      <div class="r-arrow">&rarr;</div>
+      <div class="r-col g"><div class="l">Your tax with the annuity</div><div class="v num" id="taxAfter">$0</div></div>
+    </div>
+    <div class="r-foot">
+      <div class="rf"><div class="l">You put aside</div><div class="v num" id="fPrem">$0</div><div class="n" id="fPremMo">&nbsp;</div></div>
+      <div class="rf"><div class="l">It really costs you</div><div class="v num" id="fNet">$0</div><div class="n" id="fNetMo">&nbsp;</div></div>
+      <div class="rf"><div class="l">Each $1 costs you</div><div class="v num" id="fCents">&mdash;</div><div class="n" id="fCentsN">&nbsp;</div></div>
+      <div class="rf"><div class="l">Your tax rate</div><div class="v num" id="fRate">25%</div><div class="n" id="fRateN">&nbsp;</div></div>
+    </div>
+  </section>
+
+  <!-- DETAIL -->
+  <details>
+    <summary>Show me the tax return detail</summary>
+    <div class="dbody">
+      <table>
+        <thead><tr><th>Line</th><th>Now</th><th>With annuity</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- MATURITY -->
+  <section class="mat">
+    <div class="tag">Finance Act 2026</div>
+    <h2>And when it pays out, it is tax-free</h2>
+    <p>Since 1 January 2026 the income from an approved deferred annuity is exempt from income tax when it matures. You get relief going in and no tax coming out &mdash; but the exemption has conditions.</p>
+    <div class="conds">
+      <div class="cond"><div class="t">You buy it yourself</div><div class="d">Purchased by, and payable to, a resident of Trinidad &amp; Tobago. A plan your employer owns does not qualify.</div></div>
+      <div class="cond"><div class="t">It matures between 50 and 70</div><div class="d">Outside that window the payout is legal but loses the exemption.</div></div>
+      <div class="cond"><div class="t">You keep it to maturity</div><div class="d">Cash it in early and the whole sum is taxable.</div></div>
+      <div class="cond"><div class="t">Plans you already have count</div><div class="d">Approved before, on or after 1 January 2026 &mdash; an existing policy qualifies.</div></div>
+    </div>
+    <div class="mat-foot">Finance Act 2026, passed 10 June 2026, effective 1 January 2026, amending the Income Tax Act Chap. 75:01.</div>
+  </section>
+
+  <div class="prov">
+    <b>Where these numbers come from.</b> Every rate and limit is read from the canonical parameter tables (<code>tt-parameters.json</code>), not typed into this page. <span id="provLine"></span><br><br>
+    <b>How exact is this?</b> NIS is a step table based on your earnings class, so it is exact for a regular wage over a full contribution year &mdash; not an estimate. Income tax and the deduction limit are exact. What we assume is that the tax on your pay was deducted correctly, unless you told us otherwise, and that you worked the full year. Irregular earnings, part-year employment or self-employment will differ.<br><br>
+    <b>Please read.</b> This shows the income tax effect of a deduction. It is not a tax return, not tax advice, and not a projection of what the annuity itself will be worth. You cannot get back more tax than was taken off your pay. Health surcharge is not reduced by an annuity. Confirm your own position with the Board of Inland Revenue or a qualified adviser before acting.
+  </div>
+</div>
+
+<script type="module">
+/*__PARAMETERS__*/
+
+/* ---------------- state ---------------- */
+// S.prem is the source of truth for the premium, NOT the range input. The range
+// snaps to its step, so "use all my room" would otherwise fall short of the exact
+// headroom by up to one step and report a few dollars as still unused.
+const S = { period:'month', pen:0, exist:0, payeKnown:0, prem:0 };
+const $ = id => document.getElementById(id);
+const n = id => { const v = parseFloat($(id).value); return (isNaN(v)||v<0)?0:v; };
+const money = v => (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+
+const CAP = P.income_tax.combined_deduction_cap.value;
+const PA  = P.income_tax.personal_allowance.value;
+$('capTxt').textContent = CAP.toLocaleString('en-US');
+$('provLine').textContent =
+  `Personal allowance ${money(PA)} (effective ${P.income_tax.personal_allowance.effective}); ` +
+  `combined limit ${money(CAP)} (effective ${P.income_tax.combined_deduction_cap.effective}); ` +
+  `NIS contribution table effective ${P.nis.contribution_tables[CURRENT_NIS_TABLE].rate*100}% from ${CURRENT_NIS_TABLE}.`;
+
+/* ---------------- engine ---------------- */
+function model(newPremium){
+  const gross = toMonthly(n('earn'), S.period) * 12;
+  const nis   = nisFromEarnings(n('earn'), S.period);
+
+  // approved contributions other than the new annuity
+  const existingApproved = (S.pen ? n('pension') : 0) + (S.exist ? n('existing') : 0);
+
+  const before = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                             approvedContributionsAnnual: existingApproved });
+  const after  = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                             approvedContributionsAnnual: existingApproved + newPremium });
+
+  // PAYE: assume correctly deducted against the position WITHOUT the new annuity,
+  // unless the user gave us the real figure.
+  const paye = S.payeKnown ? n('paye') : before.tax;
+
+  const refundBefore = Math.max(0, paye - before.tax);
+  const refundAfter  = Math.max(0, paye - after.tax);
+  const hs = healthSurcharge(gross/12, 40);
+
+  return { gross, nis, existingApproved, before, after, paye,
+           refundBefore, refundAfter, uplift: refundAfter - refundBefore,
+           taxSaved: before.tax - after.tax,
+           headroom: before.headroom,
+           hsAnnual: hs.weekly * 52 };
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  const prem = S.prem;
+  const m = model(prem);
+  const relieved = Math.min(prem, m.headroom);
+  const wasted   = Math.max(0, prem - m.headroom);
+
+  /* step 1 strip */
+  $('nEarn').textContent = money(m.gross);
+  $('nNis').textContent  = money(m.nis.annualEmployee);
+  $('nNisSub').textContent = m.nis.class
+    ? `Class ${m.nis.class}${m.nis.atCeiling?' — the ceiling':''}` : 'below the NIS floor';
+  $('nTax').textContent = money(m.before.tax);
+  $('nTaxSub').textContent = m.before.tax>0 ? 'a year, as things stand' : 'you pay no income tax';
+  $('nHs').textContent = money(m.hsAnnual);
+  $('nHsSub').textContent = 'a year — an annuity does not change this';
+
+  /* room */
+  $('roomBig').textContent = money(m.headroom);
+  const nis70 = m.nis.deductible70;
+  const pen = S.pen ? n('pension') : 0, ex = S.exist ? n('existing') : 0;
+  const scaleMax = Math.max(CAP, nis70 + pen + ex + prem);
+  const parts = [['nis',nis70],['pen',pen],['exist',ex],['ann',relieved],['over',wasted]];
+  let h = '';
+  parts.forEach(([c,v])=>{
+    if(v<=0) return;
+    const w = v/scaleMax*100;
+    h += `<div class="seg ${c}" style="width:${w}%">${w>13?`<span>${money(v)}</span>`:''}</div>`;
+  });
+  const used = Math.min(CAP, nis70+pen+ex+prem), free = Math.max(0, CAP-used);
+  if(free>0) h += `<div class="seg free" style="width:${free/scaleMax*100}%">${free/scaleMax*100>15?`<span>${money(free)} free</span>`:''}</div>`;
+  $('meter').innerHTML = h;
+
+  const nw=$('noteWarn'), ng=$('noteGood');
+  nw.className='note warn'; ng.className='note good';
+  if(wasted>0){
+    nw.className='note warn show';
+    nw.innerHTML = `<b>${money(wasted)} of this would be wasted.</b> You only have ${money(m.headroom)} of room left — NIS and the plans you already have take up the rest. Anything above that is still your savings, but it will not cut your tax.`;
+  } else if(m.headroom<=0){
+    nw.className='note warn show';
+    nw.innerHTML = `<b>You have no room left.</b> NIS and your existing plans already use the full ${money(CAP)}. An annuity would still build your retirement, but it cannot reduce your tax this year.`;
+  } else if(prem>0 && prem<m.headroom){
+    ng.className='note good show';
+    ng.innerHTML = `<b>You still have ${money(m.headroom-prem)} of unused room.</b> Going up to ${money(m.headroom)} would bring back about ${money((m.headroom-prem)*(m.before.chargeable>1e6?0.30:0.25))} more.`;
+  } else if(prem>0){
+    ng.className='note good show';
+    ng.innerHTML = `<b>You are using every dollar of room.</b> The whole premium cuts your tax.`;
+  }
+
+  /* slider */
+  $('premTxt').textContent = money(prem);
+  $('premMo').textContent  = prem>0 ? `a year — ${money(prem/12)} a month` : 'a year';
+
+  /* result */
+  $('heroBig').textContent = money(m.uplift);
+  $('taxBefore').textContent = money(m.before.tax);
+  $('taxAfter').textContent  = money(m.after.tax);
+  if(prem<=0){
+    $('heroCap').textContent = 'Move the slider above to see what comes back to you.';
+  } else if(m.uplift<=0 && m.taxSaved>0){
+    $('heroCap').textContent = `Your tax falls by ${money(m.taxSaved)}, but you can only get back what was actually taken off your pay.`;
+  } else if(m.uplift<=0){
+    $('heroCap').textContent = 'At this income there is no income tax to reduce.';
+  } else {
+    $('heroCap').innerHTML = S.payeKnown
+      ? `comes back to you, on top of the ${money(m.refundBefore)} you were already due.`
+      : `comes back to you as a refund when you file, because the tax on your pay was worked out without this annuity.`;
+  }
+
+  $('fPrem').textContent = money(prem);
+  $('fPremMo').textContent = prem>0 ? money(prem/12)+' a month' : ' ';
+  $('fNet').textContent = money(prem - m.taxSaved);
+  $('fNetMo').textContent = prem>0 ? money((prem-m.taxSaved)/12)+' a month' : ' ';
+  if(prem>0 && m.taxSaved>0){
+    const c = Math.round((prem-m.taxSaved)/prem*100);
+    $('fCents').textContent = c+'¢';
+    $('fCentsN').textContent = `the other ${100-c}¢ comes back`;
+  } else { $('fCents').textContent='—'; $('fCentsN').textContent=' '; }
+  const marg = m.before.chargeable>1e6?30:25;
+  $('fRate').textContent = marg+'%';
+  $('fRateN').textContent = marg===30?'above $1,000,000':'below $1,000,000';
+
+  /* detail table */
+  const rows = [
+    ['sec','Money in'],
+    ['Pay for the year', m.gross, m.gross],
+    ['sec','Taken off before tax'],
+    ['Personal allowance — everyone gets this', -PA, -PA],
+    ['NIS — 70% of what you paid', -m.nis.deductible70, -m.nis.deductible70],
+    ['Pension or savings plan at work', -(S.pen?n('pension'):0), -(S.pen?n('pension'):0)],
+    ['Annuity you already have', -(S.exist?n('existing'):0), -(S.exist?n('existing'):0)],
+    ['hl','New annuity', 0, -relieved],
+    ['tot','Income the tax is worked out on', m.before.chargeable, m.after.chargeable],
+    ['sec','The tax'],
+    ['tot','Income tax for the year', m.before.tax, m.after.tax],
+    ['Tax already taken off your pay', -m.paye, -m.paye],
+    ['grand','MONEY BACK TO YOU', m.refundBefore, m.refundAfter],
+  ];
+  $('tbody').innerHTML = rows.map(r=>{
+    if(r[0]==='sec') return `<tr class="sec"><td colspan="3">${r[1]}</td></tr>`;
+    let cls='', label, b, a;
+    if(r[0]==='hl'||r[0]==='tot'||r[0]==='grand'){ cls=r[0]; label=r[1]; b=r[2]; a=r[3]; }
+    else { label=r[0]; b=r[1]; a=r[2]; }
+    return `<tr class="${cls}"><td>${label}</td><td class="n">${money(b)}</td><td class="n">${money(a)}</td></tr>`;
+  }).join('');
+
+  /* slider ceiling follows available room; keep the thumb in sync with S.prem */
+  const rng = $('prem');
+  const want = Math.max(CAP, Math.ceil((m.headroom+10000)/10000)*10000);
+  if(+rng.max !== want) rng.max = want;
+  if(Math.abs(+rng.value - prem) > 0.5) rng.value = prem;
+}
+
+/* ---------------- wiring ---------------- */
+['earn','pension','existing','paye'].forEach(id=>$(id).addEventListener('input',render));
+$('prem').addEventListener('input',e=>{ S.prem = parseFloat(e.target.value)||0; render(); });
+
+$('periods').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('periods').children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); S.period=b.dataset.p;
+  const d={week:1200,fortnight:2400,month:5000,year:60000}[S.period];
+  $('earn').value = d; $('earn').step = {week:50,fortnight:100,month:100,year:1000}[S.period];
+  render();
+});
+
+document.querySelectorAll('.yn').forEach(g=>{
+  g.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...g.children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const q=g.dataset.q, on=b.dataset.v==='1';
+    S[q === 'paye' ? 'payeKnown' : q] = on?1:0;
+    $('amt-'+q).classList.toggle('show',on);
+    if(q==='paye' && on && n('paye')===0) $('paye').value = Math.round(model(0).before.tax);
+    render();
+  });
+});
+
+document.querySelectorAll('.chips button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const s=b.dataset.set;
+    S.prem = s==='fill' ? model(0).headroom : parseFloat(s);
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>

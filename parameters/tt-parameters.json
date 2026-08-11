@@ -153,6 +153,7 @@
     },
     "contribution_tables": {
       "_rule": "ERA-SELECTED. Contributions are computed at the rate in force WHEN THEY WERE PAID. Select by contribution date, never by claim date.",
+      "_weeks_per_year": { "value": 52, "unit": "contribution weeks per year", "status": "MARKET_CONVENTION", "notes": "NIS is a weekly contribution; annualise at 52. Some calendar years contain 53 contribution weeks and payroll practice varies. Material only at the margin." },
       "_source_note": "NIBTT publishes dated sets: 1972-2006, 2008-2012, 2013-2014, 2016, 2026. The 2016 page remaining live is CORRECT — contributions paid Sept 2016 to Jan 2026 were made at 13.2%.",
       "2026-01-05": {
         "rate": 0.162,
@@ -160,9 +161,26 @@
         "status": "VERIFIED",
         "classes": [
           { "class": "I", "monthly_min": 867, "monthly_max": 1472.99, "assumed_awe": 270.00, "weekly_total": 43.80, "weekly_employee": 14.60, "weekly_employer": 29.20 },
+          { "class": "II", "monthly_min": 1473, "monthly_max": 1949.99, "assumed_awe": 395.00, "weekly_total": 63.90, "weekly_employee": 21.30, "weekly_employer": 42.60 },
+          { "class": "III", "monthly_min": 1950, "monthly_max": 2642.99, "assumed_awe": 530.00, "weekly_total": 85.80, "weekly_employee": 28.60, "weekly_employer": 57.20 },
+          { "class": "IV", "monthly_min": 2643, "monthly_max": 3292.99, "assumed_awe": 685.00, "weekly_total": 111.00, "weekly_employee": 37.00, "weekly_employer": 74.00 },
+          { "class": "V", "monthly_min": 3293, "monthly_max": 4029.99, "assumed_awe": 845.00, "weekly_total": 136.80, "weekly_employee": 45.60, "weekly_employer": 91.20 },
+          { "class": "VI", "monthly_min": 4030, "monthly_max": 4852.99, "assumed_awe": 1025.00, "weekly_total": 166.20, "weekly_employee": 55.40, "weekly_employer": 110.80 },
+          { "class": "VII", "monthly_min": 4853, "monthly_max": 5632.99, "assumed_awe": 1210.00, "weekly_total": 195.90, "weekly_employee": 65.30, "weekly_employer": 130.60 },
+          { "class": "VIII", "monthly_min": 5633, "monthly_max": 6456.99, "assumed_awe": 1395.00, "weekly_total": 225.90, "weekly_employee": 75.30, "weekly_employer": 150.60 },
+          { "class": "IX", "monthly_min": 6457, "monthly_max": 7409.99, "assumed_awe": 1600.00, "weekly_total": 259.20, "weekly_employee": 86.40, "weekly_employer": 172.80 },
+          { "class": "X", "monthly_min": 7410, "monthly_max": 8276.99, "assumed_awe": 1810.00, "weekly_total": 293.10, "weekly_employee": 97.70, "weekly_employer": 195.40 },
+          { "class": "XI", "monthly_min": 8277, "monthly_max": 9272.99, "assumed_awe": 2025.00, "weekly_total": 328.20, "weekly_employee": 109.40, "weekly_employer": 218.80 },
+          { "class": "XII", "monthly_min": 9273, "monthly_max": 10312.99, "assumed_awe": 2260.00, "weekly_total": 366.00, "weekly_employee": 122.00, "weekly_employer": 244.00 },
+          { "class": "XIII", "monthly_min": 10313, "monthly_max": 11396.99, "assumed_awe": 2505.00, "weekly_total": 405.90, "weekly_employee": 135.30, "weekly_employer": 270.60 },
+          { "class": "XIV", "monthly_min": 11397, "monthly_max": 12652.99, "assumed_awe": 2775.00, "weekly_total": 449.70, "weekly_employee": 149.90, "weekly_employer": 299.80 },
+          { "class": "XV", "monthly_min": 12653, "monthly_max": 13599.99, "assumed_awe": 3029.00, "weekly_total": 490.80, "weekly_employee": 163.60, "weekly_employer": 327.20 },
           { "class": "XVI", "monthly_min": 13600, "monthly_max": null, "assumed_awe": 3138.00, "weekly_total": 508.50, "weekly_employee": 169.50, "weekly_employer": 339.00 }
         ],
-        "_incomplete": "Only Class I and XVI verified from source. Classes II-XV MUST be transcribed from NISContributions_20260105.pdf before use."
+        "retrieved": "2026-08-11",
+        "vote": "2-0",
+        "transcription_note": "Classes II-XV transcribed 2026-08-11 from NISContributions_20260105.pdf. Two independent reads of the source agreed on every cell, and both reproduced the previously-VERIFIED Class I and Class XVI rows exactly. Gates applied to all 16 rows: employee + employer = total; total / assumed_awe = 16.2%; employee share = 1/3; bands contiguous with no gaps or overlaps.",
+        "client_insight": "The employee pays one third. At Class XVI that is 169.50/week = 8,814.00/year, of which 70% (6,169.80) is the most NIS can ever consume of the 60,000 combined deduction cap — so a ceiling earner with no company pension has 53,830.20 of annuity room, not 60,000."
       },
       "2016-09-05": {
         "rate": 0.132,

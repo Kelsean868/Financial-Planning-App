@@ -1,6 +1,6 @@
 // Sanity + drift checks for the canonical parameter tables.
 //   node parameters/verify.mjs
-import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters } from "./tt-parameters.js";
+import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly } from "./tt-parameters.js";
 
 let fails = 0;
 const eq = (a, b, msg) => {
@@ -65,6 +65,64 @@ console.log("\n=== Annuity maturity rules ===");
 is(checkAnnuityMaturity(45).severity, "ILLEGAL", "maturity below 50 is refused, not warned");
 is(checkAnnuityMaturity(65).severity, "OK", "65 is inside the window");
 is(checkAnnuityMaturity(75).severity, "WARN", "75 warns — legal but forfeits the exemption");
+
+console.log("\n=== NIS 2026 contribution table (classes II-XV filled 2026-08-11) ===");
+{
+  const t = P.nis.contribution_tables["2026-01-05"];
+  is(t.classes.length, 16, "all sixteen earnings classes present");
+  is(t._incomplete, undefined, "the _incomplete blocker is gone");
+  is(t.status, "VERIFIED", "table status is VERIFIED");
+  let bad = 0, worstRate = 0, worstShare = 0;
+  for (const c of t.classes) {
+    if (Math.abs(c.weekly_employee + c.weekly_employer - c.weekly_total) > 0.005) bad++;
+    worstRate = Math.max(worstRate, Math.abs(c.weekly_total / c.assumed_awe - 0.162));
+    worstShare = Math.max(worstShare, Math.abs(c.weekly_employee / c.weekly_total - 1 / 3));
+  }
+  is(bad, 0, "employee + employer = total for every class");
+  console.log(`  ok   total/AWE within ${(worstRate * 100).toFixed(3)}pp of 16.2% for every class`);
+  console.log(`  ok   employee share within ${(worstShare * 100).toFixed(3)}pp of one third for every class`);
+  let gaps = 0;
+  for (let i = 1; i < t.classes.length; i++) {
+    if (Math.abs(t.classes[i].monthly_min - (t.classes[i - 1].monthly_max + 0.01)) > 0.005) gaps++;
+  }
+  is(gaps, 0, "class bands are contiguous - no gaps, no overlaps");
+}
+
+console.log("\n=== nisFromEarnings: derive NIS from earnings alone ===");
+{
+  const ceil = nisFromEarnings(20000, "month");
+  is(ceil.class, "XVI", "20,000/month lands in Class XVI");
+  is(ceil.atCeiling, true, "...and is flagged as at the ceiling");
+  eq(ceil.annualEmployee, 169.50 * 52, "Class XVI employee = 169.50 x 52 = 8,814/yr");
+  eq(ceil.deductible70, 169.50 * 52 * 0.7, "70% deductible = 6,169.80 - the most NIS can ever use of the cap");
+
+  // the three pay periods must agree for the same real income
+  const a = nisFromEarnings(120000, "year");
+  const m = nisFromEarnings(10000, "month");
+  const w = nisFromEarnings(120000 / 52, "week");
+  is(a.class === m.class && m.class === w.class, true, `annual / monthly / weekly all resolve to Class ${a.class}`);
+
+  const low = nisFromEarnings(800, "month");
+  is(low.class, null, "below the Class I floor there is no class");
+  eq(low.annualEmployee, 0, "...and no contribution");
+
+  // boundary: exactly on a class edge
+  is(nisFromEarnings(1472.99, "month").class, "I",  "1,472.99/month is the top of Class I");
+  is(nisFromEarnings(1473.00, "month").class, "II", "1,473.00/month is the bottom of Class II");
+  is(nisFromEarnings(13600, "month").class,  "XVI", "13,600/month is the ceiling class");
+}
+
+console.log("\n=== The headroom that actually matters for an annuity sale ===");
+{
+  const nis = nisFromEarnings(15000, "month");           // above the ceiling
+  const cap = P.income_tax.combined_deduction_cap.value;
+  const pension = 0;
+  const headroom = cap - nis.deductible70 - pension;
+  eq(headroom, cap - 6169.80, "a ceiling earner with no pension plan has 53,830.20 of room");
+  const withPlan = cap - nis.deductible70 - 18000;
+  eq(withPlan, 35830.20, "...but only 35,830.20 once an 18,000 company pension is counted");
+  console.log("  note  NIS alone consumes 6,169.80 of the 60,000 for every ceiling earner");
+}
 
 console.log("\n=== Parameters needing attention (audit) ===");
 for (const a of auditParameters()) console.log(`  [${a.status}] ${a.path}`);

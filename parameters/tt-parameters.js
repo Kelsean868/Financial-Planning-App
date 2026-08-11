@@ -59,6 +59,78 @@ export function nisClassForMonthly(monthly, tableDate = "2016-09-05") {
   return "XVI"; // above the ceiling
 }
 
+/** The NIS contribution table in force today. Contributions are era-selected. */
+export const CURRENT_NIS_TABLE = "2026-01-05";
+
+/** Normalise a pay figure to monthly. */
+export function toMonthly(amount, period = "month") {
+  const per = String(period).toLowerCase();
+  if (per.startsWith("week") || per === "w") return (amount * 52) / 12;
+  if (per.startsWith("fortnight") || per.startsWith("biweek") || per === "f") return (amount * 26) / 12;
+  if (per.startsWith("month") || per === "m") return amount;
+  if (per.startsWith("year") || per.startsWith("annual") || per === "y" || per === "a") return amount / 12;
+  throw new ParameterError(`Unknown pay period "${period}"`);
+}
+
+/**
+ * Employee NIS contribution derived from earnings alone.
+ *
+ * WHY THIS EXISTS: a prospect almost never knows their NIS figure. It is on the
+ * TD4 and the payslip, and neither is in the room. Earnings they always know.
+ * NIS is a step function of earnings class, so this is exact for anyone paid a
+ * regular wage — not an approximation — provided the earnings are their
+ * *insurable* earnings.
+ *
+ * LIMITS, which the caller should surface rather than bury:
+ *  - Exact only for the classed weekly contribution. Irregular earnings that move
+ *    between classes week to week will differ.
+ *  - Assumes a full contribution year (52 weeks). Part-year employment is lower.
+ *  - Self-employed and unemployed persons are not in this table at all.
+ *
+ * @returns {{class:string, weeklyEmployee:number, annualEmployee:number,
+ *            deductible70:number, atCeiling:boolean, monthly:number,
+ *            weeksPerYear:number, tableDate:string, source:string}}
+ */
+export function nisFromEarnings(amount, period = "month", tableDate = CURRENT_NIS_TABLE) {
+  const t = assertSafe(P.nis.contribution_tables[tableDate], `nis.contribution_tables.${tableDate}`);
+  if (!t) throw new ParameterError(`No NIS contribution table for ${tableDate}`);
+  if (t._incomplete) {
+    throw new ParameterError(
+      `NIS table ${tableDate} is incomplete and must not be used: ${t._incomplete}`
+    );
+  }
+
+  const monthly = toMonthly(amount, period);
+  const weeks = P.nis.contribution_tables._weeks_per_year.value;
+
+  // Below Class I there is no insurable earnings class.
+  const first = t.classes[0];
+  if (monthly < first.monthly_min) {
+    return {
+      class: null, weeklyEmployee: 0, annualEmployee: 0, deductible70: 0,
+      atCeiling: false, monthly, weeksPerYear: weeks, tableDate, source: t.source,
+      note: `Monthly earnings below the Class I floor of ${first.monthly_min} — no insurable earnings class.`,
+    };
+  }
+
+  const row =
+    t.classes.find((c) => monthly >= (c.monthly_min ?? -Infinity) && monthly <= (c.monthly_max ?? Infinity)) ??
+    t.classes[t.classes.length - 1];
+
+  const annualEmployee = row.weekly_employee * weeks;
+  return {
+    class: row.class,
+    weeklyEmployee: row.weekly_employee,
+    annualEmployee,
+    deductible70: annualEmployee * P.income_tax.nis_deductible_portion.value,
+    atCeiling: row.monthly_max === null,
+    monthly,
+    weeksPerYear: weeks,
+    tableDate,
+    source: t.source,
+  };
+}
+
 /**
  * NIS retirement pension.
  *
