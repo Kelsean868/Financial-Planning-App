@@ -5,6 +5,12 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Annuity Tax Calculator | KQM Insurance</title>
 <meta name="description" content="See what a registered annuity would do to your income tax in Trinidad &amp; Tobago. Enter what you earn — no TD4 needed. Nothing you type leaves your browser.">
+<link rel="canonical" href="https://kqminsurance.com/calculator">
+<meta property="og:title" content="Annuity Tax Calculator | KQM Insurance">
+<meta property="og:description" content="See what a registered annuity would do to your income tax in Trinidad &amp; Tobago. Enter what you earn — no TD4 needed.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://kqminsurance.com/calculator">
+<meta property="og:locale" content="en_TT">
 <style>
 /* ---- design tokens lifted from kqminsurance.com so this page reads as native ---- */
 :root{--navy:#0d1f2d;--navy2:#14324a;--teal:#1a4a63;--tealb:#01696f;--gold:#e8c477;--goldd:#b07d1a;--ink:#28251d;--mut:#6b6560;--cream:#f7f6f2;
@@ -274,13 +280,16 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
   .rcols{grid-template-columns:1fr}.rarrow{display:none}
   section{padding:44px 0}.card{padding:20px}
 }
-@media print{.cta,.chips,input[type=range],.periods{display:none}details[open] .dbody{display:block}}
+@media print{.cta,.chips,input[type=range],.periods,.backlink{display:none}details[open] .dbody{display:block}}
+.backlink{display:inline-block;color:var(--gold);text-decoration:none;font-size:14px;font-weight:600;margin-bottom:14px}
+.backlink:hover{text-decoration:underline}
 </style>
 </head>
 <body>
 
 <header class="hero">
   <div class="wrap">
+    <a class="backlink" href="/">&larr; kqminsurance.com</a>
     <div class="kicker">Free tool &middot; Trinidad &amp; Tobago &middot; 2026</div>
     <h1>You are already paying this tax.<br><em>Some of it can come back.</em></h1>
     <p>Tell me what you earn and I will show you what is coming out of your pay right now, and what a registered annuity would change. You do not need your TD4. Nothing you type here leaves your browser.</p>
