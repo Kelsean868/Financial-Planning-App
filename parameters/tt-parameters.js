@@ -59,6 +59,78 @@ export function nisClassForMonthly(monthly, tableDate = "2016-09-05") {
   return "XVI"; // above the ceiling
 }
 
+/** The NIS contribution table in force today. Contributions are era-selected. */
+export const CURRENT_NIS_TABLE = "2026-01-05";
+
+/** Normalise a pay figure to monthly. */
+export function toMonthly(amount, period = "month") {
+  const per = String(period).toLowerCase();
+  if (per.startsWith("week") || per === "w") return (amount * 52) / 12;
+  if (per.startsWith("fortnight") || per.startsWith("biweek") || per === "f") return (amount * 26) / 12;
+  if (per.startsWith("month") || per === "m") return amount;
+  if (per.startsWith("year") || per.startsWith("annual") || per === "y" || per === "a") return amount / 12;
+  throw new ParameterError(`Unknown pay period "${period}"`);
+}
+
+/**
+ * Employee NIS contribution derived from earnings alone.
+ *
+ * WHY THIS EXISTS: a prospect almost never knows their NIS figure. It is on the
+ * TD4 and the payslip, and neither is in the room. Earnings they always know.
+ * NIS is a step function of earnings class, so this is exact for anyone paid a
+ * regular wage — not an approximation — provided the earnings are their
+ * *insurable* earnings.
+ *
+ * LIMITS, which the caller should surface rather than bury:
+ *  - Exact only for the classed weekly contribution. Irregular earnings that move
+ *    between classes week to week will differ.
+ *  - Assumes a full contribution year (52 weeks). Part-year employment is lower.
+ *  - Self-employed and unemployed persons are not in this table at all.
+ *
+ * @returns {{class:string, weeklyEmployee:number, annualEmployee:number,
+ *            deductible70:number, atCeiling:boolean, monthly:number,
+ *            weeksPerYear:number, tableDate:string, source:string}}
+ */
+export function nisFromEarnings(amount, period = "month", tableDate = CURRENT_NIS_TABLE) {
+  const t = assertSafe(P.nis.contribution_tables[tableDate], `nis.contribution_tables.${tableDate}`);
+  if (!t) throw new ParameterError(`No NIS contribution table for ${tableDate}`);
+  if (t._incomplete) {
+    throw new ParameterError(
+      `NIS table ${tableDate} is incomplete and must not be used: ${t._incomplete}`
+    );
+  }
+
+  const monthly = toMonthly(amount, period);
+  const weeks = P.nis.contribution_tables._weeks_per_year.value;
+
+  // Below Class I there is no insurable earnings class.
+  const first = t.classes[0];
+  if (monthly < first.monthly_min) {
+    return {
+      class: null, weeklyEmployee: 0, annualEmployee: 0, deductible70: 0,
+      atCeiling: false, monthly, weeksPerYear: weeks, tableDate, source: t.source,
+      note: `Monthly earnings below the Class I floor of ${first.monthly_min} — no insurable earnings class.`,
+    };
+  }
+
+  const row =
+    t.classes.find((c) => monthly >= (c.monthly_min ?? -Infinity) && monthly <= (c.monthly_max ?? Infinity)) ??
+    t.classes[t.classes.length - 1];
+
+  const annualEmployee = row.weekly_employee * weeks;
+  return {
+    class: row.class,
+    weeklyEmployee: row.weekly_employee,
+    annualEmployee,
+    deductible70: annualEmployee * P.income_tax.nis_deductible_portion.value,
+    atCeiling: row.monthly_max === null,
+    monthly,
+    weeksPerYear: weeks,
+    tableDate,
+    source: t.source,
+  };
+}
+
 /**
  * NIS retirement pension.
  *
@@ -242,6 +314,93 @@ export function checkAnnuityMaturity(age, { registered = true } = {}) {
     };
   }
   return { ok: true, severity: "OK", message: null };
+}
+
+/**
+ * s.134(6) contribution ceiling, computed the way BIR COMPUTATION FORM 134 does.
+ *
+ * The form is "Request for Board of Inland Revenue Approval — Details of
+ * Contributions to Fund or Contract in accordance with Section 134(6A) and (6B)".
+ * Its own line numbers are used below so a result can be checked against a filed
+ * form line by line.
+ *
+ * THE RULE (front of form, note under line 12):
+ *   "Maximum Contributions to be made are the greater of Line 9 OR Line 11."
+ *
+ * TWO THINGS THAT ARE EASY TO GET WRONG, both confirmed with the practitioner:
+ *  1. Line 8 is a COMBINED total — company contributions PLUS the employee's own
+ *     contributions to approved plans, and the form defines the employee figure as
+ *     overleaf "6(a)(i) to (iii) and 6(b)", which INCLUDES the employee's 70% NIS.
+ *     The company allowance is therefore NOT stacked on top of the personal cap;
+ *     they share one ceiling.
+ *  2. Overleaf line 1(b), "Emolument Income (inclusive of contributions to S.134(6)
+ *     plans)", means contributions the company is ALREADY making — not the new one
+ *     being applied for. The limit is not self-referential.
+ *
+ * @param {object} i
+ * @param {number} i.salary                  overleaf line 1(a)
+ * @param {number} [i.existingCompanyContribs] overleaf line 1(b) — already in force
+ * @param {number} [i.otherIncome]           overleaf line 2
+ * @param {number} [i.tertiary]              overleaf line 4(2)
+ * @param {number} [i.firstTimeHome]         overleaf line 4(3)
+ * @param {number} [i.widowsOrphans]         overleaf line 6(a)(i)
+ * @param {number} [i.approvedPension]       overleaf line 6(a)(ii)
+ * @param {number} [i.approvedAnnuity]       overleaf line 6(a)(iii) — the personal annuity
+ * @param {number} [i.nisAnnual]             employee's full NIS; 70% goes to line 6(b)
+ */
+export function s134FormCeiling(i) {
+  const node = P.annuities.s134_6a_deferred_compensation;
+  assertSafe(node, "annuities.s134_6a_deferred_compensation");
+
+  const salary   = Math.max(0, i.salary || 0);
+  const existing = Math.max(0, i.existingCompanyContribs || 0);
+
+  const line1  = salary + existing;                       // TOTAL EMOLUMENT INCOME
+  const line3  = line1 + (i.otherIncome || 0);            // TOTAL NET INCOME
+  const line5  = Math.max(0, line3                        // ASSESSABLE INCOME
+                   - P.income_tax.personal_allowance.value
+                   - (i.tertiary || 0)
+                   - (i.firstTimeHome || 0));
+
+  const nis70  = (i.nisAnnual || 0) * P.income_tax.nis_deductible_portion.value;  // 6(b)
+  const line6  = (i.widowsOrphans || 0) + (i.approvedPension || 0)
+                 + (i.approvedAnnuity || 0) + nis70;
+  const line7  = Math.min(line6, P.income_tax.combined_deduction_cap.value);      // capped at 60,000
+  const line8  = Math.max(0, line5 - line7);                                      // CHARGEABLE INCOME
+  const line9  = line8 / node.limit.chargeable_income_divisor;                    // one third
+  const line10 = line1 * node.limit.gross_emoluments_share;                       // 20% of emoluments
+
+  const ceiling = Math.max(line9, line10);
+  // Front line 7 is the RAW employee total (not the 60,000-capped figure).
+  const employeeContribs = line6;
+  const maxTotalCompany  = Math.max(0, ceiling - employeeContribs);
+
+  return {
+    ceiling,
+    maxNewCompany: Math.max(0, maxTotalCompany - existing),
+    maxTotalCompany,
+    employeeContribs,
+    binding: line10 >= line9 ? "gross_emoluments" : "chargeable_income",
+    maturityExemptionApplies: node.maturity_exemption_applies, // false
+    employerOwned: node.employer_owned,                        // true
+    form: { line1, line5, line6, line7, line8, line9, line10 },
+  };
+}
+
+/**
+ * @deprecated Superseded by s134FormCeiling(), which reproduces BIR Form 134.
+ * This treated the company allowance as stacking on top of the personal cap and
+ * ignored the employee's contributions entirely. Retained only so the difference
+ * stays visible in the diff; do not call it.
+ */
+export function s134MaxContribution({ grossAnnual, chargeableIncome }) {
+  const node = P.annuities.s134_6a_deferred_compensation;
+  const byChargeable = Math.max(0, chargeableIncome) / node.limit.chargeable_income_divisor;
+  const byGross      = Math.max(0, grossAnnual) * node.limit.gross_emoluments_share;
+  return { max: Math.max(byChargeable, byGross), byChargeable, byGross,
+           binding: byGross >= byChargeable ? "gross_emoluments" : "chargeable_income",
+           maturityExemptionApplies: node.maturity_exemption_applies,
+           employerOwned: node.employer_owned };
 }
 
 /* --------------------------------------------------------- Provenance API */

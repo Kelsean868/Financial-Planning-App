@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>What could an annuity do for your tax?</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=IBM+Plex+Sans:wght@300;400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#F2ECE1; --paper2:#E9E1D2; --card:#FFFFFF;
+  --ink:#14202E; --ink2:#2A3D52; --muted:#6E7B8A; --mutedp:#8A7F6E;
+  --rule:#D9CFBB; --gold:#B8862B; --goldl:#E3B455;
+  --green:#1B6B4F; --greenl:#2E9B72; --red:#A5382A;
+  --shadow:0 1px 2px rgba(20,32,46,.05),0 10px 30px -14px rgba(20,32,46,.3);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'IBM Plex Sans',sans-serif;background:var(--paper);color:var(--ink);line-height:1.55;-webkit-font-smoothing:antialiased}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:999;opacity:.45;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='3'/%3E%3CfeColorMatrix type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)' opacity='.3'/%3E%3C/svg%3E")}
+.num{font-family:'IBM Plex Mono',monospace;font-variant-numeric:tabular-nums}
+.wrap{max-width:860px;margin:0 auto;padding:44px 24px 90px}
+
+/* header */
+.eyebrow{font-size:10.5px;letter-spacing:.24em;text-transform:uppercase;color:var(--mutedp);font-weight:600;margin-bottom:12px}
+h1{font-family:'Fraunces',serif;font-size:clamp(32px,5.4vw,54px);font-weight:600;line-height:1.02;letter-spacing:-.025em}
+h1 em{font-style:italic;color:var(--gold);font-weight:500}
+.sub{font-size:15.5px;color:var(--ink2);margin-top:16px;max-width:56ch}
+
+/* step */
+.step{margin-top:38px;background:var(--card);border:1px solid var(--rule);border-radius:14px;padding:26px 28px;box-shadow:var(--shadow)}
+.step-h{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.step-n{font-family:'IBM Plex Mono',monospace;font-size:11px;color:var(--gold);font-weight:600;letter-spacing:.1em;border:1px solid var(--goldl);border-radius:99px;padding:2px 9px;flex:none}
+.step-h h2{font-family:'Fraunces',serif;font-size:23px;font-weight:600;letter-spacing:-.015em}
+.step-note{font-size:13px;color:var(--muted);margin-bottom:20px;max-width:62ch}
+
+/* earnings input */
+.earn{display:flex;gap:14px;align-items:stretch;flex-wrap:wrap}
+.earn-in{flex:1;min-width:230px;position:relative}
+.earn-in .cur{position:absolute;left:16px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:24px;color:var(--mutedp)}
+.earn-in input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:30px;font-weight:500;padding:14px 16px 14px 42px;
+  border:1.5px solid var(--rule);border-radius:10px;background:var(--paper);color:var(--ink);-moz-appearance:textfield}
+.earn-in input:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 4px rgba(184,134,43,.14)}
+input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appearance:none;margin:0}
+.periods{display:flex;background:var(--paper2);border:1px solid var(--rule);border-radius:10px;padding:4px;gap:2px}
+.periods button{flex:1;border:none;background:none;font-family:inherit;font-size:13px;color:var(--ink2);padding:9px 15px;
+  border-radius:7px;cursor:pointer;transition:.15s;white-space:nowrap;font-weight:500}
+.periods button.on{background:var(--ink);color:#fff;box-shadow:0 2px 6px rgba(20,32,46,.25)}
+.periods button:not(.on):hover{background:rgba(20,32,46,.07)}
+
+/* right-now strip */
+.now{margin-top:22px;background:var(--ink);border-radius:11px;padding:20px 22px;color:#DCE4EC;position:relative;overflow:hidden}
+.now::after{content:'';position:absolute;right:-70px;top:-90px;width:280px;height:280px;border-radius:50%;
+  background:radial-gradient(circle,rgba(184,134,43,.2),transparent 68%)}
+.now-h{font-size:10.5px;letter-spacing:.17em;text-transform:uppercase;color:#93A7BC;font-weight:600;margin-bottom:14px}
+.now-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(128px,1fr));gap:16px;position:relative;z-index:2}
+.nc .l{font-size:11px;color:#8FA3B8;margin-bottom:4px}
+.nc .v{font-family:'IBM Plex Mono',monospace;font-size:20px;font-weight:500}
+.nc .n{font-size:10.5px;color:#7B8DA0;margin-top:2px}
+.nc.hi .v{color:var(--goldl)}
+
+/* questions */
+.q{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:15px 0;border-bottom:1px solid #EFE8DA;flex-wrap:wrap}
+.q:last-of-type{border-bottom:none}
+.q-t{flex:1;min-width:210px}
+.q-t .t{font-size:14.5px;font-weight:500}
+.q-t .d{font-size:12px;color:var(--muted);margin-top:2px}
+.yn{display:flex;background:var(--paper2);border:1px solid var(--rule);border-radius:8px;padding:3px;gap:2px;flex:none}
+.yn button{border:none;background:none;font-family:inherit;font-size:12.5px;padding:7px 18px;border-radius:6px;cursor:pointer;color:var(--ink2);font-weight:500}
+.yn button.on{background:var(--ink);color:#fff}
+.q-amt{width:100%;margin-top:11px;display:none}
+.q-amt.show{display:block}
+.q-amt label{font-size:11.5px;color:var(--muted);display:block;margin-bottom:5px}
+.q-amt .ai{position:relative;max-width:250px}
+.q-amt .ai .cur{position:absolute;left:11px;top:50%;transform:translateY(-50%);font-family:'IBM Plex Mono',monospace;font-size:13px;color:var(--mutedp)}
+.q-amt input{width:100%;font-family:'IBM Plex Mono',monospace;font-size:15px;padding:9px 12px 9px 28px;
+  border:1.5px solid var(--rule);border-radius:8px;background:var(--paper);color:var(--ink);-moz-appearance:textfield}
+.q-amt input:focus{outline:none;border-color:var(--gold)}
+
+/* room meter */
+.room{margin-top:20px}
+.room-top{display:flex;justify-content:space-between;align-items:baseline;margin-bottom:9px;flex-wrap:wrap;gap:8px}
+.room-top .big{font-family:'Fraunces',serif;font-size:29px;font-weight:600;color:var(--green)}
+.room-top .lab{font-size:12px;color:var(--muted)}
+.meter{height:38px;border-radius:8px;overflow:hidden;display:flex;background:var(--paper2);border:1px solid var(--rule)}
+.seg{height:100%;display:flex;align-items:center;justify-content:center;transition:width .5s cubic-bezier(.4,0,.2,1);overflow:hidden}
+.seg span{font-family:'IBM Plex Mono',monospace;font-size:10.5px;color:#fff;white-space:nowrap;padding:0 5px}
+.seg.nis{background:#4A6076}.seg.pen{background:#65798E}.seg.exist{background:#7E8FA1}
+.seg.ann{background:repeating-linear-gradient(115deg,var(--green) 0 11px,#1F7A5A 11px 22px)}
+.seg.unreg{background:repeating-linear-gradient(115deg,var(--gold) 0 9px,#C99A3E 9px 18px)}
+.seg.over{background:repeating-linear-gradient(115deg,var(--red) 0 8px,#B8493A 8px 16px)}
+.split{margin-top:18px;border:1.5px solid var(--gold);border-radius:10px;overflow:hidden;display:none}
+.split.show{display:block}
+.split-h{background:var(--gold);color:#fff;padding:10px 15px;font-weight:600;font-size:13.5px}
+.split-b{padding:15px;background:#FCF7EC}
+.split-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:13px}
+.sr{background:#fff;border:1px solid var(--rule);border-radius:9px;padding:13px}
+.sr .tag{font-size:10px;letter-spacing:.12em;text-transform:uppercase;font-weight:700;margin-bottom:4px}
+.sr.reg .tag{color:var(--green)}
+.sr.unreg .tag{color:var(--gold)}
+.sr .amt2{font-family:'Fraunces',serif;font-size:24px;font-weight:600;line-height:1.1}
+.sr .per2{font-size:11.5px;color:var(--muted);margin-bottom:6px}
+.sr .why{font-size:12.5px;color:var(--ink2);line-height:1.5}
+.split-foot{margin-top:12px;font-size:12px;color:var(--muted);line-height:1.55}
+.notax{background:#3A2E17;color:#F2EADC;border-radius:14px;padding:28px 30px;margin-top:26px;display:none}
+.notax.show{display:block}
+.notax h2{font-family:'Fraunces',serif;font-size:26px;color:#fff;font-weight:600;margin-bottom:10px}
+.notax > p{color:#D8C8AC;font-size:14.5px;max-width:64ch}
+.nt-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:13px;margin-top:20px}
+.nt-card{background:rgba(255,255,255,.06);border:1px solid rgba(227,180,85,.28);border-radius:9px;padding:14px}
+.nt-card .t{font-weight:600;color:var(--goldl);margin-bottom:5px;font-size:13.5px}
+.nt-card .d{font-size:12.5px;color:#DDD0B8;line-height:1.55}
+.seg.free{flex:1}.seg.free span{color:var(--mutedp)}
+.legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
+.legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
+
+.rec-badge{background:#fff;color:var(--green);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:700;border-radius:99px;padding:2px 9px;margin-right:8px;vertical-align:1px}
+.alt{margin-top:13px;border:1px dashed var(--rule);border-radius:9px;padding:13px 14px;background:#FAF7F0}
+.alt-h{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:9px}
+.alt-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:9px}
+.alt-r{display:flex;justify-content:space-between;gap:9px;font-size:12.5px;color:var(--muted);
+  background:#fff;border:1px solid var(--rule);border-radius:7px;padding:7px 10px}
+.alt-r b{color:var(--ink);font-weight:600}
+.alt-cmp{margin-top:10px;font-size:12px;color:var(--ink2);line-height:1.6}
+
+/* allocation + two-up */
+.alloc{margin-top:18px;border:1.5px solid var(--green);border-radius:10px;overflow:hidden;display:none}
+.alloc.show{display:block}
+.alloc-h{background:var(--green);color:#fff;padding:11px 15px;font-weight:600;font-size:14px}
+.alloc-b{padding:15px;background:#F4FAF7}
+.alloc-rows{display:grid;gap:9px}
+.ar{display:grid;grid-template-columns:1fr auto;gap:5px 14px;align-items:baseline;background:#fff;
+  border:1px solid var(--rule);border-radius:8px;padding:12px 14px}
+.ar.zero{opacity:.55}
+.ar .k{font-weight:600;font-size:13.5px}
+.ar .v{font-family:'Fraunces',serif;font-size:22px;font-weight:600;color:var(--green);text-align:right}
+.ar .w{grid-column:1/-1;font-size:12px;color:var(--muted);line-height:1.5}
+.alloc-foot{margin-top:12px;font-size:12px;line-height:1.6;background:#fff;border-left:3px solid var(--green);
+  border-radius:7px;padding:10px 13px}
+.two-up{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px;margin-top:18px}
+.tu{border-radius:10px;padding:18px;border:1.5px solid}
+.tu-you{background:#F2F9F6;border-color:var(--green)}
+.tu-co{background:#FDF8EE;border-color:var(--gold)}
+.tu-tag{font-size:10.5px;letter-spacing:.13em;text-transform:uppercase;font-weight:700;margin-bottom:5px}
+.tu-you .tu-tag{color:var(--green)}.tu-co .tu-tag{color:var(--gold)}
+.tu-amt{font-family:'Fraunces',serif;font-size:32px;font-weight:600;line-height:1}
+.tu-you .tu-amt{color:var(--green)}.tu-co .tu-amt{color:var(--gold)}
+.tu-lab{font-size:12.5px;color:var(--muted);margin-top:3px}
+.tu-note{font-size:12px;color:var(--ink2);margin-top:8px;line-height:1.5}
+.tu-caveat{margin-top:13px;padding:11px 14px;background:#FBF0EC;border-left:3px solid var(--red);
+  border-radius:7px;font-size:12px;line-height:1.6;color:#7A2B1F;display:none}
+.tu-caveat.show{display:block}
+
+/* slider */
+.slider-row{display:flex;align-items:center;gap:16px;flex-wrap:wrap;margin-top:4px}
+.slider-row .amt{font-family:'IBM Plex Mono',monospace;font-size:31px;font-weight:600;color:var(--green);min-width:150px}
+.slider-row .per{font-size:13px;color:var(--muted)}
+input[type=range]{width:100%;-webkit-appearance:none;background:transparent;cursor:pointer;margin-top:14px}
+input[type=range]::-webkit-slider-runnable-track{height:6px;background:var(--paper2);border:1px solid var(--rule);border-radius:6px}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:26px;height:26px;border-radius:50%;background:var(--green);
+  margin-top:-11px;border:3px solid #fff;box-shadow:0 2px 8px rgba(27,107,79,.45)}
+input[type=range]::-moz-range-track{height:6px;background:var(--paper2);border:1px solid var(--rule);border-radius:6px}
+input[type=range]::-moz-range-thumb{width:22px;height:22px;border-radius:50%;background:var(--green);border:3px solid #fff}
+.chips{display:flex;gap:7px;margin-top:14px;flex-wrap:wrap}
+.chips button{background:var(--paper2);border:1px solid var(--rule);color:var(--ink2);font-family:inherit;font-size:12px;
+  padding:7px 13px;border-radius:99px;cursor:pointer;transition:.15s}
+.chips button:hover{background:var(--ink);color:#fff;border-color:var(--ink)}
+
+/* result */
+.result{margin-top:38px;background:var(--ink);border-radius:16px;padding:34px 32px;color:#EAF0F6;position:relative;overflow:hidden;
+  box-shadow:0 26px 64px -30px rgba(20,32,46,.75)}
+.result::before{content:'';position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(180deg,var(--goldl),var(--greenl))}
+.result::after{content:'';position:absolute;right:-100px;top:-130px;width:440px;height:440px;border-radius:50%;
+  background:radial-gradient(circle,rgba(46,155,114,.22),transparent 68%)}
+.r-h{font-size:11px;letter-spacing:.2em;text-transform:uppercase;color:#93A7BC;font-weight:600;margin-bottom:22px;position:relative;z-index:2}
+.r-hero{position:relative;z-index:2}
+.r-hero .big{font-family:'Fraunces',serif;font-size:clamp(44px,8.5vw,80px);font-weight:700;color:var(--goldl);line-height:.95;letter-spacing:-.03em}
+.r-hero .cap{font-size:16px;color:#C3D2E0;margin-top:12px;max-width:46ch}
+.r-cols{display:grid;grid-template-columns:1fr auto 1fr;gap:20px;align-items:center;margin-top:28px;padding-top:24px;
+  border-top:1px solid #2C3E52;position:relative;z-index:2}
+.r-col .l{font-size:11px;letter-spacing:.11em;text-transform:uppercase;color:#8FA3B8;margin-bottom:6px}
+.r-col .v{font-family:'IBM Plex Mono',monospace;font-size:26px;font-weight:500}
+.r-col.g .v{color:var(--greenl);font-weight:600}
+.r-arrow{font-size:22px;color:var(--gold);opacity:.6}
+.r-foot{display:flex;gap:0;margin-top:24px;padding-top:20px;border-top:1px solid #2C3E52;flex-wrap:wrap;position:relative;z-index:2}
+.rf{flex:1;min-width:150px;padding-right:18px}
+.rf+.rf{border-left:1px solid #2C3E52;padding-left:18px}
+.rf .l{font-size:10.5px;letter-spacing:.1em;text-transform:uppercase;color:#8FA3B8;margin-bottom:4px}
+.rf .v{font-family:'IBM Plex Mono',monospace;font-size:19px}
+.rf .n{font-size:10.5px;color:#7B8DA0;margin-top:3px}
+
+.note{margin-top:16px;padding:13px 16px;border-radius:9px;font-size:12.5px;line-height:1.55;display:none;border-left:3px solid}
+.note.show{display:block}
+.note.warn{background:#FBF0EC;border-color:var(--red);color:#7A2B1F}
+.note.good{background:#EDF6F1;border-color:var(--green);color:#144C38}
+.note b{font-weight:600}
+
+/* detail */
+details{margin-top:24px;background:var(--card);border:1px solid var(--rule);border-radius:12px;box-shadow:var(--shadow)}
+summary{padding:17px 24px;cursor:pointer;font-size:14px;font-weight:500;list-style:none;display:flex;justify-content:space-between;align-items:center}
+summary::-webkit-details-marker{display:none}
+summary::after{content:'+';font-family:'IBM Plex Mono',monospace;font-size:19px;color:var(--gold)}
+details[open] summary::after{content:'–'}
+details[open] summary{border-bottom:1px solid var(--rule)}
+.dbody{padding:20px 24px 24px;overflow-x:auto}
+table{width:100%;border-collapse:collapse;font-size:12.5px;min-width:480px}
+th{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:var(--mutedp);font-weight:600;text-align:right;padding:0 0 9px;border-bottom:1.5px solid var(--ink)}
+th:first-child{text-align:left}
+td{padding:6px 0;border-bottom:1px solid #F0E9DB;color:var(--ink2)}
+td.n{text-align:right;font-family:'IBM Plex Mono',monospace;width:118px;padding-left:16px}
+tr.sec td{padding-top:16px;font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--mutedp);font-weight:600}
+tr.tot td{font-weight:600;background:#FAF6EE;color:var(--ink)}
+tr.hl td{background:#F2FAF6}tr.hl td:first-child{color:var(--green);font-weight:600}
+tr.grand td{background:var(--ink);color:#fff;font-weight:700;font-size:14px}
+tr.grand td:first-child{border-radius:5px 0 0 5px;padding-left:10px}
+tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
+
+/* maturity */
+.mat{margin-top:24px;background:linear-gradient(145deg,#14332A,#0D231C);border-radius:14px;padding:28px 30px;color:#CFE8DC}
+.mat h2{font-family:'Fraunces',serif;font-size:24px;color:#fff;font-weight:600;letter-spacing:-.015em}
+.mat .tag{font-size:10px;letter-spacing:.15em;text-transform:uppercase;color:var(--greenl);font-weight:600;margin-bottom:9px}
+.mat p{font-size:13.5px;color:#93B5A6;margin-top:10px;max-width:62ch}
+.conds{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:12px;margin-top:20px}
+.cond{background:rgba(255,255,255,.05);border:1px solid rgba(46,155,114,.28);border-radius:9px;padding:13px 14px}
+.cond .t{font-size:12.5px;font-weight:600;color:#fff;margin-bottom:4px}
+.cond .d{font-size:11px;color:#8FB5A4;line-height:1.45}
+.mat-foot{margin-top:16px;padding-top:13px;border-top:1px solid rgba(46,155,114,.2);font-size:11px;color:#7FA694}
+
+.prov{margin-top:30px;font-size:11px;color:var(--mutedp);line-height:1.65;border-top:1px solid var(--rule);padding-top:18px}
+.prov b{color:var(--ink2)}
+.prov code{font-family:'IBM Plex Mono',monospace;font-size:10.5px;background:var(--paper2);padding:1px 5px;border-radius:3px}
+@media(max-width:600px){
+  .r-cols{grid-template-columns:1fr}.r-arrow{display:none}
+  .wrap{padding:30px 16px 70px}.step{padding:20px 18px}
+}
+@media print{body::before{display:none}.chips,input[type=range]{display:none}details{page-break-inside:avoid}details:not([open]) .dbody{display:block}}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <div class="eyebrow">Trinidad &amp; Tobago &middot; Income year 2026</div>
+  <h1>You are already paying this tax.<br><em>Some of it can come back.</em></h1>
+  <p class="sub">Tell us what you earn. We will work out what is coming out of your pay right now, and what a registered annuity would change. No paperwork needed &mdash; you do not need your TD4 in front of you.</p>
+
+  <!-- STEP 1 -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">01</span><h2>What do you earn?</h2></div>
+    <p class="step-note">Your pay before anything is taken out. If you get a payslip from an employer, use the gross figure (that is your pay before tax).</p>
+    <div class="earn">
+      <div class="earn-in"><span class="cur">$</span><input type="number" id="earn" value="20000" min="0" step="100"></div>
+      <div class="periods" id="periods">
+        <button data-p="week">a week</button>
+        <button data-p="fortnight">a fortnight</button>
+        <button data-p="month" class="on">a month</button>
+        <button data-p="year">a year</button>
+      </div>
+    </div>
+
+    <div class="now">
+      <div class="now-h">What is happening to your pay right now</div>
+      <div class="now-grid">
+        <div class="nc"><div class="l">You earn</div><div class="v num" id="nEarn">$0</div><div class="n">a year</div></div>
+        <div class="nc"><div class="l">NIS taken out</div><div class="v num" id="nNis">$0</div><div class="n" id="nNisSub">&nbsp;</div></div>
+        <div class="nc hi"><div class="l">Income tax</div><div class="v num" id="nTax">$0</div><div class="n" id="nTaxSub">a year</div></div>
+        <div class="nc"><div class="l">Health surcharge</div><div class="v num" id="nHs">$0</div><div class="n" id="nHsSub">a year</div></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- STEP 2 -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">02</span><h2>Three quick questions</h2></div>
+    <p class="step-note">These decide how much room you have left. Answer what you know &mdash; leave the rest as no.</p>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Could a company fund a plan for this client?</div>
+        <div class="d">They own a company, or the employer would agree. A sole trader in their own name does not qualify &mdash; s.134(6) needs a company.</div></div>
+      <div class="yn" data-q="owner"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+    </div>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Are you in a pension or savings plan at work?</div>
+        <div class="d">Sometimes called a provident fund or superannuation plan</div></div>
+      <div class="yn" data-q="pen"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      <div class="q-amt" id="amt-pen"><label>How much do <em>you</em> put in each year? (not your employer's share)</label>
+        <div class="ai"><span class="cur">$</span><input type="number" id="pension" value="0" min="0" step="500"></div></div>
+    </div>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Do you already have an annuity?</div>
+        <div class="d">An approved deferred annuity you are already paying into</div></div>
+      <div class="yn" data-q="exist"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      <div class="q-amt" id="amt-exist"><label>How much do you pay in each year?</label>
+        <div class="ai"><span class="cur">$</span><input type="number" id="existing" value="0" min="0" step="500"></div></div>
+    </div>
+
+    <div class="q">
+      <div class="q-t"><div class="t">Do you know the exact tax taken off your pay last year?</div>
+        <div class="d">It is on your TD4. If you don't know, we assume it was deducted correctly</div></div>
+      <div class="yn" data-q="paye"><button data-v="1">Yes</button><button data-v="0" class="on">No</button></div>
+      <div class="q-amt" id="amt-paye"><label>Total income tax deducted per TD4</label>
+        <div class="ai"><span class="cur">$</span><input type="number" id="paye" value="0" min="0" step="500"></div></div>
+    </div>
+
+    <div class="room">
+      <div class="room-top">
+        <span class="big num" id="roomBig">$0</span>
+        <span class="lab">of room left before you hit the $<span id="capTxt">60,000</span> limit that everyone shares</span>
+      </div>
+      <div class="meter" id="meter"></div>
+      <div class="legend">
+        <span><i style="background:#4A6076"></i>NIS</span>
+        <span><i style="background:#65798E"></i>Work pension</span>
+        <span><i style="background:#7E8FA1"></i>Annuity you have</span>
+        <span><i style="background:repeating-linear-gradient(115deg,#1B6B4F 0 5px,#1F7A5A 5px 10px)"></i>New annuity</span>
+        <span><i style="background:repeating-linear-gradient(115deg,#A5382A 0 4px,#B8493A 4px 8px)"></i>Wasted</span>
+      </div>
+      <div class="note good" id="splitPointer"></div>
+      <div class="note warn" id="noteWarn"></div>
+      <div class="note good" id="noteGood"></div>
+    </div>
+  </section>
+
+  <!-- STEP 3 -->
+  <section class="step">
+    <div class="step-h"><span class="step-n">03</span><h2>What if you put money aside?</h2></div>
+    <p class="step-note">Drag to try an amount. This is money that stays yours &mdash; it goes into your own retirement plan, not to the government.</p>
+    <div class="earn">
+      <div class="earn-in"><span class="cur">$</span><input type="number" id="prem" value="0" min="0" step="50"></div>
+      <div class="periods" id="premPeriods">
+        <button data-p="month" class="on">a month</button>
+        <button data-p="quarter">a quarter</button>
+        <button data-p="half">every 6 months</button>
+        <button data-p="year">a year</button>
+      </div>
+    </div>
+    <input type="range" id="premRange" min="0" max="5000" step="25" value="0">
+    <div class="slider-row" style="margin-top:12px">
+      <span class="amt num" id="premTxt">$0</span>
+      <span class="per" id="premMo">a year in total</span>
+    </div>
+    <div class="chips">
+      <button data-set="fill">Use all my room</button>
+      <button data-set="useful">Most that cuts tax</button>
+      <button data-set="0">Clear</button>
+    </div>
+    <div class="split" id="splitBlock">
+      <div class="split-h">Past this point, split it across two plans</div>
+      <div class="split-b">
+        <div class="split-rows">
+          <div class="sr reg"><div class="tag">Registered</div><div class="amt2 num" id="srReg">$0</div>
+            <div class="per2" id="srRegPer">a year</div><div class="why" id="srRegWhy"></div></div>
+          <div class="sr unreg"><div class="tag">Unregistered</div><div class="amt2 num" id="srUnreg">$0</div>
+            <div class="per2" id="srUnregPer">a year</div>
+            <div class="why">No deduction &mdash; but no lock-in either. No 50&ndash;70 maturity window, no penalty for early access.</div></div>
+        </div>
+        <div class="split-foot" id="splitFoot"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULT -->
+  <section class="result">
+    <div class="r-h">What you get back</div>
+    <div class="r-hero">
+      <div class="big num" id="heroBig">$0</div>
+      <div class="cap" id="heroCap">Move the slider above to see what comes back to you.</div>
+    </div>
+    <div class="r-cols">
+      <div class="r-col"><div class="l">Your tax now</div><div class="v num" id="taxBefore">$0</div></div>
+      <div class="r-arrow">&rarr;</div>
+      <div class="r-col g"><div class="l">Your tax with the annuity</div><div class="v num" id="taxAfter">$0</div></div>
+    </div>
+    <div class="r-foot">
+      <div class="rf"><div class="l">You put aside</div><div class="v num" id="fPrem">$0</div><div class="n" id="fPremMo">&nbsp;</div></div>
+      <div class="rf"><div class="l">It really costs you</div><div class="v num" id="fNet">$0</div><div class="n" id="fNetMo">&nbsp;</div></div>
+      <div class="rf"><div class="l">Each $1 costs you</div><div class="v num" id="fCents">&mdash;</div><div class="n" id="fCentsN">&nbsp;</div></div>
+      <div class="rf"><div class="l">Your tax rate</div><div class="v num" id="fRate">25%</div><div class="n" id="fRateN">&nbsp;</div></div>
+    </div>
+  </section>
+
+  <section class="notax" id="noTaxBlock">
+    <h2>A registered annuity would not cut this client's tax</h2>
+    <p id="ntWhy"></p>
+    <div class="nt-grid">
+      <div class="nt-card"><div class="t">The deduction is worth nothing</div>
+        <div class="d">A registered plan's whole advantage is that contributions come off taxable income. With no tax payable, the deduction is worth exactly $0.</div></div>
+      <div class="nt-card"><div class="t">What would change it</div><div class="d" id="ntChange"></div></div>
+      <div class="nt-card"><div class="t">Point at unregistered instead</div>
+        <div class="d">Same saving, no 50&ndash;70 maturity window, no early-surrender penalty. They give up a tax break they cannot use.</div></div>
+    </div>
+  </section>
+
+  <section class="card" id="routesBlock" hidden style="margin-top:26px;border-top:3px solid var(--green)">
+    <div class="card-h"><h2>Third route: employer-funded s.134(6)</h2><div class="tag">Company owners</div></div>
+    <p class="card-note">Runs on a share of income rather than the $60,000 cap, funded by the company out of pre-tax money. Employer-owned, so it forfeits the Finance Act 2026 maturity exemption.</p>
+    <div class="alloc" id="allocBlock">
+      <div class="alloc-h"><span class="rec-badge">Recommended</span>Split of <span id="alTotal">$0</span> a year</div>
+      <div class="alloc-b">
+        <div class="alloc-rows">
+          <div class="ar" id="arPers"><div class="k">1 &middot; Personal registered</div><div class="v num" id="alPers">$0</div><div class="w" id="alPersWhy"></div></div>
+          <div class="ar" id="arCorp"><div class="k">2 &middot; Company s.134(6)</div><div class="v num" id="alCorp">$0</div><div class="w" id="alCorpWhy"></div></div>
+          <div class="ar" id="arUnreg"><div class="k">3 &middot; Unregistered</div><div class="v num" id="alUnreg">$0</div><div class="w" id="alUnregWhy"></div></div>
+        </div>
+        <div class="alt" id="altBox">
+          <div class="alt-h">Alternative &mdash; everything through the company</div>
+          <div class="alt-rows">
+            <div class="alt-r"><span>Personal</span><b class="num" id="altP">$0</b></div>
+            <div class="alt-r"><span>Company</span><b class="num" id="altC">$0</b></div>
+            <div class="alt-r"><span>Unregistered</span><b class="num" id="altU">$0</b></div>
+          </div>
+          <div class="alt-cmp" id="altCmp"></div>
+        </div>
+        <div class="alloc-foot" id="alFoot"></div>
+      </div>
+    </div>
+    <div class="two-up">
+      <div class="tu tu-you"><div class="tu-tag">Client personally</div><div class="tu-amt num" id="tuYouAmt">$0</div>
+        <div class="tu-lab">income tax refunded</div><div class="tu-note" id="tuYouNote"></div></div>
+      <div class="tu tu-co"><div class="tu-tag">Their company</div><div class="tu-amt num" id="tuCoAmt">$0</div>
+        <div class="tu-lab">corporation tax saved</div><div class="tu-note" id="tuCoNote"></div></div>
+    </div>
+    <div class="tu-caveat" id="tuCaveat"></div>
+    <p style="margin-top:14px;font-size:11.5px;color:var(--muted);line-height:1.6" id="rtBasis"></p>
+  </section>
+
+  <!-- DETAIL -->
+  <details>
+    <summary>Show me the tax return detail</summary>
+    <div class="dbody">
+      <table>
+        <thead><tr><th>Line</th><th>Now</th><th>With annuity</th></tr></thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </div>
+  </details>
+
+  <!-- MATURITY -->
+  <section class="mat">
+    <div class="tag">Finance Act 2026</div>
+    <h2>And when it pays out, it is tax-free</h2>
+    <p>Since 1 January 2026 the income from an approved deferred annuity is exempt from income tax when it matures. You get relief going in and no tax coming out &mdash; but the exemption has conditions.</p>
+    <div class="conds">
+      <div class="cond"><div class="t">You buy it yourself</div><div class="d">Purchased by, and payable to, a resident of Trinidad &amp; Tobago. A plan your employer owns does not qualify.</div></div>
+      <div class="cond"><div class="t">It matures between 50 and 70</div><div class="d">Outside that window the payout is legal but loses the exemption.</div></div>
+      <div class="cond"><div class="t">You keep it to maturity</div><div class="d">Cash it in early and the whole sum is taxable.</div></div>
+      <div class="cond"><div class="t">Plans you already have count</div><div class="d">Approved before, on or after 1 January 2026 &mdash; an existing policy qualifies.</div></div>
+    </div>
+    <div class="mat-foot">Finance Act 2026, passed 10 June 2026, effective 1 January 2026, amending the Income Tax Act Chap. 75:01.</div>
+  </section>
+
+  <div class="prov">
+    <b>Where these numbers come from.</b> Every rate and limit is read from the canonical parameter tables (<code>tt-parameters.json</code>), not typed into this page. <span id="provLine"></span><br><br>
+    <b>How exact is this?</b> NIS is a step table based on your earnings class, so it is exact for a regular wage over a full contribution year &mdash; not an estimate. Income tax and the deduction limit are exact. What we assume is that the tax on your pay was deducted correctly, unless you told us otherwise, and that you worked the full year. Irregular earnings, part-year employment or self-employment will differ.<br><br>
+    <b>Please read.</b> This shows the income tax effect of a deduction. It is not a tax return, not tax advice, and not a projection of what the annuity itself will be worth. You cannot get back more tax than was taken off your pay. Health surcharge is not reduced by an annuity. Confirm your own position with the Board of Inland Revenue or a qualified adviser before acting.
+  </div>
+</div>
+
+<script type="module">
+/*__PARAMETERS__*/
+
+/* ---------------- state ---------------- */
+// S.prem is the source of truth for the premium, NOT the range input. The range
+// snaps to its step, so "use all my room" would otherwise fall short of the exact
+// headroom by up to one step and report a few dollars as still unused.
+const PREM_MULT = { month:12, quarter:4, half:2, year:1 };
+const PREM_WORD = { month:'a month', quarter:'a quarter', half:'every 6 months', year:'a year' };
+const S = { period:'month', pen:0, exist:0, payeKnown:0, owner:0, prem:0, premPeriod:'month' };
+const $ = id => document.getElementById(id);
+const n = id => { const v = parseFloat($(id).value); return (isNaN(v)||v<0)?0:v; };
+const money = v => (v<0?'-$':'$') + Math.abs(Math.round(v)).toLocaleString('en-US');
+
+const CAP = P.income_tax.combined_deduction_cap.value;
+const PA  = P.income_tax.personal_allowance.value;
+$('capTxt').textContent = CAP.toLocaleString('en-US');
+$('provLine').textContent =
+  `Personal allowance ${money(PA)} (effective ${P.income_tax.personal_allowance.effective}); ` +
+  `combined limit ${money(CAP)} (effective ${P.income_tax.combined_deduction_cap.effective}); ` +
+  `NIS contribution table effective ${P.nis.contribution_tables[CURRENT_NIS_TABLE].rate*100}% from ${CURRENT_NIS_TABLE}.`;
+
+/* ---------------- engine ---------------- */
+function model(newPremium){
+  const gross = toMonthly(n('earn'), S.period) * 12;
+  const nis   = nisFromEarnings(n('earn'), S.period);
+
+  // approved contributions other than the new annuity
+  const existingApproved = (S.pen ? n('pension') : 0) + (S.exist ? n('existing') : 0);
+
+  const before = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                             approvedContributionsAnnual: existingApproved });
+  const after  = incomeTax({ grossAnnual: gross, nisContributionsAnnual: nis.annualEmployee,
+                             approvedContributionsAnnual: existingApproved + newPremium });
+
+  // PAYE: assume correctly deducted against the position WITHOUT the new annuity,
+  // unless the user gave us the real figure.
+  const paye = S.payeKnown ? n('paye') : before.tax;
+
+  const refundBefore = Math.max(0, paye - before.tax);
+  const refundAfter  = Math.max(0, paye - after.tax);
+  const hs = healthSurcharge(gross/12, 40);
+
+  return { gross, nis, existingApproved, before, after, paye,
+           refundBefore, refundAfter, uplift: refundAfter - refundBefore,
+           taxSaved: before.tax - after.tax,
+           headroom: before.headroom,
+           hsAnnual: hs.weekly * 52 };
+}
+
+/* ---------------- render ---------------- */
+function render(){
+  let prem = S.prem;
+  let m = model(prem);
+  if(m.before.tax <= 0 && prem !== 0){ prem = 0; m = model(0); }
+  // Relief is limited by the shared cap AND by tax payable — whichever binds first.
+  const maxUseful  = Math.max(0, Math.min(m.headroom, m.before.chargeable));
+  let registered   = Math.min(prem, maxUseful);
+  let unregistered = Math.max(0, prem - maxUseful);
+  if(unregistered < 0.5){ registered = prem; unregistered = 0; }
+  const relieved   = registered;
+  const wasted     = 0;
+
+  /* step 1 strip */
+  $('nEarn').textContent = money(m.gross);
+  $('nNis').textContent  = money(m.nis.annualEmployee);
+  $('nNisSub').textContent = m.nis.class
+    ? `Class ${m.nis.class}${m.nis.atCeiling?' — the ceiling':''}` : 'below the NIS floor';
+  $('nTax').textContent = money(m.before.tax);
+  $('nTaxSub').textContent = m.before.tax>0 ? 'a year, as things stand' : 'you pay no income tax';
+  $('nHs').textContent = money(m.hsAnnual);
+  $('nHsSub').textContent = 'a year — an annuity does not change this';
+
+  /* room */
+  $('roomBig').textContent = money(m.headroom);
+  const nis70 = m.nis.deductible70;
+  const pen = S.pen ? n('pension') : 0, ex = S.exist ? n('existing') : 0;
+  const scaleMax = S.owner===1 ? Math.max(CAP, nis70+pen+ex+registered) : Math.max(CAP, nis70+pen+ex+prem);
+  const parts = S.owner===1
+    ? [['nis',nis70],['pen',pen],['exist',ex],['ann',registered]]
+    : [['nis',nis70],['pen',pen],['exist',ex],['ann',registered],['unreg',unregistered]];
+  let h = '';
+  parts.forEach(([c,v])=>{
+    if(v<=0) return;
+    const w = v/scaleMax*100;
+    h += `<div class="seg ${c}" style="width:${w}%">${w>13?`<span>${money(v)}</span>`:''}</div>`;
+  });
+  const used = Math.min(CAP, nis70+pen+ex+registered), free = Math.max(0, CAP-used);
+  if(free>0) h += `<div class="seg free" style="width:${free/scaleMax*100}%">${free/scaleMax*100>15?`<span>${money(free)} free</span>`:''}</div>`;
+  $('meter').innerHTML = h;
+
+  // Tax is banded: 25% on chargeable income up to 1,000,000 and 30% above. A
+  // deduction that straddles that line is therefore relieved at a BLEND, not at
+  // the marginal rate. Ask the engine what the tax actually is instead of
+  // multiplying by a single rate — the flat assumption overstated the saving by
+  // about 2,700 on a straddling income.
+  const saveAt = x => m.before.tax - model(x).after.tax;
+  const marginRate = m.before.chargeable > 1e6 ? 0.30 : 0.25;   // display only
+  const mult2 = PREM_MULT[S.premPeriod], word2 = PREM_WORD[S.premPeriod];
+  const nw=$('noteWarn'), ng=$('noteGood'), sp=$('splitBlock');
+  nw.className='note warn'; ng.className='note good'; sp.className='split';
+
+  if(prem>0 && prem<maxUseful){
+    ng.className='note good show';
+    ng.innerHTML = `<b>${money(maxUseful-prem)} more would still attract relief in full.</b> Taking it to ${money(maxUseful)} a year returns roughly ${money(saveAt(maxUseful) - saveAt(prem))} more.`;
+  } else if(prem>0 && unregistered<=0.5 && maxUseful>0){
+    ng.className='note good show';
+    ng.innerHTML = `<b>Every dollar attracts relief.</b> The full premium reduces tax.`;
+  }
+
+  // Wrong, not merely early, for a client with a company route: it sends the
+  // overflow to an unregistered plan while ignoring s.134(6). Superseded below.
+  if(unregistered>0.5 && S.owner!==1){
+    sp.className='split show';
+    $('srReg').textContent   = money(registered);
+    $('srUnreg').textContent = money(unregistered);
+    $('srRegPer').textContent   = `a year${mult2>1?` \u2014 ${money(registered/mult2)} ${word2}`:''}`;
+    $('srUnregPer').textContent = `a year${mult2>1?` \u2014 ${money(unregistered/mult2)} ${word2}`:''}`;
+    const capBinds = m.headroom < m.before.chargeable;
+    $('srRegWhy').innerHTML = registered>0
+      ? `Cuts tax by ${money(saveAt(registered))}. ${capBinds
+          ? `This is all the room left under the ${money(CAP)} combined limit.`
+          : `Past this point chargeable income is already nil, so no further tax can be saved.`}`
+      : `No relief is available, so nothing needs to sit in a registered plan.`;
+    $('splitFoot').innerHTML = `The extra ${money(unregistered)} in a <b>registered</b> plan earns no deduction while still binding the 50\u201370 maturity window and taxing early surrender in full. `
+      + `Counter-argument to weigh with the client: registered income is exempt at maturity under the Finance Act 2026 and unregistered is not \u2014 turns on age and expected retirement tax.`;
+  }
+
+  const pointer = $('splitPointer');
+  const showPointer = unregistered > 0.5 && S.owner === 1;
+  pointer.className = showPointer ? 'note good show' : 'note good';
+  if(showPointer) pointer.innerHTML = `<b>${money(unregistered)}</b> sits beyond the personal cap, but the company route is open \u2014 the arrangement below places it.`;
+
+  /* ---- third route: employer-funded s.134(6) ---- */
+  // BIR Form 134 shares ONE ceiling between the company and the employee, and the
+  // employee side includes their 70% NIS. So the company allowance is not stacked
+  // on top of the personal cap — filling the personal cap spends the same budget.
+  const exAnn = S.exist ? n('existing') : 0, exPen = S.pen ? n('pension') : 0;
+  const ceilingWith = (personalAnnuity) => s134FormCeiling({
+    salary: m.gross,
+    approvedAnnuity: personalAnnuity + exAnn,
+    approvedPension: exPen,
+    nisAnnual: m.nis.annualEmployee,
+  });
+
+  const alPers  = Math.min(prem, maxUseful);
+  const s134    = ceilingWith(alPers);
+  const s134NoPersonal = ceilingWith(0);
+  const alCorp  = Math.min(Math.max(0, prem - alPers), s134.maxNewCompany);
+  const alUnreg = Math.max(0, prem - alPers - alCorp);
+
+  const showRoutes = m.before.tax > 0 && S.owner === 1;
+  $('routesBlock').hidden = !showRoutes;
+  if(showRoutes){
+    const corpRate2 = P.corporation_tax.ordinary_rate.value;
+    const ab = $('allocBlock');
+    ab.className = prem > 0 ? 'alloc show' : 'alloc';
+    if(prem > 0){
+      // Compare against the real alternative — everything through the company —
+      // using the form-faithful ceiling, not the deprecated stacking function.
+      const thisWay          = saveAt(alPers) + alCorp*corpRate2;
+      const altCorp          = Math.min(prem, s134NoPersonal.maxNewCompany);
+      const giveUp           = Math.max(0, altCorp*corpRate2 - thisWay);
+      const exemptAtMaturity = alPers;
+      $('alTotal').textContent = money(prem);
+      $('alPers').textContent  = money(alPers);
+      $('alCorp').textContent  = money(alCorp);
+      $('alUnreg').textContent = money(alUnreg);
+      $('arPers').className  = 'ar' + (alPers  > 0.5 ? '' : ' zero');
+      $('arCorp').className  = 'ar' + (alCorp  > 0.5 ? '' : ' zero');
+      $('arUnreg').className = 'ar' + (alUnreg > 0.5 ? '' : ' zero');
+      $('alPersWhy').innerHTML = alPers > 0.5
+        ? `Fill first. Relieves ${money(saveAt(alPers))} of income tax \u2014 marginally less than the company route would on the same money \u2014 but this is the only one of the three whose income is <b>exempt at maturity</b>.`
+        : `No personal room left after NIS and existing plans.`;
+      $('alCorpWhy').innerHTML = alCorp > 0.5
+        ? `Saves the company ${money(alCorp*corpRate2)} at ${Math.round(corpRate2*100)}%. Ceiling ${money(s134.maxNewCompany)} with the personal allowance filled, ${money(s134NoPersonal.maxNewCompany)} without \u2014 Form 134 tests both sides against one limit.`
+        : `Not needed \u2014 the personal allowance absorbs the whole amount.`;
+      $('alUnregWhy').innerHTML = alUnreg > 0.5
+        ? `Beyond both ceilings. No relief, but no lock-in either.`
+        : `Nothing left over.`;
+      const bCorp  = altCorp;
+      const bUnreg = Math.max(0, prem - bCorp);
+      const bRelief = bCorp * corpRate2;
+      $('altP').textContent = money(0); $('altC').textContent = money(bCorp); $('altU').textContent = money(bUnreg);
+      const reliefGap = bRelief - thisWay, unregGap = alUnreg - bUnreg;
+      $('altCmp').innerHTML = reliefGap > 1
+        ? `Relieves <b>${money(bRelief)}</b> \u2014 ${money(reliefGap)} more` + (unregGap>1?`, and strands ${money(unregGap)} less in unregistered`:``)
+          + `. Better on this year alone; forfeits the maturity exemption entirely.`
+        : `Does not beat the split above on these figures.`;
+      $('alFoot').innerHTML = `Relieved this year: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax.`
+        + (giveUp>1 ? ` Company-only would relieve ${money(giveUp)} more this year \u2014 Form 134 shares one ceiling, so the personal plan spends company room. Against that: ${money(exemptAtMaturity)} sits exempt at maturity, worth ~${money(exemptAtMaturity*0.25)} at a 25% retirement rate before any growth. Reverses if the client pays no tax in retirement.` : ``);
+    }
+    const youSave = saveAt(maxUseful), coSave = s134.maxNewCompany * corpRate2;
+    $('tuYouAmt').textContent = money(Math.min(youSave, m.paye));
+    $('tuCoAmt').textContent  = money(coSave);
+    $('tuYouNote').innerHTML  = `${money(maxUseful)} from taxed income. Effective relief ${maxUseful>0?((saveAt(maxUseful)/maxUseful)*100).toFixed(1):0}%, and <b>exempt at maturity</b> under s.8(1)(ta).`;
+    $('tuCoNote').innerHTML   = `${money(s134.maxNewCompany)} from company pre-tax money. Under s.134(6) it is <b>not</b> a taxable benefit in the client's hands. Larger relief in, but <b>taxable at maturity</b>.`;
+    const levy = P.corporation_tax.business_levy;
+    $('tuCaveat').className = 'tu-caveat show';
+    $('tuCaveat').innerHTML = `<b>Test before quoting.</b> The saving assumes the company has taxable profit to absorb the contribution. Business levy is ${(levy.value*100).toFixed(1)}% of gross receipts and a company effectively pays the greater of it or corporation tax \u2014 so relief stops once corporation tax reaches the levy. Companies within ${levy.exemptions.new_company_years} years of registration, or under ${money(levy.exemptions.turnover_threshold)} of receipts, have no levy floor.`;
+    $('rtBasis').innerHTML = `s.134(6) excludes employer retirement provision from the benefit-in-kind charge; s.134(6A) requires BIR approval of the contract. Neither subsection states a limit \u2014 the greater of one third of chargeable income (${money(s134.form.line9)}) or 20% of gross (${money(s134.form.line10)}) is market practice, not a quoted rule.`;
+  }
+
+  const noTax = m.before.tax <= 0;
+  $('noTaxBlock').className = noTax ? 'notax show' : 'notax';
+  if(noTax){
+    const taxStarts = PA + m.before.combinedDeductionUsed;
+    $('ntWhy').innerHTML = `At ${money(m.gross)} a year there is no income tax payable. The personal allowance of ${money(PA)} plus allowable NIS of ${money(nis70)}${(pen+ex)>0?` plus ${money(pen+ex)} of existing contributions`:''} covers the whole income.`;
+    $('ntChange').innerHTML = `On these deductions, tax begins at roughly <b>${money(taxStarts)}</b> a year (about ${money(taxStarts/12)} a month). Below that the deduction has no value.`;
+  }
+
+  /* slider */
+  $('premTxt').textContent = money(prem);
+  $('premMo').textContent  = prem>0
+    ? `a year in total \u2014 ${money(prem/PREM_MULT[S.premPeriod])} ${PREM_WORD[S.premPeriod]}`
+    : 'a year in total';
+
+  /* result */
+  $('heroBig').textContent = money(m.uplift);
+  $('taxBefore').textContent = money(m.before.tax);
+  $('taxAfter').textContent  = money(m.after.tax);
+  if(prem<=0){
+    $('heroCap').textContent = 'Move the slider above to see what comes back to you.';
+  } else if(m.uplift<=0 && m.taxSaved>0){
+    $('heroCap').textContent = `Your tax falls by ${money(m.taxSaved)}, but you can only get back what was actually taken off your pay.`;
+  } else if(m.uplift<=0){
+    $('heroCap').textContent = 'At this income there is no income tax to reduce.';
+  } else {
+    $('heroCap').innerHTML = S.payeKnown
+      ? `comes back to you, on top of the ${money(m.refundBefore)} you were already due.`
+      : `comes back to you as a refund when you file, because the tax on your pay was worked out without this annuity.`;
+  }
+
+  $('fPrem').textContent = money(prem);
+  $('fPremMo').textContent = prem>0 ? money(prem/12)+' a month' : ' ';
+  $('fNet').textContent = money(prem - m.taxSaved);
+  $('fNetMo').textContent = prem>0 ? money((prem-m.taxSaved)/12)+' a month' : ' ';
+  if(prem>0 && m.taxSaved>0){
+    const c = Math.round((prem-m.taxSaved)/prem*100);
+    $('fCents').textContent = c+'¢';
+    $('fCentsN').textContent = `the other ${100-c}¢ comes back`;
+  } else { $('fCents').textContent='—'; $('fCentsN').textContent=' '; }
+  // Show the relief ACTUALLY obtained on this premium, not the marginal band.
+  // A deduction that crosses 1,000,000 is relieved partly at 30% and partly at
+  // 25%, so quoting a single band rate misstates it.
+  const spansBand = m.before.chargeable > 1e6 && m.after.chargeable < 1e6;
+  if(prem>0 && registered>0 && m.taxSaved>0){
+    const eff = m.taxSaved / registered;
+    $('fRate').textContent = (eff*100).toFixed(eff*100 % 1 ? 1 : 0)+'%';
+    $('fRateN').textContent = spansBand
+      ? 'blended — part at 30%, part at 25%'
+      : (m.before.chargeable>1e6 ? 'above $1,000,000' : 'below $1,000,000');
+  } else {
+    const marg = m.before.chargeable>1e6?30:25;
+    $('fRate').textContent = marg+'%';
+    $('fRateN').textContent = marg===30?'above $1,000,000':'below $1,000,000';
+  }
+
+  /* detail table */
+  const rows = [
+    ['sec','Money in'],
+    ['Pay for the year', m.gross, m.gross],
+    ['sec','Taken off before tax'],
+    ['Personal allowance — everyone gets this', -PA, -PA],
+    ['NIS — 70% of what you paid', -m.nis.deductible70, -m.nis.deductible70],
+    ['Pension or savings plan at work', -(S.pen?n('pension'):0), -(S.pen?n('pension'):0)],
+    ['Annuity you already have', -(S.exist?n('existing'):0), -(S.exist?n('existing'):0)],
+    ['hl','New annuity', 0, -relieved],
+    ['tot','Income the tax is worked out on', m.before.chargeable, m.after.chargeable],
+    ['sec','The tax'],
+    ['tot','Income tax for the year', m.before.tax, m.after.tax],
+    ['Tax already taken off your pay', -m.paye, -m.paye],
+    ['grand','MONEY BACK TO YOU', m.refundBefore, m.refundAfter],
+  ];
+  $('tbody').innerHTML = rows.map(r=>{
+    if(r[0]==='sec') return `<tr class="sec"><td colspan="3">${r[1]}</td></tr>`;
+    let cls='', label, b, a;
+    if(r[0]==='hl'||r[0]==='tot'||r[0]==='grand'){ cls=r[0]; label=r[1]; b=r[2]; a=r[3]; }
+    else { label=r[0]; b=r[1]; a=r[2]; }
+    return `<tr class="${cls}"><td>${label}</td><td class="n">${money(b)}</td><td class="n">${money(a)}</td></tr>`;
+  }).join('');
+
+  /* keep the number box and slider in step with S.prem, in the chosen frequency */
+  const mult = PREM_MULT[S.premPeriod];
+  const maxAnnual = Math.max(CAP, Math.ceil((m.headroom+10000)/10000)*10000);
+  const rng = $('premRange'), box = $('prem');
+  const perPeriod = prem / mult;
+  const wantMax  = Math.ceil(maxAnnual / mult);
+  const wantStep = mult >= 12 ? 25 : mult >= 4 ? 50 : mult >= 2 ? 100 : 250;
+  if(+rng.max !== wantMax)   rng.max = wantMax;
+  if(+rng.step !== wantStep){ rng.step = wantStep; box.step = wantStep; }
+  if(Math.abs(+rng.value - perPeriod) > 0.5) rng.value = perPeriod;
+  if(document.activeElement !== box && Math.abs(parseFloat(box.value||0) - perPeriod) > 0.5){
+    box.value = Math.round(perPeriod);
+  }
+}
+
+/* ---------------- wiring ---------------- */
+['earn','pension','existing','paye'].forEach(id=>$(id).addEventListener('input',render));
+$('prem').addEventListener('input',e=>{ S.prem=(parseFloat(e.target.value)||0)*PREM_MULT[S.premPeriod]; render(); });
+$('premRange').addEventListener('input',e=>{ S.prem=(parseFloat(e.target.value)||0)*PREM_MULT[S.premPeriod]; render(); });
+$('premPeriods').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('premPeriods').children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+  S.premPeriod=b.dataset.p; render();
+});
+
+$('periods').addEventListener('click',e=>{
+  const b=e.target.closest('button'); if(!b) return;
+  [...$('periods').children].forEach(x=>x.classList.remove('on'));
+  b.classList.add('on'); S.period=b.dataset.p;
+  const d={week:1200,fortnight:2400,month:5000,year:60000}[S.period];
+  $('earn').value = d; $('earn').step = {week:50,fortnight:100,month:100,year:1000}[S.period];
+  render();
+});
+
+document.querySelectorAll('.yn').forEach(g=>{
+  g.addEventListener('click',e=>{
+    const b=e.target.closest('button'); if(!b) return;
+    [...g.children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
+    const q=g.dataset.q, on=b.dataset.v==='1';
+    S[q === 'paye' ? 'payeKnown' : q] = on?1:0;
+    const amt=document.getElementById('amt-'+q); if(amt) amt.classList.toggle('show',on);  // 'owner' has no amount box
+    if(q==='paye' && on && n('paye')===0) $('paye').value = Math.round(model(0).before.tax);
+    render();
+  });
+});
+
+document.querySelectorAll('.chips button').forEach(b=>{
+  b.addEventListener('click',()=>{
+    const s=b.dataset.set, mm=model(0);
+    if(s==='fill')        S.prem = mm.headroom;
+    else if(s==='useful') S.prem = Math.max(0, Math.min(mm.headroom, mm.before.chargeable));
+    else                  S.prem = parseFloat(s)||0;
+    render();
+  });
+});
+
+render();
+</script>
+</body>
+</html>
