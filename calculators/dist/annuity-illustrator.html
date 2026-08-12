@@ -115,6 +115,16 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .legend{display:flex;gap:15px;flex-wrap:wrap;margin-top:10px;font-size:11px;color:var(--muted)}
 .legend i{width:9px;height:9px;border-radius:2px;display:inline-block;margin-right:5px}
 
+.rec-badge{background:#fff;color:var(--green);font-size:10px;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:700;border-radius:99px;padding:2px 9px;margin-right:8px;vertical-align:1px}
+.alt{margin-top:13px;border:1px dashed var(--rule);border-radius:9px;padding:13px 14px;background:#FAF7F0}
+.alt-h{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:9px}
+.alt-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(115px,1fr));gap:9px}
+.alt-r{display:flex;justify-content:space-between;gap:9px;font-size:12.5px;color:var(--muted);
+  background:#fff;border:1px solid var(--rule);border-radius:7px;padding:7px 10px}
+.alt-r b{color:var(--ink);font-weight:600}
+.alt-cmp{margin-top:10px;font-size:12px;color:var(--ink2);line-height:1.6}
+
 /* allocation + two-up */
 .alloc{margin-top:18px;border:1.5px solid var(--green);border-radius:10px;overflow:hidden;display:none}
 .alloc.show{display:block}
@@ -308,6 +318,7 @@ tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
         <span><i style="background:repeating-linear-gradient(115deg,#1B6B4F 0 5px,#1F7A5A 5px 10px)"></i>New annuity</span>
         <span><i style="background:repeating-linear-gradient(115deg,#A5382A 0 4px,#B8493A 4px 8px)"></i>Wasted</span>
       </div>
+      <div class="note good" id="splitPointer"></div>
       <div class="note warn" id="noteWarn"></div>
       <div class="note good" id="noteGood"></div>
     </div>
@@ -387,12 +398,21 @@ tr.grand td:last-child{border-radius:0 5px 5px 0;padding-right:10px}
     <div class="card-h"><h2>Third route: employer-funded s.134(6)</h2><div class="tag">Company owners</div></div>
     <p class="card-note">Runs on a share of income rather than the $60,000 cap, funded by the company out of pre-tax money. Employer-owned, so it forfeits the Finance Act 2026 maturity exemption.</p>
     <div class="alloc" id="allocBlock">
-      <div class="alloc-h">Recommended split of <span id="alTotal">$0</span> a year</div>
+      <div class="alloc-h"><span class="rec-badge">Recommended</span>Split of <span id="alTotal">$0</span> a year</div>
       <div class="alloc-b">
         <div class="alloc-rows">
           <div class="ar" id="arPers"><div class="k">1 &middot; Personal registered</div><div class="v num" id="alPers">$0</div><div class="w" id="alPersWhy"></div></div>
           <div class="ar" id="arCorp"><div class="k">2 &middot; Company s.134(6)</div><div class="v num" id="alCorp">$0</div><div class="w" id="alCorpWhy"></div></div>
           <div class="ar" id="arUnreg"><div class="k">3 &middot; Unregistered</div><div class="v num" id="alUnreg">$0</div><div class="w" id="alUnregWhy"></div></div>
+        </div>
+        <div class="alt" id="altBox">
+          <div class="alt-h">Alternative &mdash; everything through the company</div>
+          <div class="alt-rows">
+            <div class="alt-r"><span>Personal</span><b class="num" id="altP">$0</b></div>
+            <div class="alt-r"><span>Company</span><b class="num" id="altC">$0</b></div>
+            <div class="alt-r"><span>Unregistered</span><b class="num" id="altU">$0</b></div>
+          </div>
+          <div class="alt-cmp" id="altCmp"></div>
         </div>
         <div class="alloc-foot" id="alFoot"></div>
       </div>
@@ -1599,11 +1619,12 @@ function render(){
     const ab = $('allocBlock');
     ab.className = prem > 0 ? 'alloc show' : 'alloc';
     if(prem > 0){
-      const pStar = Math.max(0, Math.min(maxUseful, (3*prem - m.before.chargeable)/2));
-      const cStar = s134MaxContribution({ grossAnnual:m.gross, chargeableIncome: model(pStar).after.chargeable }).max;
-      const bestThisYear = saveAt(pStar) + Math.min(Math.max(0,prem-pStar), cStar)*corpRate2;
-      const thisWay      = saveAt(alPers) + alCorp*corpRate2;
-      const giveUp       = Math.max(0, bestThisYear - thisWay);
+      // Compare against the real alternative — everything through the company —
+      // using the form-faithful ceiling, not the deprecated stacking function.
+      const thisWay          = saveAt(alPers) + alCorp*corpRate2;
+      const altCorp          = Math.min(prem, s134NoPersonal.maxNewCompany);
+      const giveUp           = Math.max(0, altCorp*corpRate2 - thisWay);
+      const exemptAtMaturity = alPers;
       $('alTotal').textContent = money(prem);
       $('alPers').textContent  = money(alPers);
       $('alCorp').textContent  = money(alCorp);
@@ -1620,6 +1641,15 @@ function render(){
       $('alUnregWhy').innerHTML = alUnreg > 0.5
         ? `Beyond both ceilings. No relief, but no lock-in either.`
         : `Nothing left over.`;
+      const bCorp  = altCorp;
+      const bUnreg = Math.max(0, prem - bCorp);
+      const bRelief = bCorp * corpRate2;
+      $('altP').textContent = money(0); $('altC').textContent = money(bCorp); $('altU').textContent = money(bUnreg);
+      const reliefGap = bRelief - thisWay, unregGap = alUnreg - bUnreg;
+      $('altCmp').innerHTML = reliefGap > 1
+        ? `Relieves <b>${money(bRelief)}</b> \u2014 ${money(reliefGap)} more` + (unregGap>1?`, and strands ${money(unregGap)} less in unregistered`:``)
+          + `. Better on this year alone; forfeits the maturity exemption entirely.`
+        : `Does not beat the split above on these figures.`;
       $('alFoot').innerHTML = `Relieved this year: <b>${money(thisWay)}</b> \u2014 ${money(saveAt(alPers))} income tax, ${money(alCorp*corpRate2)} corporation tax.`
         + (giveUp>1 ? ` Company-only would relieve ${money(giveUp)} more this year \u2014 Form 134 shares one ceiling, so the personal plan spends company room. Against that: ${money(exemptAtMaturity)} sits exempt at maturity, worth ~${money(exemptAtMaturity*0.25)} at a 25% retirement rate before any growth. Reverses if the client pays no tax in retirement.` : ``);
     }

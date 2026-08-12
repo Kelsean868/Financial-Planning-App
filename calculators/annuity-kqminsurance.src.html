@@ -95,6 +95,17 @@ input::-webkit-outer-spin-button,input::-webkit-inner-spin-button{-webkit-appear
 .seg.unreg{background:repeating-linear-gradient(115deg,var(--goldd) 0 9px,#c08f2c 9px 18px)}
 .seg.over{background:repeating-linear-gradient(115deg,var(--bad) 0 8px,#b04531 8px 16px)}
 
+/* the alternative — visibly secondary to the recommendation */
+.rec-badge{background:#fff;color:var(--tealb);font-size:10.5px;letter-spacing:.11em;text-transform:uppercase;
+  font-weight:700;border-radius:99px;padding:3px 10px;margin-right:9px;vertical-align:1px}
+.alt{margin-top:14px;border:1px dashed var(--line);border-radius:9px;padding:14px 15px;background:#faf8f3}
+.alt-h{font-size:12.5px;font-weight:600;color:var(--mut);margin-bottom:10px}
+.alt-rows{display:grid;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));gap:10px}
+.alt-r{display:flex;justify-content:space-between;gap:10px;font-size:13px;color:var(--mut);
+  background:#fff;border:1px solid var(--line);border-radius:7px;padding:8px 11px}
+.alt-r b{color:var(--ink);font-weight:600}
+.alt-cmp{margin-top:11px;font-size:12.5px;color:var(--ink);line-height:1.6}
+
 /* two pockets — deliberately NOT summed: one is cash, one stays in the company */
 .pockets{display:grid;grid-template-columns:1fr auto 1fr;gap:18px;align-items:center;margin-top:20px}
 .pk{background:var(--navy);color:#fff;border-radius:11px;padding:20px}
@@ -457,7 +468,7 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
       </div>
 
       <div class="alloc" id="allocBlock">
-        <div class="alloc-h">How I would split <span id="alTotal">$0</span> a year</div>
+        <div class="alloc-h"><span class="rec-badge">Recommended</span> How I would split <span id="alTotal">$0</span> a year</div>
         <div class="alloc-b">
           <div class="alloc-rows">
             <div class="ar" id="arPers"><div class="k">1 &middot; Personal registered</div>
@@ -467,7 +478,16 @@ tr.grand td:last-child{border-radius:0 6px 6px 0;padding-right:12px}
             <div class="ar" id="arUnreg"><div class="k">3 &middot; Unregistered</div>
               <div class="v num" id="alUnreg">$0</div><div class="w" id="alUnregWhy"></div></div>
           </div>
-          <div class="alloc-foot" id="alFoot"></div>
+          <div class="alt" id="altBox">
+          <div class="alt-h">The other way it could be done &mdash; everything through the company</div>
+          <div class="alt-rows">
+            <div class="alt-r"><span>Personal</span><b class="num" id="altP">$0</b></div>
+            <div class="alt-r"><span>Company</span><b class="num" id="altC">$0</b></div>
+            <div class="alt-r"><span>Unregistered</span><b class="num" id="altU">$0</b></div>
+          </div>
+          <div class="alt-cmp" id="altCmp"></div>
+        </div>
+        <div class="alloc-foot" id="alFoot"></div>
         </div>
       </div>
 
@@ -774,8 +794,25 @@ function render(){
       const thisWay       = saveAt(alPers) + alCorp*corpRate2;
       const giveUp        = Math.max(0, reliefCoFirst - thisWay);
       const exemptAtMaturity = alPers;
+      /* Show the road not taken, with its real advantages, rather than only naming it. */
+      const bCorp  = Math.min(prem, s134NoPersonal.maxNewCompany);
+      const bUnreg = Math.max(0, prem - bCorp);
+      const bRelief = bCorp * corpRate2;
+      $('altP').textContent = money(0);
+      $('altC').textContent = money(bCorp);
+      $('altU').textContent = money(bUnreg);
+      const reliefGap = bRelief - thisWay;
+      const unregGap  = alUnreg - bUnreg;
+      $('altCmp').innerHTML = reliefGap > 1
+        ? `That would relieve <b>${money(bRelief)}</b> this year &mdash; ${money(reliefGap)} more than the split above`
+          + (unregGap > 1 ? `, and leave ${money(unregGap)} <i>less</i> stranded in an unregistered plan.` : `.`)
+          + ` On this year alone it is the better arrangement. What it gives up is that none of it would be exempt when it matures.`
+        : `On these figures it does not do better than the split above.`;
+
       $('alFoot').innerHTML = `Tax saved this year: <b>${money(thisWay)}</b> &mdash; ${money(saveAt(alPers))} off your income tax and ${money(alCorp*corpRate2)} off your company's corporation tax.`
-        + (giveUp>1 ? ` <b>Putting it all through the company instead would save ${money(giveUp)} more this year</b>, because the company and you share one ceiling and your personal plan uses part of it. The reason to do it this way anyway: the ${money(exemptAtMaturity)} in your personal plan is <b>exempt from tax when it matures</b>, and the company plan is not. At a 25% retirement rate that is worth about ${money(exemptAtMaturity*0.25)} even if the fund never grows &mdash; more than the ${money(giveUp)} given up. If you expect to pay little or no tax in retirement, the company route wins instead.` : ``);
+        + (giveUp>1
+           ? ` <b>Why I still prefer the split above.</b> The ${money(exemptAtMaturity)} in your personal plan is exempt from tax when it matures; nothing in the company plan is. At a 25% retirement rate that is worth about ${money(exemptAtMaturity*0.25)} even if the fund never grows, against the ${money(giveUp)} of relief given up &mdash; so you are ahead by roughly ${money(exemptAtMaturity*0.25 - giveUp)} before any growth at all, and further ahead the longer it runs. <b>It reverses in one case:</b> if your retirement income will sit under the ${money(PA)} personal allowance you will pay no tax then, the exemption is worth nothing to you, and the company route is simply better. That is worth deciding deliberately rather than by default.`
+           : ``);
     }
 
     /* two pockets, kept separate on purpose */
