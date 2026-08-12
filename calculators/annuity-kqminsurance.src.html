@@ -960,8 +960,17 @@ $('premPeriods').addEventListener('click',e=>{
 $('periods').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   [...$('periods').children].forEach(x=>x.classList.remove('on')); b.classList.add('on');
-  S.period=b.dataset.p;
-  $('earn').value = {week:1200,fortnight:2400,month:5000,year:60000}[S.period];
+  // This is a unit toggle, not a reset. It used to overwrite whatever the user
+  // had typed with a default for the new period, so "50,000 a month" became
+  // "60,000 a year" on one click - a different person entirely, and every figure
+  // below followed it down without a word. Convert instead: the annual earnings
+  // stay put and only the way they are stated changes, which is what the premium
+  // control next to it has always done.
+  const prev = S.period;
+  S.period = b.dataset.p;
+  const annual  = toMonthly(n('earn'), prev) * 12;
+  const perYear = {week:52, fortnight:26, month:12, year:1}[S.period];
+  $('earn').value = Math.round(annual / perYear);
   $('earn').step  = {week:50,fortnight:100,month:100,year:1000}[S.period];
   render();
 });

@@ -1771,9 +1771,15 @@ $('premPeriods').addEventListener('click',e=>{
 $('periods').addEventListener('click',e=>{
   const b=e.target.closest('button'); if(!b) return;
   [...$('periods').children].forEach(x=>x.classList.remove('on'));
-  b.classList.add('on'); S.period=b.dataset.p;
-  const d={week:1200,fortnight:2400,month:5000,year:60000}[S.period];
-  $('earn').value = d; $('earn').step = {week:50,fortnight:100,month:100,year:1000}[S.period];
+  b.classList.add('on');
+  // Unit toggle, not a reset - see the note in annuity-kqminsurance.src.html.
+  // Overwriting the entered figure with a default silently turned "50,000 a
+  // month" into "60,000 a year" and every figure below followed it.
+  const prev = S.period; S.period = b.dataset.p;
+  const annual  = toMonthly(n('earn'), prev) * 12;
+  const perYear = {week:52, fortnight:26, month:12, year:1}[S.period];
+  $('earn').value = Math.round(annual / perYear);
+  $('earn').step  = {week:50,fortnight:100,month:100,year:1000}[S.period];
   render();
 });
 
