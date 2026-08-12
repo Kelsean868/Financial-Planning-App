@@ -413,6 +413,34 @@
     }
   },
 
+  "group_life": {
+    "_note": "Employer-sponsored group life terms. T&T-specific and materially affects the protection gap: most employed clients are underinsured AND about to lose what they have.",
+    "reduction_age": {
+      "value": 66,
+      "unit": "age",
+      "source": "https://www.sagicor.com/en-tt/business-solutions/employee-benefits",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE",
+      "notes": "Sagicor T&T CariCARE group life. Coverage reduces by 50% at this age."
+    },
+    "reduction_factor": {
+      "value": 0.5,
+      "unit": "fraction of face remaining",
+      "source": "https://www.sagicor.com/en-tt/business-solutions/employee-benefits",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE"
+    },
+    "termination_age": {
+      "value": 70,
+      "unit": "age",
+      "source": "https://www.sagicor.com/en-tt/business-solutions/employee-benefits",
+      "retrieved": "2026-07-16",
+      "status": "VERIFIED_SINGLE_SOURCE",
+      "client_insight": "Group life terminates at 70 with NO post-retirement cover. This is the single best prospecting insight for the individual-cover conversation: what you have through work vanishes exactly when you may still have dependents.",
+      "warning": "Sourced from Sagicor's terms. Other T&T carriers' group schemes may differ — confirm per scheme before relying on it for a specific client. An engine that counts group cover as permanent is mis-selling."
+    }
+  },
+
   "annuities": {
     "statutory_maturity_floor": {
       "value": 50,
@@ -559,6 +587,20 @@
     "_note": "T&T market conventions — local norms, not universal truths. Sourced from the standard fact-finding instruments.",
     "rental_income_months": { "value": 120, "source": "Tatil Life Client Financial Profile (needs formula)", "status": "MARKET_CONVENTION" },
     "income_continuation_to_age": { "value": 21, "source": "Tatil Life Client Financial Profile — 'Continuation of Income until Last child attains age 21'", "status": "MARKET_CONVENTION" },
+    "funeral_cost_default": {
+      "value": 50000,
+      "unit": "TTD",
+      "source": "Founder (Kyron Marchan, CBTT-registered Tatil Life agent, 13+ years T&T practice), 2026-07-17",
+      "status": "VERIFIED_PRACTICE_UNCITED",
+      "notes": "A DEFAULT, not a floor. Used when the client has no figure of their own; a stated figure overrides it in EITHER direction. Contrast medical_cost_minimum, which is a floor."
+    },
+    "medical_cost_minimum": {
+      "value": 100000,
+      "unit": "TTD",
+      "source": "Founder (Kyron Marchan, CBTT-registered Tatil Life agent, 13+ years T&T practice), 2026-07-17",
+      "status": "VERIFIED_PRACTICE_UNCITED",
+      "notes": "A FLOOR, not a default. A client's own lower estimate does NOT override it — final-illness costs in T&T are systematically underestimated by clients, and understating this is the direction that leaves a family short. Rationale is professional judgement, not a published schedule; revisit if a costing source is found."
+    },
     "emergency_fund_multiple": { "value": 6, "unit": "x gross monthly income", "source": "Maritime Financial Fact Finder", "status": "MARKET_CONVENTION", "notes": "Note: 6x GROSS INCOME, not months of expenses as in US convention." },
     "benchmark_allocation": {
       "value": { "tax": 0.15, "loans": 0.25, "retirement": 0.10, "life_insurance": 0.05, "general_insurance": 0.05, "savings_investment": 0.10, "living_expenses": 0.30 },
