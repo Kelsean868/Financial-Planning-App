@@ -516,8 +516,10 @@ function render(){
   $('roomBig').textContent = money(m.headroom);
   const nis70 = m.nis.deductible70;
   const pen = S.pen ? n('pension') : 0, ex = S.exist ? n('existing') : 0;
-  const scaleMax = Math.max(CAP, nis70 + pen + ex + prem);
-  const parts = [['nis',nis70],['pen',pen],['exist',ex],['ann',registered],['unreg',unregistered]];
+  const scaleMax = S.owner===1 ? Math.max(CAP, nis70+pen+ex+registered) : Math.max(CAP, nis70+pen+ex+prem);
+  const parts = S.owner===1
+    ? [['nis',nis70],['pen',pen],['exist',ex],['ann',registered]]
+    : [['nis',nis70],['pen',pen],['exist',ex],['ann',registered],['unreg',unregistered]];
   let h = '';
   parts.forEach(([c,v])=>{
     if(v<=0) return;
@@ -547,7 +549,9 @@ function render(){
     ng.innerHTML = `<b>Every dollar attracts relief.</b> The full premium reduces tax.`;
   }
 
-  if(unregistered>0.5){
+  // Wrong, not merely early, for a client with a company route: it sends the
+  // overflow to an unregistered plan while ignoring s.134(6). Superseded below.
+  if(unregistered>0.5 && S.owner!==1){
     sp.className='split show';
     $('srReg').textContent   = money(registered);
     $('srUnreg').textContent = money(unregistered);
@@ -562,6 +566,11 @@ function render(){
     $('splitFoot').innerHTML = `The extra ${money(unregistered)} in a <b>registered</b> plan earns no deduction while still binding the 50\u201370 maturity window and taxing early surrender in full. `
       + `Counter-argument to weigh with the client: registered income is exempt at maturity under the Finance Act 2026 and unregistered is not \u2014 turns on age and expected retirement tax.`;
   }
+
+  const pointer = $('splitPointer');
+  const showPointer = unregistered > 0.5 && S.owner === 1;
+  pointer.className = showPointer ? 'note good show' : 'note good';
+  if(showPointer) pointer.innerHTML = `<b>${money(unregistered)}</b> sits beyond the personal cap, but the company route is open \u2014 the arrangement below places it.`;
 
   /* ---- third route: employer-funded s.134(6) ---- */
   // BIR Form 134 shares ONE ceiling between the company and the employee, and the
