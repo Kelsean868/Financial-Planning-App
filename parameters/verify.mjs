@@ -1,6 +1,6 @@
 // Sanity + drift checks for the canonical parameter tables.
 //   node parameters/verify.mjs
-import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly, s134MaxContribution, s134FormCeiling } from "./tt-parameters.js";
+import { P, nisPension, scpBenefit, retirementFloor, healthSurcharge, incomeTax, checkAnnuityMaturity, auditParameters, nisFromEarnings, toMonthly, s134MaxContribution, s134FormCeiling, ageNextBirthday } from "./tt-parameters.js";
 
 let fails = 0;
 const eq = (a, b, msg) => {
@@ -327,6 +327,32 @@ console.log("\n=== Tatil life underwriting: medical limits (twin of AgencyTrack)
     }
     is(/application part 2/i.test(ml.exam_levels["Non-Medical"]), true,
        "Non-Medical is documented as a FORM (life application part 2), not an absent requirement");
+  }
+
+  // Age basis. Confirmed 30 Aug 2026: Tatil rates and underwrites on AGE NEXT
+  // BIRTHDAY. The 50/51 pair below is the whole reason this had to be settled -
+  // reading the table with an attained age promises a non-medical case to a
+  // client who will be sent for a paramedical.
+  {
+    is(/next birthday/i.test(ml.age_basis), true, "the table records age next birthday as its basis");
+    is(ml.age_basis_confirmed, "2026-08-30", "...and when that was confirmed");
+
+    eq(ageNextBirthday("1976-01-10", "2026-01-09"), 50, "the day before a 50th birthday, ANB is 50");
+    eq(ageNextBirthday("1976-01-10", "2026-01-10"), 51, "ON the 50th birthday, ANB steps to 51");
+    eq(ageNextBirthday("2026-08-30", "2026-08-30"), 1, "a newborn is 1, not 0");
+    eq(ageNextBirthday("2000-02-29", "2027-02-28"), 27, "a leap-day birth has not stepped on 28 Feb of a common year");
+    eq(ageNextBirthday("2000-02-29", "2027-03-01"), 28, "...and steps on 1 March");
+    is(ageNextBirthday("2026-02-30", "2026-08-30"), null, "an impossible date is refused, not rolled forward");
+    is(ageNextBirthday("2026-08-30", "2020-01-01"), null, "an asOf before the birth is refused");
+
+    const bandOf = (age) => ml.bands.find(
+      (b) => age >= b.min_age && (b.max_age === null || age <= b.max_age));
+    is(bandOf(ageNextBirthday("1976-01-10", "2026-01-09")).min_age, 41,
+       "a client one day short of 50 reads the 41-50 band");
+    is(bandOf(ageNextBirthday("1976-01-10", "2026-01-10")).min_age, 51,
+       "the same client on their 50th birthday reads 51-60 - where no non-medical band exists");
+    is(bandOf(ageNextBirthday("1976-01-10", "2026-01-10")).tiers[0].exam, "Paramedical",
+       "...so their 500,000 case is a paramedical, not the non-medical an attained age would promise");
   }
 
   console.log("  note  AgencyTrack src/config/medicalLimits/2026-04.js holds the same table and");

@@ -403,6 +403,52 @@ export function s134MaxContribution({ grossAnnual, chargeableIncome }) {
            employerOwned: node.employer_owned };
 }
 
+/* ------------------------------------------------- Life underwriting age */
+
+/**
+ * ageNextBirthday — the age Tatil rates and underwrites at.
+ *
+ * CONFIRMED by the operator 30 Aug 2026: Tatil reckons AGE NEXT BIRTHDAY, for
+ * premiums and for the medical requirements in `life_underwriting` alike. ANB
+ * is always attained age + 1 — a constant offset, not a mid-year switch.
+ *
+ * The recommendation engine must derive the age through here, never from a
+ * raw attained age. The boundary that costs money is 50/51: a client aged 50 is
+ * underwritten at 51, where the non-medical band disappears entirely, so a
+ * recommendation quoted off attained age promises a non-medical case and
+ * delivers a paramedical the client was never warned about.
+ *
+ * Pure: both arguments are YYYY-MM-DD strings and there is no clock here. The
+ * caller supplies `asOf` — Trinidad is UTC-4 with no DST, so a UTC "today" is
+ * the previous calendar day for four hours every evening, which at a birthday
+ * boundary is a wrong band.
+ *
+ * A leap-day birth has no birthday in a common year; 1 March is treated as the
+ * day it steps. That is a choice, not a fact from the document.
+ *
+ * @returns {number|null} age next birthday, or null on an unusable input
+ */
+export function ageNextBirthday(dateOfBirth, asOf) {
+  const parse = (s) => {
+    const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(typeof s === "string" ? s : "");
+    if (!m) return null;
+    const [y, mo, d] = [Number(m[1]), Number(m[2]), Number(m[3])];
+    const probe = new Date(Date.UTC(y, mo - 1, d));
+    if (probe.getUTCFullYear() !== y || probe.getUTCMonth() !== mo - 1 || probe.getUTCDate() !== d) {
+      return null;
+    }
+    return [y, mo, d];
+  };
+  const dob = parse(dateOfBirth);
+  const at = parse(asOf);
+  if (!dob || !at) return null;
+  const [by, bm, bd] = dob;
+  const [ay, am, ad] = at;
+  const before = am < bm || (am === bm && ad < bd);
+  if (ay < by || (ay === by && before)) return null; // not yet born
+  return (ay - by) - (before ? 1 : 0) + 1;
+}
+
 /* --------------------------------------------------------- Provenance API */
 
 /** Walk the tree and return every parameter whose status is not clean. */

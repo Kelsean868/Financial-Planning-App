@@ -585,7 +585,9 @@
       "retrieved": "2026-08-30",
       "status": "VERIFIED_SINGLE_SOURCE",
       "applies_to": ["life", "critical_illness"],
-      "age_basis": "as printed on the document; confirm whether Tatil reckons age next birthday before deriving age from a date of birth",
+      "age_basis": "age next birthday (attained age + 1)",
+      "age_basis_confirmed": "2026-08-30",
+      "age_basis_note": "CONFIRMED by the operator 30 Aug 2026: Tatil reckons AGE NEXT BIRTHDAY, for premiums and for these medical requirements alike. ANB is always attained age + 1 - a constant offset, not a mid-year switch. NEVER read this table with a raw attained age: the boundary that costs money is 50/51, where the non-medical band disappears entirely, so a client aged 50 is underwritten at 51 and a quote taken off their attained age promises a non-medical case and delivers a paramedical. AgencyTrack derives it with ageNextBirthday() in src/utils/medicalRequirements.js.",
       "band_mapping_confirmed": "2026-08-30",
       "band_mapping_note": "The source PDF's text layer emits its five age headings AFTER their five requirement blocks, so the age-to-block pairing was originally inferred from layout. It has since been checked against the printed table by the operator (30 Aug 2026) and stands as written - including the 16-40 / 41-50 pair (identical but for the chest X-ray at the top tier), the 750,000 breakpoint used only by 51-60, and the urine screen applying to ages 16-60 only.",
       "exam_levels": {
