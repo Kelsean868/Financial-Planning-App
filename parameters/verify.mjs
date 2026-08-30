@@ -307,6 +307,28 @@ console.log("\n=== Tatil life underwriting: medical limits (twin of AgencyTrack)
   is(ml.disability_income_rider_requires_medical, kf.disability_income_rider_requires_medical,
      "the DIR-forces-a-medical rule matches key_figures");
 
+  // Operator-confirmed on 30 Aug 2026, so now asserted rather than assumed.
+  {
+    const urine = ml.universal.find((u) => u.from === kf.urine_screen_from_ages_16_to_60
+      && /urine/i.test(u.requirement));
+    is(!!urine, true, "the urine screen entry exists");
+    eq(urine.min_age, 16, "the urine screen starts at 16, not at birth");
+    eq(urine.max_age, 60, "...and stops at 60 — it is NOT all ages");
+
+    const breakpoints = ml.bands.map(
+      (b) => [b.min_age, b.tiers.some((t) => t.up_to === 750000)]);
+    const with750 = breakpoints.filter(([, has]) => has).map(([min]) => min);
+    is(JSON.stringify(with750), JSON.stringify([0, 51]),
+       "only the child band and 51-60 use a 750,000 breakpoint");
+
+    const examsUsed = [...new Set(ml.bands.flatMap((b) => b.tiers.map((t) => t.exam)))];
+    for (const e of examsUsed) {
+      is(typeof ml.exam_levels?.[e], "string", `exam level "${e}" is explained in exam_levels`);
+    }
+    is(/application part 2/i.test(ml.exam_levels["Non-Medical"]), true,
+       "Non-Medical is documented as a FORM (life application part 2), not an absent requirement");
+  }
+
   console.log("  note  AgencyTrack src/config/medicalLimits/2026-04.js holds the same table and");
   console.log("  note  asserts the SAME key figures in its own suite. No test inside either repo");
   console.log("  note  can read the other — if you change one, change the twin.");
