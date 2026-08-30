@@ -254,6 +254,64 @@ console.log("\n=== BIR Form 134 reproduced line by line ===");
      `the superseded function still disagrees (${oldWay.max.toFixed(0)} vs ${r.maxNewCompany.toFixed(0)}) — do not call it`);
 }
 
+console.log("\n=== Tatil life underwriting: medical limits (twin of AgencyTrack) ===");
+{
+  const ml = P.life_underwriting.medical_limits;
+  const kf = P.life_underwriting.key_figures;
+
+  is(ml.effective, "2026-04-01", "table is the April 2026 revision");
+  is(ml.applies_to.includes("critical_illness"), true,
+     "the 25-Mar-2026 memo extended the life requirements to critical illness");
+
+  // Structure: bands must tile the age line with no gap and no overlap, or a
+  // client of some age silently gets no answer.
+  for (const age of [0, 15, 16, 40, 41, 50, 51, 60, 61, 99]) {
+    const hits = ml.bands.filter(
+      (b) => age >= b.min_age && (b.max_age === null || age <= b.max_age));
+    is(hits.length, 1, `exactly one band covers age ${age}`);
+  }
+  for (const b of ml.bands) {
+    const ups = b.tiers.map((t) => t.up_to);
+    is(ups[ups.length - 1], null, `band ${b.min_age}+ ends in an open tier`);
+    const finite = ups.slice(0, -1);
+    is(JSON.stringify(finite), JSON.stringify([...finite].sort((a, c) => a - c)),
+       `band ${b.min_age}+ tiers ascend`);
+  }
+
+  // The figures a human would quote, checked against the structure that
+  // produces them. If the table is edited, these move and this fails.
+  const tierTop = (age, exam) => {
+    const band = ml.bands.find((b) => age >= b.min_age && (b.max_age === null || age <= b.max_age));
+    const last = [...band.tiers].reverse().find((t) => t.exam === exam);
+    return last ? last.up_to : null;
+  };
+  eq(tierTop(30, "Non-Medical"), kf.non_medical_limit_16_to_50,
+     "non-medical limit at 30 matches key_figures");
+  eq(tierTop(50, "Non-Medical"), kf.non_medical_limit_16_to_50,
+     "...and still holds at 50, the top of that band");
+  eq(tierTop(10, "Non-Medical"), kf.non_medical_limit_child_with_hiv_aps,
+     "a child stretches to 750,000 (with HIV + APS)");
+  is(tierTop(kf.first_age_with_no_non_medical_band, "Non-Medical"), null,
+     `no non-medical band exists from age ${kf.first_age_with_no_non_medical_band}`);
+  is(ml.bands.find((b) => b.min_age === kf.first_age_requiring_medical_from_first_dollar)
+       .tiers[0].exam, "Medical",
+     `a Medical is required from the first dollar at ${kf.first_age_requiring_medical_from_first_dollar}`);
+
+  const froms = ml.universal.map((u) => u.from);
+  is(froms.includes(kf.financial_statement_and_inspection_from), true,
+     "financial statement / inspection threshold matches key_figures");
+  is(froms.includes(kf.urine_screen_from_ages_16_to_60), true,
+     "urine-screen threshold matches key_figures");
+  eq(ml.determined_at_underwriting_from, kf.determined_at_underwriting_from,
+     "the underwriting-discretion ceiling matches key_figures");
+  is(ml.disability_income_rider_requires_medical, kf.disability_income_rider_requires_medical,
+     "the DIR-forces-a-medical rule matches key_figures");
+
+  console.log("  note  AgencyTrack src/config/medicalLimits/2026-04.js holds the same table and");
+  console.log("  note  asserts the SAME key figures in its own suite. No test inside either repo");
+  console.log("  note  can read the other — if you change one, change the twin.");
+}
+
 console.log("\n=== Parameters needing attention (audit) ===");
 for (const a of auditParameters()) console.log(`  [${a.status}] ${a.path}`);
 

@@ -573,5 +573,74 @@
       "status": "MARKET_CONVENTION",
       "notes": "Elicit budget as a PERCENTAGE BAND with this social-proof anchor, not as a dollar figure. The middle band reads as the norm, the top flatters, the bottom gives permission."
     }
+  },
+
+  "life_underwriting": {
+    "_note": "Tatil Life underwriting requirements by age and sum assured. Insurer-specific, NOT a T&T statutory parameter — kept here because this module is where provenance lives and the recommendation engine needs it to know whether a proposed cover triggers a medical.",
+    "_twin": "MIRRORED in AgencyTrack at src/config/medicalLimits/2026-04.js, which carries the derivation (requirementsFor / headroomFor). The two are checked against the shared figures in key_figures below. Cross-repo drift cannot be caught automatically from inside either repo — if you change one, change the other, and both suites will tell you the numbers moved.",
+
+    "medical_limits": {
+      "effective": "2026-04-01",
+      "source": "TATIL LIFE REVISED MEDICAL LIMITS (Effective April 1st, 2026) - Individual Life Insurance; internal memo 'Revision of Rates - LifeSpan Gold', A. Shaw (General Manager), 25-MAR-2026",
+      "retrieved": "2026-08-30",
+      "status": "VERIFIED_SINGLE_SOURCE",
+      "applies_to": ["life", "critical_illness"],
+      "age_basis": "as printed on the document; confirm whether Tatil reckons age next birthday before deriving age from a date of birth",
+      "reconstruction_caveat": "The source PDF's text layer emits its five age headings AFTER their five requirement blocks. The age-to-block pairing below was inferred from layout and monotonic stringency (children carry APS and no nicotine screen; 51-60 is the first band with PSA; over 60 needs a Medical from the first dollar). Internally consistent, NOT yet checked against the printed table by a human.",
+
+      "bands": [
+        { "min_age": 0, "max_age": 15, "tiers": [
+          { "up_to": 500000, "exam": "Non-Medical", "requirements": ["Non-Medical"] },
+          { "up_to": 750000, "exam": "Non-Medical", "requirements": ["Non-Medical", "HIV", "APS"] },
+          { "up_to": 1000000, "exam": "Paramedical", "requirements": ["Paramedical", "HIV", "APS"] },
+          { "up_to": null, "exam": "Medical", "requirements": ["Medical", "HIV", "ECG", "APS"] }
+        ] },
+        { "min_age": 16, "max_age": 40, "tiers": [
+          { "up_to": 500000, "exam": "Non-Medical", "requirements": ["Non-Medical"] },
+          { "up_to": 1000000, "exam": "Paramedical", "requirements": ["Paramedical", "Micro", "Nicotine", "HIV", "Cholesterol", "HDL", "Fasting Blood Sugar"] },
+          { "up_to": 2000000, "exam": "Medical", "requirements": ["Medical", "Micro", "Nicotine", "HIV", "Fasting Lipid Blood Profile (Cholesterol, Trigs, HDL, LDL, VLDL)", "Fasting Blood Sugar"] },
+          { "up_to": null, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Complete Blood Profile (fasting): Alkaline Phosphatase, SGOT, SGPT, GGTP, Creatinine, Cholesterol, Trigs, HDL, LDL, VLDL, Fasting Blood Sugar"] }
+        ] },
+        { "min_age": 41, "max_age": 50, "tiers": [
+          { "up_to": 500000, "exam": "Non-Medical", "requirements": ["Non-Medical"] },
+          { "up_to": 1000000, "exam": "Paramedical", "requirements": ["Paramedical", "Micro", "Nicotine", "HIV", "Cholesterol", "HDL", "Fasting Blood Sugar"] },
+          { "up_to": 2000000, "exam": "Medical", "requirements": ["Medical", "Micro", "Nicotine", "HIV", "Fasting Lipid Blood Profile (Cholesterol, Trigs, HDL, LDL, VLDL)", "Fasting Blood Sugar"] },
+          { "up_to": null, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Complete Blood Profile (fasting): Alkaline Phosphatase, SGOT, SGPT, GGTP, Creatinine, Cholesterol, Trigs, HDL, LDL, VLDL, Fasting Blood Sugar", "Chest X-ray"] }
+        ] },
+        { "min_age": 51, "max_age": 60, "tiers": [
+          { "up_to": 500000, "exam": "Paramedical", "requirements": ["Paramedical", "Micro", "Cholesterol", "HDL", "Fasting Blood Sugar"] },
+          { "up_to": 750000, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Fasting Lipid Blood Profile (Cholesterol, Trigs, HDL, LDL)", "Fasting Blood Sugar", "PSA (males only)"] },
+          { "up_to": 2000000, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Complete Blood Profile (fasting): Alkaline Phosphatase, SGOT, SGPT, GGTP, Creatinine, Cholesterol, Trigs, HDL, LDL, VLDL, Fasting Blood Sugar", "PSA (males only)"] },
+          { "up_to": null, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Complete Blood Profile (fasting): Alkaline Phosphatase, SGOT, SGPT, GGTP, Creatinine, Cholesterol, Trigs, HDL, LDL, VLDL, Fasting Blood Sugar", "PSA (males only)", "Chest X-ray"] }
+        ] },
+        { "min_age": 61, "max_age": null, "tiers": [
+          { "up_to": 500000, "exam": "Medical", "requirements": ["Medical", "Micro", "Fasting Lipid Blood Profile (Cholesterol, Trigs, HDL, LDL)", "Fasting Blood Sugar"] },
+          { "up_to": 1500000, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Complete Blood Profile (fasting): Alkaline Phosphatase, SGOT, SGPT, GGTP, Creatinine, Cholesterol, Trigs, HDL, LDL, VLDL, Fasting Blood Sugar", "PSA (males only)"] },
+          { "up_to": null, "exam": "Medical", "requirements": ["Medical", "ECG", "Micro", "Nicotine", "HIV", "Complete Blood Profile (fasting): Alkaline Phosphatase, SGOT, SGPT, GGTP, Creatinine, Cholesterol, Trigs, HDL, LDL, VLDL, Fasting Blood Sugar", "PSA (males only)", "Chest X-ray"] }
+        ] }
+      ],
+
+      "universal": [
+        { "from": 3000000, "min_age": 16, "max_age": 60, "requirement": "Urine screen for marijuana and cocaine" },
+        { "from": 1500000, "min_age": 0, "max_age": null, "requirement": "Financial Statement" },
+        { "from": 1500000, "min_age": 0, "max_age": null, "requirement": "Inspection report" }
+      ],
+
+      "determined_at_underwriting_from": 5000000,
+      "disability_income_rider_requires_medical": true,
+      "notes": "The DIR rule is the quiet one: a 100,000 case that is otherwise Non-Medical becomes a Medical the moment a Disability Income Rider is attached. 'Routine requirements' is a floor - underwriting may always ask for more, so never present this to a client as a promise."
+    },
+
+    "key_figures": {
+      "_note": "The cross-repo contract. Both this file and AgencyTrack's src/config/medicalLimits/2026-04.js assert these same figures in their own suites, so a change to either side fails there and names what moved. This is NOT automatic cross-repo enforcement - no test inside one repo can read the other - it is a deliberate, checkable handshake.",
+      "non_medical_limit_16_to_50": 500000,
+      "non_medical_limit_child_with_hiv_aps": 750000,
+      "first_age_with_no_non_medical_band": 51,
+      "first_age_requiring_medical_from_first_dollar": 61,
+      "financial_statement_and_inspection_from": 1500000,
+      "urine_screen_from_ages_16_to_60": 3000000,
+      "determined_at_underwriting_from": 5000000,
+      "disability_income_rider_requires_medical": true
+    }
   }
 }
