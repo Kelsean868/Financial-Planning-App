@@ -505,9 +505,10 @@ test("youngestDependentChild ignores non-children", () => {
 });
 
 test("yearsUntilLastChildReaches drives income continuation", () => {
-  // Aaliyah born 2018-09-20 is 7 on 2026-07-16; reaches 21 in ~14.2 years
+  // Aaliyah born 2018-09-20 is 7 on 2026-07-16; she reaches 21 on 2039-09-20,
+  // which is 13.18 years away (13 years + 66 days).
   const y = yearsUntilLastChildReaches(h, 21, TODAY);
-  assert.ok(y > 14 && y < 14.5, `expected ~14.2, got ${y}`);
+  assert.ok(y > 13.1 && y < 13.3, `expected ~13.18, got ${y}`);
   assert.equal(yearsUntilLastChildReaches({ ...h, dependents: [mother] }, 21, TODAY), 0, "no children => zero");
 });
 
@@ -628,10 +629,21 @@ git commit -m "feat(core): Household aggregate with informal dependents and debt
 - Create: `core/src/policy-ledger.ts`
 - Test: `core/test/policy-ledger.test.ts`
 
+**⚠️ PRE-FLIGHT RESOLUTION (supersedes the code shown below):** the group-life ages are **T&T parameters and must NOT be hardcoded** — this task as originally drafted contradicted the Global Constraints. They now live in `parameters/tt-parameters.json` under `group_life` (`reduction_age` 66, `reduction_factor` 0.5, `termination_age` 70, all `VERIFIED_SINGLE_SOURCE`). **Import them via `ProvenanceBuilder.use()` so they carry provenance like every other parameter.** Task 4 builds `ProvenanceBuilder`, so this task may either read them directly via `resolveParameter()` or — simpler — export them as module constants *derived from* the parameters module, never as literals:
+
+```ts
+import { P } from "../../parameters/tt-parameters.js";
+export const GROUP_LIFE_REDUCTION_AGE: number = P.group_life.reduction_age.value;
+export const GROUP_LIFE_TERMINATION_AGE: number = P.group_life.termination_age.value;
+export const GROUP_LIFE_REDUCTION_FACTOR: number = P.group_life.reduction_factor.value;
+```
+
+The literals `66`, `70`, `0.5` **must not appear** in `core/src/policy-ledger.ts`. Task 8's purity guard adds them to its forbidden list.
+
 **Interfaces:**
-- Consumes: `Policy`, `TTD` from `core/src/types.ts`
+- Consumes: `Policy`, `TTD` from `core/src/types.ts`; `P` from `parameters/tt-parameters.js`
 - Produces:
-  - `GROUP_LIFE_REDUCTION_AGE = 66`, `GROUP_LIFE_TERMINATION_AGE = 70`, `GROUP_LIFE_REDUCTION_FACTOR = 0.5`
+  - `GROUP_LIFE_REDUCTION_AGE`, `GROUP_LIFE_TERMINATION_AGE`, `GROUP_LIFE_REDUCTION_FACTOR` — **all read from `P.group_life`, never literals**
   - `inForceCoverAt(policies: Policy[], age: number): { individual: TTD; group: TTD; total: TTD }`
   - `totalMonthlyPremium(policies: Policy[]): TTD`
   - `totalCashValue(policies: Policy[]): TTD`
@@ -705,7 +717,14 @@ test("group cover is still zero above 70", () => {
 });
 
 test("premiums and cash value sum only over in-force policies", () => {
-  assert.equal(totalMonthlyPremium(all), 767.18, "467.18 + 0 + 300; lapsed excluded");
+  // Money is TTD as float and the engine must NOT round intermediates (Global Constraint),
+  // so 467.18 + 300 lands on 767.1800000000001 in IEEE-754. The tolerance belongs in the
+  // TEST, not in the implementation — rounding in the engine would violate the constraint.
+  const premium = totalMonthlyPremium(all);
+  assert.ok(Math.abs(premium - 767.18) < 0.005,
+    `expected ~767.18 (467.18 + 0 + 300; lapsed excluded), got ${premium}`);
+
+  // Cash values are whole dollars here, so exact equality is safe.
   assert.equal(totalCashValue(all), 76283, "31283 + 45000");
 });
 
@@ -1018,9 +1037,10 @@ test("renter: 120 months of rent replaces mortgage liquidation", () => {
 
 test("income continuation runs until the last child reaches 21", () => {
   const n = computeDeathNeeds(owner, TODAY);
-  // child born 2018-09-20 -> ~14.18y to 21; 9000 expenses x 12 x 14.18
-  assert.ok(n.incomeContinuation > 1_520_000 && n.incomeContinuation < 1_540_000,
-    `expected ~1.53M, got ${n.incomeContinuation}`);
+  // child born 2018-09-20 reaches 21 on 2039-09-20 = 13.18y from TODAY.
+  // 9000 monthly expenses x 12 x 13.18 = ~1,423,471
+  assert.ok(n.incomeContinuation > 1_420_000 && n.incomeContinuation < 1_430_000,
+    `expected ~1.42M, got ${n.incomeContinuation}`);
 });
 
 test("no children => no income continuation", () => {
@@ -1670,6 +1690,22 @@ test("the core performs no I/O", () => {
   }
 });
 
+/**
+ * Strip comments and string literals before checking for hardcoded values.
+ * Prose LEGITIMATELY mentions these numbers — "group life reduces by 50% at 66
+ * and terminates at 70" is documentation, not a hardcoded parameter. Only
+ * executable code counts. (Caught during Task 3: the naive raw-source grep
+ * failed on that exact doc-comment.)
+ */
+function codeOnly(src: string): string {
+  return src
+    .replace(/\/\*[\s\S]*?\*\//g, " ")   // block comments
+    .replace(/\/\/.*$/gm, " ")            // line comments
+    .replace(/"(?:[^"\\]|\\.)*"/g, '""')  // double-quoted strings
+    .replace(/'(?:[^'\\]|\\.)*'/g, "''")  // single-quoted strings
+    .replace(/`(?:[^`\\]|\\.)*`/g, "``"); // template literals
+}
+
 test("no T&T parameter is hardcoded outside the parameters module", () => {
   const FORBIDDEN = [
     ["3000", "the NIS minimum pension"],
@@ -1678,14 +1714,30 @@ test("no T&T parameter is hardcoded outside the parameters module", () => {
     ["90000", "the personal allowance"],
     ["566.72", "a NIS benefit rate"],
     ["335.83", "a STALE NIS benefit rate"],
+    ["120", "the rental-income replacement months"],
+    ["66", "the group life reduction age"],
+    ["70", "the group life termination age"],
   ] as const;
   for (const f of files) {
-    const src = readFileSync(f, "utf8");
+    const code = codeOnly(readFileSync(f, "utf8"));
     for (const [num, what] of FORBIDDEN) {
-      assert.ok(!new RegExp(`\\b${num.replace(".", "\\.")}\\b`).test(src),
-        `${f} hardcodes ${num} (${what}) — import it from parameters/tt-parameters.js instead`);
+      assert.ok(!new RegExp(`\\b${num.replace(".", "\\.")}\\b`).test(code),
+        `${f} hardcodes ${num} (${what}) in executable code — import it from parameters/tt-parameters.js instead`);
     }
   }
+});
+
+test("the hardcoded-parameter guard actually catches a violation", () => {
+  // A guard that cannot fail is not a guard. Prove it fires on code and
+  // stays quiet on prose.
+  assert.ok(/\b3000\b/.test(codeOnly("const minPension = 3000;")),
+    "must catch a hardcoded parameter in code");
+  assert.ok(!/\b3000\b/.test(codeOnly("// the minimum pension is 3000/month")),
+    "must NOT trip on a line comment");
+  assert.ok(!/\b66\b/.test(codeOnly("/** reduces by 50% at 66 and ends at 70 */")),
+    "must NOT trip on a block comment");
+  assert.ok(!/\b3000\b/.test(codeOnly('const msg = "minimum is 3000";')),
+    "must NOT trip on a string literal");
 });
 ```
 
