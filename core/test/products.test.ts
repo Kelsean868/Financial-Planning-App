@@ -40,7 +40,8 @@ test("§2.4: every product row carries source and asOf, with the signed figures"
 
 function variants(): LifeCaseFacts[] {
   const out: LifeCaseFacts[] = [];
-  for (const base of [SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE]) {
+  const noParents = { ...clone(SAMPLE_FAMILY), parents: [] };
+  for (const base of [SAMPLE_FAMILY, noParents, SAMPLE_YOUNG_SINGLE]) {
     for (const age of [22, 30, 38, 47, 55, 63]) {
       for (const gross of [7000, 9500, 13000, 17000, 25000, 45000]) {
         for (const savings of [0, 20000, 150000]) {
