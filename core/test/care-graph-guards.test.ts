@@ -75,13 +75,30 @@ test("guard 4: non-overlapping child and parent windows report zero sandwich yea
   assert.equal(cg.years.filter((y) => y.isSandwich).length, 0);
 });
 
+/**
+ * The change each lever names, applied by hand — independent of the engine's `applyLever`, so a lever
+ * that does something other than what its label says cannot agree with itself.
+ */
+function applyByHand(inp: CareGraphInput, lever: { kind: string; childId: string; milestone?: string }): CareGraphInput {
+  return {
+    ...inp,
+    children: inp.children.map((c) => {
+      if (c.personId !== lever.childId) return c;
+      if (lever.kind === "route-local") return { ...c, route: "local" };
+      if (lever.kind === "lean-cost") return { ...c, costLevel: "lean" };
+      return { ...c, milestones: c.milestones.map((m) => (m.key === lever.milestone ? { ...m, on: false } : m)) };
+    }),
+  };
+}
+
 test("guard 5: applying a lever reduces monthly saving by the reported amount, within $1", () => {
   for (const facts of [withChildBInUK(SAMPLE_FAMILY), SAMPLE_FAMILY]) {
     const inp = careGraphInputFromFacts(facts);
     const cg = careGraph(inp, CARE_GRAPH_FIXTURE_NET_MONTHLY);
     assert.ok(cg.levers.length > 0, "the fixture has levers");
     for (const lever of cg.levers) {
-      const after = careGraph(applyLever(inp, lever)).funding.saveFromToday;
+      assert.deepEqual(applyLever(inp, lever), applyByHand(inp, lever), `${lever.label}: the engine's change is the one the label names`);
+      const after = careGraph(applyByHand(inp, lever)).funding.saveFromToday;
       const real = cg.funding.saveFromToday - after;
       assert.ok(Math.abs(real - lever.monthlyReduction) <= 1, `${lever.label}: reported ${lever.monthlyReduction}, real ${real}`);
       assert.ok(real >= 0, `${lever.label} must not raise the saving`);
