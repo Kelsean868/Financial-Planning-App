@@ -36,12 +36,18 @@ export function dependents(h: Household): Person[] {
   return h.dependents;
 }
 
-/** The youngest person whose relationship is "child". Non-children are ignored. */
-export function youngestDependentChild(h: Household, on: ISODate): Person | null {
+/**
+ * The youngest person whose relationship is "child". Non-children are ignored.
+ *
+ * Compared by date of birth, not by whole-year age: two children can share a whole-year
+ * age on `on`, and a tie on age let list order pick the older one. `on` is kept for API
+ * stability; the latest date of birth is the youngest child on any date.
+ */
+export function youngestDependentChild(h: Household, _on: ISODate): Person | null {
   const kids = h.dependents.filter((p) => p.relationship === "child");
   if (kids.length === 0) return null;
   return kids.reduce((youngest, p) =>
-    ageAt(p.dateOfBirth, on) < ageAt(youngest.dateOfBirth, on) ? p : youngest
+    new Date(p.dateOfBirth).getTime() > new Date(youngest.dateOfBirth).getTime() ? p : youngest
   );
 }
 

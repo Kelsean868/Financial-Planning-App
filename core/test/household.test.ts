@@ -78,6 +78,19 @@ test("youngestDependentChild ignores non-children", () => {
   assert.equal(y?.name, "Aaliyah");
 });
 
+test("youngestDependentChild picks the younger of two children with the same whole-year age", () => {
+  // On 2026-07-16 both are 7: one has had the birthday, one has not. Comparing whole-year
+  // ages tied them and kept whichever came first, so list order decided the answer and
+  // income continuation ran to the OLDER child's 21st — about 0.78 years short.
+  const olderSeven: Person = { ...child2, id: "d4", name: "Older", dateOfBirth: "2018-09-20" };
+  const youngerSeven: Person = { ...child2, id: "d5", name: "Younger", dateOfBirth: "2019-07-01" };
+  for (const order of [[olderSeven, youngerSeven], [youngerSeven, olderSeven]]) {
+    const hh: Household = { ...h, dependents: order };
+    assert.equal(youngestDependentChild(hh, TODAY)?.name, "Younger",
+      `order ${order.map((p) => p.name).join(",")} must not change who is youngest`);
+  }
+});
+
 test("yearsUntilLastChildReaches drives income continuation", () => {
   // Aaliyah born 2018-09-20 is 7 on 2026-07-16; she reaches 21 on 2039-09-20,
   // which is 13.18 years away (13 years + 66 days).
