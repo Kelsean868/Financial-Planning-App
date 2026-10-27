@@ -3,6 +3,43 @@
 Brief: `docs/briefs/2026-10-27-fact-finder-one-shot.md`. Rules: Section 2 §2.13.
 Orchestrator: Claude Opus 5.5 (effort high), one Claude Code session, started 27 Oct 2026.
 
+## Fix run, 27 Oct 2026 (NIS 70% and F-12)
+
+Brief: `docs/briefs/2026-10-27-fix-nis70-f12.md`. Kyron, 27 Oct 2026 19:30: Decision 1 = A, Decision 2 = A. One
+session, Claude Opus 5.5, effort medium. Nothing merged, deployed or applied; no live database access. No hard stop.
+
+**New hashes.**
+
+| What | Old | New |
+|---|---|---|
+| FPA `feat/fact-finder-engine` head (PR #5) | `3b8e7d69320f9264777fb39ca73c0b1565beab84` | `8bd31a13a9caef9e58a28a296867a1817595aa72` (engine change `3f6bd49`, then the run record) |
+| `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `0fcef96c…cddd97` | `7633c01460422f599014554407e0627243728972c36eeefd72e36e64946f2d18` |
+| Assumption set id | `ff-2026-10-27` | `ff-2026-10-27-nis70` |
+| GRP `feat/fact-finder` head (PR #160) | `7e5500e` | `c24dd0f2f38bcf17cd44232503e3cc80d2a1e7c5` (F-12 `a23ddec`, then the re-vendor and run record) |
+
+**New goldens.** PAYE now deducts 70% of employee NIS (IRD TD1 2023 line 4(b)). 2 of 37 goldens moved: family ceiling
+$725 → **$711** (724.61 → 710.84), young single $376 → **$374** (375.76 → 374.14). No care graph §3 golden moved.
+Also moved (not goldens): the family's protection budget $543 → $533 no longer fits Rest Assured II's $240 minimum
+beside term and CI, so it shows as "Not yet"; the family's death scenario says Child B's degree stops in month 2, not 11.
+Full table and chain: FPA `docs/audit/RUN-2026-10-27-fix-nis70.md` (on `feat/fact-finder-engine`). O9 is closed.
+
+**F-12 closed in the database.** New migration `20261027130000_life_case_link_owner.sql` (owner triggers on the three
+fact-finder tables) and guard 20 in the guard 9/10 script. GRP `docs/audit/RUN-2026-10-27-fix-f12.md` (on
+`feat/fact-finder`).
+
+**Merge and deploy order (replaces the old one):**
+1. Merge FPA #4, then #1, then #5.
+2. Merge GRP #159. Deploy it (the health-on-phone fix; static file list under "Open items", Phase 0b).
+3. Merge GRP #160. Do not deploy the portal yet. (Merging into `main` does not deploy: GRP deploys are manual
+   direct uploads, GRP `CLAUDE.md` Phase 5.)
+4. Apply the migrations in this order in the Supabase SQL editor (paths in the GRP repo, `supabase/migrations/`):
+   `20261027120000_life_cases.sql`, `20261027120100_life_case_scope.sql`, `20261027120200_life_case_snapshots.sql`,
+   `20261027130000_life_case_link_owner.sql`. Then run `supabase/tests/20261027120200_fact_finder.guards-9-10.sql`
+   (guards 9, 10 and 20). **Every value must be `true`.** Read-only check: 4 ledger rows `like '20261027%'`.
+5. Deploy the portal.
+
+This order replaces "PRs, in merge order" and "Commands Kyron runs" below.
+
 ## Final summary
 
 **The chain ran to the end. Phases 0a, 0b, 1, 2 and 3 are done. No hard stop was hit.** Nothing was merged or
@@ -101,7 +138,7 @@ From Phase 0b (`docs/audit/RUN-2026-10-27-life-phase0.md` on `fix/life-phase0`):
 - Deploy for Kyron after merge (static files only). Portal `tatil-portal`: `life-shapes.js`, `life-ingenium.js`, `life-ingenium-maps.js`, `life-limits-2026-09.js`, `life-app-panel.js`, `life-products.js`, `life-panel.js`, `sw.js` (v340). Intake `tatil-intake`: `life-guided.js`, `life-guided.html`, `life-guided-desktop.html`, `life-shapes.js`, intake service worker (v115). The health-on-device fix reaches clients' phones only after this deploy.
 
 From Phase 1 (`docs/audit/RUN-2026-10-27-fact-finder-engine.md` on `feat/fact-finder-engine`):
-- O-1 NIS deductible 100% vs 70% (decision O9): Kyron to rule; a change is a recorded re-baseline of the two ceilings.
+- O-1 NIS deductible 100% vs 70% (decision O9): **closed 27 Oct 2026** (Decision 1 = A; fix run above, re-baselined).
 - O-3: all premium rates are rough sample estimates (`estimate`).
 - O-4: whether Platinum Edge grades (item 5.3a) is unconfirmed.
 - O-6: first-time-buyer stamp duty threshold not checked against the Act.
@@ -118,7 +155,7 @@ From Phase 2 (`docs/audit/RUN-2026-10-27-fact-finder-page.md` on GRP `feat/fact-
 From Phase 3 (`docs/audit/RUN-2026-10-27-fact-finder-close.md` on GRP `feat/fact-finder`):
 - F-10: no "New case" control; after a saved Start the page offers no second snapshot.
 - F-11: no offline queue for case and scope writes; offline, the page says "Not saved" and sends nothing.
-- F-12 (security, medium): `life_cases.lead_id` is a foreign key, and a foreign-key check ignores row security, so the
+- F-12 (security, medium) — **closed 27 Oct 2026** (Decision 2 = A; migration `20261027130000`, guard 20; fix run above): `life_cases.lead_id` is a foreign key, and a foreign-key check ignores row security, so the
   database alone does not stop a case linking another owner's `pipeline_cards` id. The page offers only the owner's
   own cards. A trigger that checks the card's owner would close it.
 - F-13: the money health score and the live "next steps" are no longer on the printed plan (it prints only what the
