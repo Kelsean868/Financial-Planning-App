@@ -1,8 +1,17 @@
-import { P, assertSafe } from "../../parameters/tt-parameters.js";
+import { P, assertSafe, ParameterError } from "../../parameters/tt-parameters.js";
 import type { Provenance, ProvenanceParameter } from "./types.ts";
+import { resolveCoreRow, CORE_PREFIX } from "./parameters/index.ts";
 
-/** Read a dotted parameter path, returning both the node (for provenance) and its value. */
+/**
+ * Read a dotted parameter path, returning both the node (for provenance) and its value.
+ * Paths starting `core:` resolve against the core tables in `src/parameters/` (finding F3);
+ * every other path resolves against the root `P` exactly as before.
+ */
 export function resolveParameter(path: string): { node: any; value: unknown } {
+  if (path.startsWith(CORE_PREFIX)) {
+    const r = resolveCoreRow(path);
+    return { node: r, value: r.value };
+  }
   let node: any = P;
   for (const key of path.split(".")) {
     if (node == null || typeof node !== "object" || !(key in node)) {
@@ -35,15 +44,35 @@ export class ProvenanceBuilder {
   useNode(path: string): { node: any; value: unknown } {
     const { node, value } = resolveParameter(path);
     assertSafe(node, path);
+    if (node?.status === "unverified") {
+      throw new ParameterError(
+        `Parameter "${path}" is unverified and has no value; the engine must not use it. ${node.note ?? ""}`.trim()
+      );
+    }
     if (!this.#params.has(path)) {
       this.#params.set(path, {
         path,
-        effective: node.effective ?? null,
+        effective: node.effective ?? node.asOf ?? null,
         source: node.source ?? null,
         status: node.status ?? "UNMARKED",
       });
     }
+    if (typeof node?.caveat === "string") this.caveat(node.caveat);
     return { node, value };
+  }
+
+  /** Read a numeric parameter, recording its provenance. Throws if the row is not a finite number. */
+  num(path: string): number {
+    const v = this.use(path);
+    if (typeof v !== "number" || !Number.isFinite(v)) {
+      throw new ParameterError(`Parameter "${path}" is not a finite number`);
+    }
+    return v;
+  }
+
+  /** Read a structured parameter (a table or a spec), recording its provenance. */
+  get<T>(path: string): T {
+    return this.use(path) as T;
   }
 
   /** Read a parameter's value, recording its provenance. */
