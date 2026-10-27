@@ -745,7 +745,7 @@ var D = "2026-10-27";
 var PROTO = "Fact-Finder Prototype v17 (docs/prototype/fact-finder-prototype-v17.html), 27 Oct 2026";
 var CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 var CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
-var ASSUMPTION_SET_ID = "ff-2026-10-27";
+var ASSUMPTION_SET_ID = "ff-2026-10-27-nis70";
 var FF = deepFreeze2({
   assumptionSetId: row(ASSUMPTION_SET_ID, "rule", "Section 1 §1.2: the assumption set is a versioned constant in the engine", D),
   rates: {
@@ -815,9 +815,7 @@ var FF = deepFreeze2({
   },
   tax: {
     nisEmployeeRate: row(0.054, "verified", "NIBTT contribution rates from 5 Jan 2026: 16.2% of insurable earnings, one third (5.4%) paid by the employee (root nis.contribution_rate)", "2026-01-05"),
-    nisDeductibleShare: row(1, "assumed", `${PROTO}: PAYE deducts all of the employee's NIS. Section 2 §2.8 goldens are built on this.`, D, {
-      caveat: "Net pay deducts all of the employee's NIS from taxable income, as the prototype does. The root parameter table and the pension audit say only 70% is deductible; at 70% net pay is a little lower. Open item for Kyron (run record R1)."
-    }),
+    nisDeductibleShare: row(0.7, "verified", `IRD form TD1 2023, line 4(b) "N.I.S (70% of Employees Contribution)": taxable pay deducts 70% of the employee's NIS. Kyron's ruling 27 Oct 2026 (Decision 1 = A) replaced the prototype's 100%; the §2.8 goldens were re-baselined (docs/audit/RUN-2026-10-27-fix-nis70.md).`, D),
     surchargeWeeksPerYear: row(52, "verified", "Health surcharge is a weekly charge (root health_surcharge.rates)", D),
     surchargeExemptFromAge: row(60, "verified", "Root health_surcharge.exemptions: aged 60 and over", D),
     paysTaxAbove: row(0.5, "assumed", `${PROTO}: monthly PAYE above $0.50 counts as paying tax`, D)

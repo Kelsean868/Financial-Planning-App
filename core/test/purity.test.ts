@@ -147,6 +147,8 @@ test("no T&T parameter is hardcoded outside the parameters module", () => {
     ["120", "the rental-income replacement months"],
     ["66", "the group life reduction age"],
     ["70", "the group life termination age"],
+    ["0.7", "the NIS deductible share (core:ff.tax.nisDeductibleShare)"],
+    ["0.70", "the NIS deductible share (core:ff.tax.nisDeductibleShare)"],
   ] as const;
   for (const f of engineFiles) {
     const code = codeOnly(readFileSync(f, "utf8"));

@@ -1,10 +1,14 @@
 /**
  * Section 2 guard 14 (goldens), care graph guard 2 (golden numbers, inverted gate) and closing
  * guard 1 (upstream immutability). Numbers from the prototype v17, 27 Oct 2026; each moves only with
- * a recorded re-baseline (closing addendum §14.1). Assumption set `ff-2026-10-27`.
+ * a recorded re-baseline (closing addendum §14.1). Assumption set `ff-2026-10-27-nis70`.
  *
  * Two checks per figure: the signed rounded golden exactly, and the prototype's full-precision value
  * (traced in the run record §6) to 1e-6, so a drift too small to move the rounding is still caught.
+ *
+ * Re-baseline 27 Oct 2026 (Kyron, Decision 1 = A; docs/audit/RUN-2026-10-27-fix-nis70.md): PAYE deducts
+ * 70% of the employee's NIS (IRD TD1 2023, line 4(b)), not the prototype's 100%. Only the two ceilings
+ * moved: family 725 -> 711 (724.6125 -> 710.8425), young single 376 -> 374 (375.7625 -> 374.1425).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -19,14 +23,15 @@ const near = (name: string, produced: number, prototype: number): void =>
   assert.ok(Math.abs(produced - prototype) < 1e-6, `${name}: produced ${produced}, prototype ${prototype}`);
 const thousands = (x: number): number => Math.round(x / 1000) * 1000;
 
-test("goldens are pinned to assumption set ff-2026-10-27", () => {
-  assert.equal(ASSUMPTION_SET_ID, "ff-2026-10-27");
+test("goldens are pinned to assumption set ff-2026-10-27-nis70", () => {
+  assert.equal(ASSUMPTION_SET_ID, "ff-2026-10-27-nis70");
 });
 
 test("§2.8 sample family", () => {
   const r = computeFactFinder(SAMPLE_FAMILY);
   assert.equal(r.budget.stage, 2, "stage");
-  eq("ceiling", r.budget.ceilingMonthly, 725); near("ceiling", r.budget.ceilingMonthly, 724.6125000000002);
+  // NIS 70% re-baseline: was 725 (724.6125000000002).
+  eq("ceiling", r.budget.ceilingMonthly, 711); near("ceiling", r.budget.ceilingMonthly, 710.8425000000007);
   eq("care save", r.careGraph.funding.saveFromToday, 3837); near("care save", r.careGraph.funding.saveFromToday, 3836.832922361326);
   eq("already paying", r.careGraph.funding.alreadyPaying, 4000);
   eq("care PV", r.careGraph.funding.ifYouDieTomorrow, 1263107); near("care PV", r.careGraph.funding.ifYouDieTomorrow, 1263107.2588376082);
@@ -44,7 +49,8 @@ test("§2.8 sample family", () => {
 test("§2.8 sample young single (age 24, $8,000 gross, renting)", () => {
   const r = computeFactFinder(SAMPLE_YOUNG_SINGLE);
   assert.equal(r.budget.stage, 1, "stage");
-  eq("ceiling", r.budget.ceilingMonthly, 376); near("ceiling", r.budget.ceilingMonthly, 375.76250000000005);
+  // NIS 70% re-baseline: was 376 (375.76250000000005).
+  eq("ceiling", r.budget.ceilingMonthly, 374); near("ceiling", r.budget.ceilingMonthly, 374.14250000000004);
   assert.equal(r.careGraph.goals.length, 0, "no care");
   assert.equal(r.careGraph.funding.saveFromToday, 0, "no care saving");
   for (const t of ["essential", "recommended", "full"] as const) eq(`cover ${t}`, r.deathNeed.tiers[t], 149000);

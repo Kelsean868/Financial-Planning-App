@@ -26,21 +26,26 @@ test("health score: family 33 'Needs work', young single 51 'Getting there' (pro
 
 test("insurance budget, young single: as the prototype; Cashbuilder II with the rider waits as 'not yet'", () => {
   const [prot, sav] = computeFactFinder(SAMPLE_YOUNG_SINGLE).insuranceBudget.groups;
-  assert.equal(R(prot.totalMonthly), 282);
-  assert.deepEqual(prot.funded.map((p) => [p.key, R(p.monthly)]), [["ci", 282]]);
+  // NIS 70% re-baseline (docs/audit/RUN-2026-10-27-fix-nis70.md): net pay is $32.40 lower, so protection
+  // 282 -> 281 and savings 364/388 -> 361/387. Same plans, same order.
+  assert.equal(R(prot.totalMonthly), 281);
+  assert.deepEqual(prot.funded.map((p) => [p.key, R(p.monthly)]), [["ci", 281]]);
   assert.deepEqual(prot.notYet.map((p) => [p.product, R(p.needsMonthly)]), [["cashbuilder-ii", 300]]);
   assert.equal(prot.notYet[0]!.riders[0]!.underwriting, "Medical at any amount");
-  assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 364], ["endowment", 388]]);
+  assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 361], ["endowment", 387]]);
 });
 
 test("insurance budget, family: Rest Assured II is priced on the parent's age (run record D7)", () => {
   const [prot, sav] = computeFactFinder(SAMPLE_FAMILY).insuranceBudget.groups;
-  assert.equal(R(prot.totalMonthly), 543);
   // Prototype: term 260, CI 211, Rest Assured 72 — it priced the parents' cover at the client's age (38).
   // The engine prices it at the father's age (71), so its minimum is $240 and less is left to share.
-  assert.deepEqual(prot.funded.map((p) => [p.key, R(p.monthly)]), [["term", 152], ["ci", 151], ["parent-funeral", 241]]);
-  assert.deepEqual(prot.notYet.map((p) => p.product), ["cashbuilder-ii"]);
-  assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 875], ["endowment", 929]]);
+  // NIS 70% re-baseline (docs/audit/RUN-2026-10-27-fix-nis70.md): protection 543 -> 533. The three minimums
+  // add to $540.15 (150 + 150 + 240.15), so Rest Assured II no longer fits and waits as "not yet"; term and
+  // CI share the $533. Before: term 152, CI 151, Rest Assured 241. Savings 875/929 -> 872/926.
+  assert.equal(R(prot.totalMonthly), 533);
+  assert.deepEqual(prot.funded.map((p) => [p.key, R(p.monthly)]), [["term", 300], ["ci", 233]]);
+  assert.deepEqual(prot.notYet.map((p) => [p.product, R(p.needsMonthly)]), [["cashbuilder-ii", 300], ["rest-assured-ii", 240]]);
+  assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 872], ["endowment", 926]]);
 });
 
 test("start early: prototype defaults ($500 a month, balanced 5%, 10 years' delay)", () => {

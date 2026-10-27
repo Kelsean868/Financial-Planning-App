@@ -22,7 +22,11 @@ test("a fact-finder result records core rows and root rows side by side", () => 
   const paths = r.budget.provenance.parameters.map((x) => x.path);
   assert.ok(paths.includes("core:ff.budget.stagePercents"));
   assert.ok(paths.includes("income_tax.personal_allowance"), "root table rows still come from parameters/");
-  assert.ok(r.budget.provenance.caveats.some((c) => /70% is deductible/.test(c)), "the NIS deductibility conflict travels with the number (run record R1)");
+  // Run record R1's conflict (core said 100%, root said 70%) was settled on 27 Oct 2026: both are 70%, so
+  // the caveat is gone and the core row now names its source (docs/audit/RUN-2026-10-27-fix-nis70.md).
+  const nis = r.budget.provenance.parameters.find((x) => x.path === "core:ff.tax.nisDeductibleShare");
+  assert.ok(nis && /IRD form TD1 2023, line 4\(b\)/.test(nis.source ?? ""),"the NIS 70% row is recorded with its IRD source");
+  assert.ok(!r.budget.provenance.caveats.some((c) => /70% is deductible/.test(c)), "no stale 100%-vs-70% caveat");
   const closing = r.closing.provenance.parameters.map((x) => x.path);
   assert.ok(closing.includes("core:products.life-span-gold"), "product rows are recorded when read");
 });

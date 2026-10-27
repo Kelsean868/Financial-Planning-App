@@ -41,13 +41,14 @@ test("dist reproduces the §2.8 and care graph §3 goldens", async () => {
       R(fam.careGraph.funding.ifYouDieTomorrow), R(fam.careGraph.peak.monthly), fam.careGraph.peak.atAge, fam.careGraph.sandwichYears,
       fam.careGraph.finishAge, R(fam.deathNeed.tiers.essential), R(fam.deathNeed.tiers.recommended), R(fam.deathNeed.tiers.full),
       R(fam.budget.needsMonthly), R(fam.budget.livingMonthly)],
-    [2, 725, 3837, 4000, 1263107, 17391, 54, 8, 55, 823567, 1994846, 2236674, 15140, 6700],
+    // ceilings 725 -> 711 and 376 -> 374: NIS 70% re-baseline (docs/audit/RUN-2026-10-27-fix-nis70.md)
+    [2, 711, 3837, 4000, 1263107, 17391, 54, 8, 55, 823567, 1994846, 2236674, 15140, 6700],
   );
   const young = d.computeFactFinder(d.SAMPLE_YOUNG_SINGLE);
   assert.deepEqual(
     [young.budget.stage, R(young.budget.ceilingMonthly), young.careGraph.goals.length, R(young.deathNeed.tiers.essential),
       R(young.deathNeed.tiers.recommended), R(young.deathNeed.tiers.full), R(young.budget.needsMonthly), R(young.budget.livingMonthly)],
-    [1, 376, 0, 149000, 149000, 149000, 5450, 5300],
+    [1, 374, 0, 149000, 149000, 149000, 5450, 5300],
   );
   const cg = d.careGraph(d.careGraphInputFromFacts(d.SAMPLE_FAMILY), d.CARE_GRAPH_FIXTURE_NET_MONTHLY);
   assert.equal(R(cg.nominalTotal / 1000) * 1000, 2078000);
