@@ -26,10 +26,12 @@ Orchestrator: Claude Opus 5.5 (effort high), one Claude Code session, started 27
 | 0a specs | FPA `docs/fact-finder-specs` | `ab2e777` | https://github.com/Kelsean868/Financial-Planning-App/pull/4 | — | done, PR open |
 | 0a review | FPA `feat/domain-core` | `596cfea` | https://github.com/Kelsean868/Financial-Planning-App/pull/1 (existing PR from July; review comment added) | purity (5 probes), no hard-coded parameter, goldens (table, code, fixture): all sabotage-tested. 71/71 tests, typecheck clean. Orchestrator re-ran: 71/71. | done, verdict "ready to merge" |
 | 0b | GRP `fix/life-phase0` | `e789623` | https://github.com/Kelsean868/General_Raters_Portal/pull/159 | Phase 0 guards 1–5 (rider list, no DI field on Part 1, Medical follows the rider, queue strip = Section 1 guard 11, grading text), each sabotage-tested. Full `npm test`: 3036 tests, 3006 pass, 0 fail, 30 skipped (existing live-DB partner-invite tests). Orchestrator re-ran the three changed test files: 60/60; no test deleted or skipped. | done, PR open |
-| 1 | FPA `feat/fact-finder-engine` | | | | not started |
+| 1 | FPA `feat/fact-finder-engine` | `3b8e7d6` (`3b8e7d69320f9264777fb39ca73c0b1565beab84`) | https://github.com/Kelsean868/Financial-Planning-App/pull/5 (stacked on #1) | Care graph 1–5, closing 1–12, Section 1 guards 6 (11 probes), 7, 8, Section 2 guards 14, 16, 17, dist freshness: 36 breaks, all failed, all restored. 130/130 tests, typecheck exit 0. All 34 goldens match from the built file; no re-baseline. `core/dist/fpa-core.js` SHA-256 `0fcef96c4b17b45a2179a68e526a430afa7781fd0860f90b7a199ddb38cddd97`. Orchestrator re-ran: 130/130, typecheck 0, hash matches. | done, PR open |
 | 2 | GRP `feat/fact-finder` | | | | not started |
 | 3 | GRP `feat/fact-finder` | | | | not started |
 
+| O9 | Phase 1 open item O-1 (the prototype, and so the signed §2.8 goldens, deduct 100% of NIS from taxable pay; the table says 70%): **keep the signed goldens.** At 70% the family ceiling would be $710.84 (not $725) and the young single's $374.14 (not $376). Moving a signed golden needs Kyron's recorded reason; §14.1 does not cover it. Open item for Kyron. | §2.8: goldens move only with a recorded reason. The error is about $14 a month on an advisory ceiling. |
+| O10 | Phase 1 open item O-2 (parents' Rest Assured II priced at the parent's age, not the client's, as the prototype did): **keep the engine's way.** It moves no §2.8 golden; it changes only the protection split shown on screen ($152 / $151 / $241 instead of $260 / $211 / $72). | Pricing a parent's plan at the client's age is a prototype error. |
 | O8 | Phase 1 owns review findings F2 (purity guard short of Section 1 guard 6), F3 (no parameter layer in `core/`, `ProvenanceBuilder` tied to one table) and F4 (no single-file build), because Phase 1's own deliverables need them. F1 (provenance by construction for the July modules) and F5–F10 stay follow-ups: Phase 1 does not refactor the July modules. F6: parents get their own birth-year type; `Person` is not changed. | Keeps `feat/domain-core` as reviewed; Phase 1 builds only what its brief needs. |
 
 ## Open items
@@ -46,3 +48,11 @@ From Phase 0a (`docs/audit/RUN-2026-10-27-domain-core-review.md` on `feat/domain
 From Phase 0b (`docs/audit/RUN-2026-10-27-life-phase0.md` on `fix/life-phase0`):
 - Saved-case count: 0 (read-only SELECT through the plugin Supabase tool on `oujnscwyxwuzmgyszkxd`; 4 Whole Life / Endowment rows, all ZZ, none with the rider).
 - Deploy for Kyron after merge (static files only). Portal `tatil-portal`: `life-shapes.js`, `life-ingenium.js`, `life-ingenium-maps.js`, `life-limits-2026-09.js`, `life-app-panel.js`, `life-products.js`, `life-panel.js`, `sw.js` (v340). Intake `tatil-intake`: `life-guided.js`, `life-guided.html`, `life-guided-desktop.html`, `life-shapes.js`, intake service worker (v115). The health-on-device fix reaches clients' phones only after this deploy.
+
+From Phase 1 (`docs/audit/RUN-2026-10-27-fact-finder-engine.md` on `feat/fact-finder-engine`):
+- O-1 NIS deductible 100% vs 70% (decision O9): Kyron to rule; a change is a recorded re-baseline of the two ceilings.
+- O-3: all premium rates are rough sample estimates (`estimate`).
+- O-4: whether Platinum Edge grades (item 5.3a) is unconfirmed.
+- O-6: first-time-buyer stamp duty threshold not checked against the Act.
+- O-5 / O-9: follow-ups F-1 to F-3 and review findings F1, F5–F13.
+- Build uses esbuild 0.28.2 as an exact-pinned devDependency.
