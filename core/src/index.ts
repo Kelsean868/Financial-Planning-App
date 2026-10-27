@@ -1,6 +1,6 @@
 export type {
   TTD, ISODate, Sex, SmokerStatus, RelationshipKind, Person, Debt, DebtKind,
-  Household, Policy, PolicyType, PolicyStatus, Provenance,
+  Household, HousingStrategy, Policy, PolicyType, PolicyStatus, Provenance, ProvenanceParameter,
   DeathNeedsProfile, RetirementNeedsProfile, Gap,
 } from "./types.ts";
 
