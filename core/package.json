@@ -1,0 +1,16 @@
+{
+  "name": "@tt-planning/core",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Pure domain core for the T&T insurance planning engine. No I/O, no UI, no dependencies.",
+  "engines": { "node": ">=24" },
+  "scripts": {
+    "test": "node --test test/**/*.test.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^24",
+    "typescript": "^5"
+  }
+}

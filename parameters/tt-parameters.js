@@ -25,6 +25,24 @@
 
 import DATA from "./tt-parameters.json" with { type: "json" };
 
+/**
+ * Freeze the parameter tables at load.
+ *
+ * These values are the project's source of truth and several are objects or
+ * arrays (rate tables, SCP bands, PAYE bands). A caller mutating one in place
+ * would silently corrupt every other consumer in the process. Freezing makes
+ * that a TypeError in strict mode (all ESM is strict) instead of a silent,
+ * process-wide data corruption.
+ */
+function deepFreeze(o) {
+  if (o && typeof o === "object" && !Object.isFrozen(o)) {
+    Object.freeze(o);
+    for (const v of Object.values(o)) deepFreeze(v);
+  }
+  return o;
+}
+deepFreeze(DATA);
+
 export const P = DATA;
 
 /** Statuses that must never be used silently. */
