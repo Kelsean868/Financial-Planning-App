@@ -6,7 +6,7 @@
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
-import { computeNetPay, resolveCoreRow, SAMPLE_YOUNG_SINGLE } from "../src/index.ts";
+import { computeNetPay, resolveCoreRow, SAMPLE_YOUNG_SINGLE, toEngineFacts } from "../src/index.ts";
 
 test("the NIS deductible share is a 70% row with its IRD source and date", () => {
   const r = resolveCoreRow("core:ff.tax.nisDeductibleShare");
@@ -25,7 +25,8 @@ test("hand-worked PAYE: $8,000 a month, age 24, pays NIS (the young single)", ()
   // Health surcharge:           $8.25 a week x 52 / 12                = $35.75 a month
   // Net pay:                    $8,000 - $432.00 - $35.75 - $49.40    = $7,482.85 a month
   // (At 100% the chargeable income was $816.00 and PAYE $17.00 a month: $32.40 a month less tax.)
-  const n = computeNetPay(SAMPLE_YOUNG_SINGLE);
+  // Section 3: computeNetPay reads the engine view (monthly gross worked out from the pay frequency).
+  const n = computeNetPay(toEngineFacts(SAMPLE_YOUNG_SINGLE));
   assert.equal(n.grossMonthly, 8000);
   assert.ok(Math.abs(n.nisMonthly - 432) < 1e-9, `NIS ${n.nisMonthly}`);
   assert.ok(Math.abs(n.payeMonthly - 49.4) < 1e-9, `PAYE ${n.payeMonthly}, hand-worked 49.40 (100% NIS gives 17.00)`);

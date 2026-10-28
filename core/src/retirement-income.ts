@@ -9,7 +9,7 @@
  */
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
-import type { LifeCaseFacts } from "./life-case-facts.ts";
+import type { EngineFacts } from "./engine-facts.ts";
 import type { NetPay } from "./household-budget.ts";
 import { workPension, type WorkPension } from "./needs/work-pension.ts";
 import { routeAnnuity, monthlyToReach, stressAgainstFloor, type AnnuityRouting, type FloorStress } from "./annuity-routing.ts";
@@ -39,7 +39,7 @@ export interface RetirementIncome {
   readonly provenance: Provenance;
 }
 
-export function computeRetirementIncome(facts: LifeCaseFacts, netPay: NetPay): RetirementIncome {
+export function computeRetirementIncome(facts: EngineFacts, netPay: NetPay): RetirementIncome {
   const b = new ProvenanceBuilder();
   const w = facts.wishes;
   const wp = workPension(b, facts.workPension, w.retireAge);

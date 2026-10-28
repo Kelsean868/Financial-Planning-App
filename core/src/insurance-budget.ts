@@ -14,7 +14,7 @@
  */
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
-import type { LifeCaseFacts } from "./life-case-facts.ts";
+import type { EngineFacts } from "./engine-facts.ts";
 import { parentAge, parentSex } from "./life-case-facts.ts";
 import type { HouseholdBudget, BudgetBuckets } from "./household-budget.ts";
 import type { Ladder, LadderItemSpec } from "./closing-ladder.ts";
@@ -123,12 +123,12 @@ export function minimumFor(b: ProvenanceBuilder, row: Pick<PlanRow, "product" | 
   return Math.max(minPrem, coverMin);
 }
 
-export function profileFor(facts: LifeCaseFacts): Profile {
+export function profileFor(facts: EngineFacts): Profile {
   if (facts.client.age >= 50) return "later";
   return facts.partner || facts.children.length > 0 ? "family" : "single";
 }
 
-function savingsRows(facts: LifeCaseFacts, profile: Profile): PlanRow[] {
+function savingsRows(facts: EngineFacts, profile: Profile): PlanRow[] {
   const age = facts.client.age;
   const r = (key: string, name: string, product: ProductId, weight: number, why: string, basis: CoverBasis): PlanRow =>
     ({ key, name, product, riders: [], weight, why, costTier: "you choose", basis, insuredAge: age });
@@ -164,7 +164,7 @@ interface ProtectionPlan {
 
 const fmt = (n: number): string => `$${Math.round(n).toLocaleString("en-US")}`;
 
-function protectionPlanFor(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: Profile, item: LadderItemSpec): ProtectionPlan {
+function protectionPlanFor(b: ProvenanceBuilder, facts: EngineFacts, profile: Profile, item: LadderItemSpec): ProtectionPlan {
   const { key } = item;
   const age = facts.client.age;
   const capped = (product: ProductId, cover: number): number => Math.min(b.get<ProductSpec>(`core:products.${product}`).cover?.max ?? Infinity, cover);
@@ -184,6 +184,14 @@ function protectionPlanFor(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: 
     const loan = item.product === "whole-life" ? { product: "whole-life" as const, name: "Whole life" } : { product: "term" as const, name: "Term life" };
     return { name: `${loan.name} for your ${goal.kind === "home" ? "home" : "car"} loan`, product: loan.product, riders: [],
       why: `Your lender will want this from year ${goal.years}. It costs about ${fmt(item.min)} a month if you start now.`, cover: at(loan.product, loan.product) };
+  }
+  // Section 3 §7.5 (closes F-16): cover for a debt someone co-signed, so it does not fall on them.
+  const cosigned = key.startsWith("cosigned-cover:") ? facts.debts.items[Number(key.slice("cosigned-cover:".length))] : undefined;
+  if (cosigned) {
+    const loan = item.product === "whole-life" ? { product: "whole-life" as const, name: "Whole life" } : { product: "term" as const, name: "Term life" };
+    const who = cosigned.cosignerName ?? "The person who co-signed";
+    return { name: `${loan.name} for the ${cosigned.label.toLowerCase()} ${cosigned.cosignerName ?? "someone"} co-signed`, product: loan.product, riders: [],
+      why: `${who} would owe the ${fmt(cosigned.balance)} if you died. This clears it. It costs about ${fmt(item.min)} a month.`, cover: at(loan.product, loan.product) };
   }
   if (key === "critical-illness") {
     const why = profile === "single" ? "At your age a serious illness or injury is far more likely than death. This pays a lump sum to live on while you recover."
@@ -217,7 +225,7 @@ const notYetNote = (notYet: readonly NotYetPlan[]): string => notYet.length
   : "";
 
 /** The Protection group: the ladder's insurance items, in ladder order. "Life cover beyond the ruin level" adds to the term plan. */
-function protectionGroup(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: Profile, from: ProtectionLadder, note: string): InsuranceBudgetGroup {
+function protectionGroup(b: ProvenanceBuilder, facts: EngineFacts, profile: Profile, from: ProtectionLadder, note: string): InsuranceBudgetGroup {
   type Draft = { plan: ProtectionPlan; key: string; monthly: number; min: number; keys: string[] };
   const drafts: Draft[] = [];
   const notYet: NotYetPlan[] = [];
@@ -283,7 +291,7 @@ function fitGroup(b: ProvenanceBuilder, title: InsuranceBudgetGroup["title"], to
   return { title, totalMonthly: Math.max(0, total), funded, notYet, note: note + notYetNote(notYet) };
 }
 
-export function computeInsuranceBudget(facts: LifeCaseFacts, budget: HouseholdBudget, buckets: BudgetBuckets, from: ProtectionLadder): InsuranceBudgetResult {
+export function computeInsuranceBudget(facts: EngineFacts, budget: HouseholdBudget, buckets: BudgetBuckets, from: ProtectionLadder): InsuranceBudgetResult {
   const b = new ProvenanceBuilder();
   const profile = profileFor(facts);
   const fromBuilder = buckets.retirement + buckets.goals;

@@ -5,8 +5,14 @@
  *
  * Parents are by birth year (Section 1): the prototype's mother aged 66 and father aged 71 in
  * 2026 are birth years 1960 and 1955.
+ *
+ * Section 3 Build A (28 Oct 2026): the samples are schema version 2. The mapping keeps every total of version 1 (the
+ * inverted gate: no golden moves): monthly pay; the cost lines spread across the budget groups to the same totals; the
+ * once-a-year bills across once-a-year lines to the same yearly total; the father has a $4,000 Family you support line
+ * and no growth; the mother has a $0 line and her future level is her current one (Light top-up from 66, which her
+ * pension covers). The version 1 originals stay (`*_V1`) for the upgrade test.
  */
-import type { LifeCaseFacts, MilestoneFacts } from "../life-case-facts.ts";
+import type { LifeCaseFacts, LifeCaseFactsV1, MilestoneFacts, BudgetGroupFacts, BudgetLineFacts, PayFacts } from "../life-case-facts.ts";
 import { deepFreeze } from "../parameters/row.ts";
 
 const id = (n: number): string => `00000000-0000-4000-8000-${n.toString(16).padStart(12, "0")}`;
@@ -18,13 +24,157 @@ const milestones = (vehicleOn: boolean, weddingOn: boolean): MilestoneFacts[] =>
   { key: "home", on: false, atAge: 30, amountToday: 100000 },
 ];
 
-const COVER_DEFAULT: LifeCaseFacts["existingCover"] = [
+const COVER_DEFAULT_V1: LifeCaseFactsV1["existingCover"] = [
   { policyId: id(0x101), label: "Group life through work", kind: "life", group: true, amount: null },
   { policyId: id(0x102), label: "Individual life", kind: "life", group: false, amount: 0 },
   { policyId: id(0x103), label: "Critical illness", kind: "ci", group: false, amount: 0 },
 ];
 
+const COVER_DEFAULT: LifeCaseFacts["existingCover"] = [
+  { policyId: id(0x101), label: "Group life through work", kind: "life", group: true, amount: null, status: "unsure" },
+  { policyId: id(0x102), label: "Individual life", kind: "life", group: false, amount: 0, status: "none" },
+  { policyId: id(0x103), label: "Critical illness", kind: "ci", group: false, amount: 0, status: "none" },
+];
+
+const monthlyPay = (amountPerPay: number): PayFacts => ({ frequency: "monthly", amountPerPay, varies: false, lowestMonthly: null });
+const grp = (key: BudgetGroupFacts["key"], lines: BudgetLineFacts[]): BudgetGroupFacts => ({ key, skip: false, total: null, totalFrequency: null, lines });
+const mo = (label: string, amount: number, extra: Partial<BudgetLineFacts> = {}): BudgetLineFacts => ({ label, amount, frequency: "monthly", ...extra });
+const yr = (label: string, amount: number): BudgetLineFacts => ({ label, amount, frequency: "yearly" });
+const NO_OPENER: LifeCaseFacts["opener"] = { worries: [], dreams: [], ownWorries: [], ownDreams: [] };
+
 export const SAMPLE_FAMILY: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
+  schemaVersion: 2,
+  asOfYear: 2026,
+  client: { personId: id(1), age: 38, sex: "male", longLived: false, pay: monthlyPay(17000), nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
+  partner: { personId: id(2), age: 36, pay: monthlyPay(4000) },
+  children: [
+    { personId: id(3), age: 4, route: "local", costLevel: "typical", studyStartAge: 18, milestones: milestones(false, false) },
+    { personId: id(4), age: 11, route: "local", costLevel: "typical", studyStartAge: 18, milestones: milestones(true, true) },
+  ],
+  parents: [
+    { personId: id(5), relationship: "mother", birthYear: 1960, careTier: 1, careFromAge: 66, growth: true, receivesSCP: true, nisContributions: "yes" },
+    { personId: id(6), relationship: "father", birthYear: 1955, careTier: 2, careFromAge: 71, growth: false, receivesSCP: false, nisContributions: "unknown" },
+  ],
+  budget: {
+    // Version 1: Mortgage payment 3,000; Groceries 2,000; Utilities 600; Transport 1,100; Phone and internet 400;
+    // School and childcare 800; Insurance premiums 300 (8,200 a month); once-a-year bills 18,000 a year.
+    groups: [
+      grp("home", [mo("Mortgage", 3000, { stop: "mortgage" })]),
+      grp("util", [mo("T&TEC", 600), mo("Home internet and cable", 400)]),
+      grp("food", [mo("Groceries and market", 2000)]),
+      grp("move", [mo("Fuel", 1100)]),
+      grp("kids", [mo("School fees", 800, { stop: "kids" })]),
+      grp("family", [mo("Mother", 0, { stop: "care", personId: id(5) }), mo("Father", 4000, { stop: "care", personId: id(6) })]),
+      grp("ins", [mo("Other premiums", 300)]),
+      grp("yearly", [yr("Christmas", 6000), yr("Back to school", 4000), yr("Motor renewal", 5000), yr("Home repairs", 3000)]),
+    ],
+    housing: "mortgage",
+    mortgage: { balance: 420000, yearsLeft: 18, clearOnDeath: true },
+    savings: 20000,
+    roomPlan: null,
+  },
+  debts: {
+    items: [
+      { label: "Credit card", type: "credit-card", lender: null, balance: 18000, ratePct: 24, minimumMonthly: 540, endDate: null, cosigned: false, cosignerName: null },
+      { label: "Personal loan", type: "personal", lender: null, balance: 45000, ratePct: 14, minimumMonthly: 900, endDate: null, cosigned: false, cosignerName: null },
+    ],
+    extraMonthly: 600,
+  },
+  goals: [
+    { goalId: id(0x201), kind: "home", on: false, price: 900000, years: 5, saved: 0, route: "mortgage" },
+    { goalId: id(0x202), kind: "vehicle", on: false, price: 180000, years: 2, saved: 0, route: "loan", newVehicle: true, depositPct: 0, termYears: 8 },
+    { goalId: id(0x203), kind: "study", on: false, price: 120000, years: 3, saved: 0, route: "save" },
+    { goalId: id(0x204), kind: "business", on: false, price: 100000, years: 3, saved: 0, route: "save" },
+  ],
+  existingCover: COVER_DEFAULT,
+  wishes: { funeral: 50000, finalMedical: 0, legacy: 150000, retireAge: 65, retireIncomeMonthly: 8000 },
+  workPension: { kind: "none" },
+  opener: NO_OPENER,
+  assets: [],
+});
+
+export const SAMPLE_YOUNG_SINGLE: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
+  schemaVersion: 2,
+  asOfYear: 2026,
+  client: { personId: id(0x11), age: 24, sex: "female", longLived: false, pay: monthlyPay(8000), nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
+  partner: null,
+  children: [],
+  parents: [],
+  budget: {
+    // Version 1: Rent 2,500; Groceries 900; Utilities 300; Transport 800; Phone and internet 300 (4,800 a month);
+    // once-a-year bills 6,000 a year.
+    groups: [
+      grp("home", [mo("Rent", 2500)]),
+      grp("util", [mo("T&TEC", 300), mo("Mobile phone (bMobile / Digicel)", 300)]),
+      grp("food", [mo("Groceries and market", 900)]),
+      grp("move", [mo("Maxi taxi, taxi, bus or ferry", 800)]),
+      grp("yearly", [yr("Christmas", 3000), yr("Carnival season (if not above)", 2000), yr("Medical and dental not covered", 1000)]),
+    ],
+    housing: "rent",
+    mortgage: null,
+    savings: 4000,
+    roomPlan: null,
+  },
+  debts: { items: [{ label: "Credit card", type: "credit-card", lender: null, balance: 3000, ratePct: 24, minimumMonthly: 150, endDate: null, cosigned: false, cosignerName: null }], extraMonthly: 200 },
+  goals: [
+    { goalId: id(0x211), kind: "home", on: true, price: 850000, years: 6, saved: 0, route: "mortgage" },
+    { goalId: id(0x212), kind: "vehicle", on: true, price: 150000, years: 2, saved: 0, route: "loan", newVehicle: true, depositPct: 0, termYears: 8 },
+    { goalId: id(0x213), kind: "study", on: false, price: 120000, years: 3, saved: 0, route: "save" },
+    { goalId: id(0x214), kind: "business", on: false, price: 100000, years: 3, saved: 0, route: "save" },
+  ],
+  existingCover: COVER_DEFAULT,
+  wishes: { funeral: 50000, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 6000 },
+  workPension: { kind: "none" },
+  opener: NO_OPENER,
+  assets: [],
+});
+
+/**
+ * Section 3 smoke-walk case 2 (Build B): a weekly-paid single who rents, with "My pay changes" on and two groups skipped
+ * (Fun and lifestyle, Pets and other). His recommended insurance figure is under $200, so the floor sets the cap (§5.2),
+ * and his card's end date is months before its payoff date (§7.2). Not one of the 37 golden fixtures; its own goldens
+ * are in section3-goldens.test.ts.
+ */
+export const SAMPLE_WEEKLY_RENTER: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
+  schemaVersion: 2,
+  asOfYear: 2026,
+  client: {
+    personId: id(0x21), age: 29, sex: "male", longLived: false, nisPaying: true, selfEmployed: false, hasHealthCover: "no",
+    pay: { frequency: "weekly", amountPerPay: 2000, varies: true, lowestMonthly: 7500 },
+  },
+  partner: null,
+  children: [],
+  parents: [],
+  budget: {
+    groups: [
+      grp("home", [mo("Rent", 2500), yr("Home insurance", 1200)]),
+      grp("util", [mo("T&TEC", 250), yr("WASA", 600), mo("Mobile phone (bMobile / Digicel)", 200)]),
+      grp("food", [{ label: "Groceries and market", amount: 180, frequency: "weekly" }, { label: "Work and school lunches, snacks", amount: 100, frequency: "weekly", stop: "work" }]),
+      grp("move", [{ label: "Maxi taxi, taxi, bus or ferry", amount: 100, frequency: "weekly" }]),
+      { key: "fun", skip: true, total: 400, totalFrequency: "monthly", lines: [] },
+      { key: "other", skip: true, total: 300, totalFrequency: "fortnightly", lines: [] },
+      grp("save", [mo("Credit union shares", 300)]),
+      grp("yearly", [yr("Christmas", 2400)]),
+    ],
+    housing: "rent",
+    mortgage: null,
+    savings: 7000,
+    roomPlan: null,
+  },
+  debts: {
+    items: [{ label: "Credit card", type: "credit-card", lender: "Republic Bank", balance: 6000, ratePct: 24, minimumMonthly: 250, endDate: "2028-06", cosigned: false, cosignerName: null }],
+    extraMonthly: 0,
+  },
+  goals: [],
+  existingCover: COVER_DEFAULT,
+  wishes: { funeral: 50000, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 5000 },
+  workPension: { kind: "none" },
+  opener: NO_OPENER,
+  assets: [],
+});
+
+/** Version 1 of the sample family, as signed (the upgrade test reads it). */
+export const SAMPLE_FAMILY_V1: LifeCaseFactsV1 = deepFreeze<LifeCaseFactsV1>({
   schemaVersion: 1,
   asOfYear: 2026,
   client: { personId: id(1), age: 38, sex: "male", longLived: false, grossMonthly: 17000, nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
@@ -62,12 +212,13 @@ export const SAMPLE_FAMILY: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
     { goalId: id(0x203), kind: "study", on: false, price: 120000, years: 3, saved: 0, route: "save" },
     { goalId: id(0x204), kind: "business", on: false, price: 100000, years: 3, saved: 0, route: "save" },
   ],
-  existingCover: COVER_DEFAULT,
+  existingCover: COVER_DEFAULT_V1,
   wishes: { funeral: 50000, finalMedical: 0, legacy: 150000, retireAge: 65, retireIncomeMonthly: 8000 },
   workPension: { kind: "none" },
 });
 
-export const SAMPLE_YOUNG_SINGLE: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
+/** Version 1 of the young single, as signed. */
+export const SAMPLE_YOUNG_SINGLE_V1: LifeCaseFactsV1 = deepFreeze<LifeCaseFactsV1>({
   schemaVersion: 1,
   asOfYear: 2026,
   client: { personId: id(0x11), age: 24, sex: "female", longLived: false, grossMonthly: 8000, nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
@@ -93,7 +244,7 @@ export const SAMPLE_YOUNG_SINGLE: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
     { goalId: id(0x213), kind: "study", on: false, price: 120000, years: 3, saved: 0, route: "save" },
     { goalId: id(0x214), kind: "business", on: false, price: 100000, years: 3, saved: 0, route: "save" },
   ],
-  existingCover: COVER_DEFAULT,
+  existingCover: COVER_DEFAULT_V1,
   wishes: { funeral: 50000, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 6000 },
   workPension: { kind: "none" },
 });

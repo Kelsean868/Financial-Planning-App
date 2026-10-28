@@ -1,7 +1,11 @@
 /**
  * Section 2 guard 14 (goldens), care graph guard 2 (golden numbers, inverted gate) and closing
  * guard 1 (upstream immutability). Numbers from the prototype v17, 27 Oct 2026; each moves only with
- * a recorded re-baseline (closing addendum §14.1). Assumption set `ff-2026-10-28-cards1` (was `ff-2026-10-27-ladder2`; fix run 4 moved no golden).
+ * a recorded re-baseline (closing addendum §14.1). Assumption set `ff-2026-10-28-s3` (was `ff-2026-10-28-cards1`, and
+ * `ff-2026-10-27-ladder2` before it; fix run 4 and Section 3 Build A moved no golden).
+ *
+ * Section 3 Build A (28 Oct 2026; docs/audit/RUN-2026-10-28-section3-a.md): the samples are schema version 2, mapped so
+ * every total equals version 1's (inverted gate). No golden here moved.
  *
  * Two checks per figure: the signed rounded golden exactly, and the prototype's full-precision value
  * (traced in the run record §6) to 1e-6, so a drift too small to move the rounding is still caught.
@@ -31,8 +35,8 @@ const near = (name: string, produced: number, prototype: number): void =>
   assert.ok(Math.abs(produced - prototype) < 1e-6, `${name}: produced ${produced}, prototype ${prototype}`);
 const thousands = (x: number): number => Math.round(x / 1000) * 1000;
 
-test("goldens are pinned to assumption set ff-2026-10-28-cards1", () => {
-  assert.equal(ASSUMPTION_SET_ID, "ff-2026-10-28-cards1");
+test("goldens are pinned to assumption set ff-2026-10-28-s3", () => {
+  assert.equal(ASSUMPTION_SET_ID, "ff-2026-10-28-s3");
 });
 
 test("death scenario sentences, both samples (pinned 27 Oct 2026, one-allocator fix; re-baselined in fix run 3)", () => {

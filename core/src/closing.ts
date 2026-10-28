@@ -11,7 +11,8 @@
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
 import { ClosingInputError } from "./errors.ts";
-import type { LifeCaseFacts, ParentFacts } from "./life-case-facts.ts";
+import type { ParentFacts } from "./life-case-facts.ts";
+import { parentSupported, type EngineFacts } from "./engine-facts.ts";
 import { parentAge, parentSex } from "./life-case-facts.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import type { DebtsResult } from "./debts.ts";
@@ -20,7 +21,7 @@ import { survivorCashflow, type DeathNeedResult, type Obligation, type SurvivorC
 import type { RetirementIncome } from "./retirement-income.ts";
 import type { GoalsResult } from "./goals.ts";
 import { ratePer1000, roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, canIssue, ratedAge, premiumFor, type PremiumBand } from "./premiums.ts";
-import { allocateLadder, completeOrder, defaultOrder, insuranceCap, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
+import { allocateLadder, completeOrder, defaultOrder, insuranceCap, insuranceRange, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
 import { minimumFor, profileFor } from "./insurance-budget.ts";
 import type { ScopeGap } from "./scope.ts";
 import type { ProductId, ProductSpec } from "./parameters/tatil-products-2026-10.ts";
@@ -36,7 +37,7 @@ export const LAYER_NAMES: Readonly<Record<RevealLayer, string>> = {
 export const UNKNOWN_SENTENCE = "We did not capture this. It is not counted either way.";
 
 export interface ClosingContext {
-  readonly facts?: LifeCaseFacts;
+  readonly facts?: EngineFacts;
   readonly budget?: HouseholdBudget;
   readonly debts?: DebtsResult;
   readonly careGraph?: CareGraphResult;
@@ -206,6 +207,11 @@ export interface ClosingComparison {
   readonly provenance: Provenance;
 }
 
+const DEBT_WORDS: Readonly<Record<EngineFacts["debts"]["items"][number]["type"], string>> = {
+  "credit-card": "credit card", "car-loan": "car loan", personal: "personal loan", "hire-purchase": "hire purchase",
+  "student-loan": "student loan", informal: "family loan", other: "loan",
+};
+
 /** Thousands separators without ICU, so sentences are byte-identical everywhere (guard 4). */
 export function money(n: number): string {
   const s = Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
@@ -238,7 +244,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const cap = insuranceCap(budget, options.budgetMonthly);
 
   /* -------------------------------------------------------------- reveal layers */
-  const parentsOffset = facts.parents.filter((p) => p.careTier > 0 && !careGraph.goals.some((g) => g.key === `${p.personId}:care`));
+  const parentsOffset = facts.parents.filter((p) => parentSupported(p) && !careGraph.goals.some((g) => g.key === `${p.personId}:care`));
   const careGoal = new Map(careGraph.goals.map((g) => [g.key, g]));
   const pronoun = (p: ParentFacts): string => (/mother|grandmother/.test(p.relationship) ? "Her" : /father|grandfather/.test(p.relationship) ? "His" : "Their");
 
@@ -471,6 +477,16 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, ratedAge(age)));
     return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id }];
   });
+  // Section 3 §7.5 (closes F-16): a debt someone co-signed leaves that person owing it if the client dies. One loan cover
+  // item per co-signed debt with a balance, in the tier Decision 7 gives a loan taken now (inside three years: Tier 2).
+  const cosignedCover = facts.debts.items.flatMap((d, ix): LadderItemSpec[] => {
+    if (!d.cosigned || d.balance <= 0) return [];
+    const id: "term" | "whole-life" = canIssue(b, "term", age) ? "term" : "whole-life";
+    const spec = id === "term" ? term : whole;
+    const cover = Math.min(spec.cover!.max ?? Infinity, Math.max(spec.cover!.min, d.balance));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, ratedAge(age)));
+    return [{ key: `cosigned-cover:${ix}`, tier: 2, label: `Life cover for the ${DEBT_WORDS[d.type]} ${d.cosignerName ?? "someone"} co-signed`, min: prem, full: prem, insurance: true, product: id }];
+  });
   // Decision 8 = B: the chosen card is the Tier 1 life target. life-ruin's minimum stays the ruin level (pass one is
   // unchanged); its full is the chosen card's premium, so in pass two spare money fills the chosen level first. The
   // step from the chosen card to the Recommended card stays in Tier 3.
@@ -489,6 +505,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
     ...loanCover,
+    ...cosignedCover,
     ...(dependants ? [{ key: "life-beyond-ruin", tier: 3 as const, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - cardPrem(chosen)), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : []),
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
@@ -555,9 +572,12 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   /* -------------------------------------------------------------- bands (F-18, Change 3) */
   // Each band's cover is the life cover the ladder funds at that band's cap, with the chosen card. No band assumes all of
   // its premium goes to life.
+  // Section 3 §5 (guard 30): no band below the $200 floor; none at all when there is no plan (stage 0, or money left
+  // under $200).
   const shares = b.get<{ floor: number; recommended: number; ceiling: number }>("core:ff.closing.bandShares");
+  const range = insuranceRange(budget);
   const bands: CloseBand[] = (["floor", "recommended", "ceiling"] as const).map((k) => {
-    const monthly = budget.ceilingMonthly * shares[k];
+    const monthly = range.noPlan ? 0 : Math.max(range.floorMonthly, budget.ceilingMonthly * shares[k]);
     const cover = monthly > 0 ? lifeCoverFunded(runLadder(pkg, monthly).ladder, pkg) : 0;
     const L5 = layerAt(5, cover);
     return {

@@ -14,12 +14,16 @@ import {
   computeFactFinder, parentAge, TATIL_PRODUCTS, SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, type FactFinderResult, type ProductId,
 } from "../src/index.ts";
 import { clone, eachCase, variants, CENT } from "./ladder-cases.ts";
+import { setGross, setParents } from "./facts-helpers.ts";
 
 const money2 = (x: number): string => x.toFixed(2);
 
-/** Guard 23 (F-18): insurance is never above the cap in use: the slider's amount when given, else the recommended figure. */
+/**
+ * Guard 23 (F-18): insurance is never above the cap in use: the slider's amount when given, else max($200, the recommended
+ * figure) since Section 3 §5; 0 when there is no plan (stage 0, or money left under $200).
+ */
 export function assertWithinCap(r: FactFinderResult, label: string, budgetMonthly?: number): void {
-  const cap = r.budget.stage === 0 ? 0 : budgetMonthly ?? r.budget.band.recommended;
+  const cap = r.insuranceRange.noPlan ? 0 : budgetMonthly ?? r.insuranceRange.defaultMonthly;
   assert.ok(r.closing.ladder.insuranceAllocated <= cap + 1e-9, `${label}: insurance allocated ${r.closing.ladder.insuranceAllocated} is above the cap in use ${cap}`);
   assert.ok(r.insuranceBudget.groups[0].totalMonthly <= cap + 1e-9, `${label}: the Protection total ${r.insuranceBudget.groups[0].totalMonthly} is above the cap in use ${cap}`);
   assert.ok(r.buckets.protection <= cap + 1e-9, `${label}: the budget card's Protection bucket ${r.buckets.protection} is above the cap in use ${cap}`);
@@ -62,9 +66,10 @@ test("guard 23: insurance allocated is never above the cap in use (the slider, e
   assertWithinCap(fam, "sample family");
   let n = eachCase((r, label) => assertWithinCap(r, label));
   for (const f of variants()) {
-    const { band, stage } = computeFactFinder(f).budget;
-    if (stage === 0) continue;
-    for (const cap of [band.floor, (band.floor + band.recommended) / 2, band.ceiling]) {
+    // Section 3 §5: the slider's range is the $200 floor to max(ceiling, $200).
+    const range = computeFactFinder(f).insuranceRange;
+    if (range.noPlan) continue;
+    for (const cap of [range.minMonthly, (range.minMonthly + range.defaultMonthly) / 2, range.maxMonthly]) {
       for (const pkg of ["essential", "recommended", "full"] as const) {
         const r = computeFactFinder(f, { package: pkg, budgetMonthly: cap });
         assert.equal(r.closing.ladder.insuranceCapMonthly, cap, "the slider's amount is the cap");
@@ -84,7 +89,8 @@ test("guard 24: no funded ladder item breaks its product's issue ages (rated age
 
 test("guard 24 fixture: a client of rated age 66 gets whole life to the ruin level, not term", () => {
   const f = clone(SAMPLE_FAMILY);
-  f.client = { ...f.client, age: 65, grossMonthly: 60000 };
+  f.client = { ...f.client, age: 65 };
+  setGross(f, 60000);
   const r = computeFactFinder(f);
   const ruin = r.closing.ladder.items.find((i) => i.key === "life-ruin")!;
   assert.equal(ruin.product, "whole-life");
@@ -145,7 +151,8 @@ test("Change 3: no ruin-level life cover without dependants; parent care paid by
   assert.ok(young.closing.provenance.rulesFired.includes("no partner, no children, no parent care paid: no ruin-level life cover"));
   assert.equal(Math.round(young.deathNeed.tiers.essential), 149000, "the death need is unchanged; only the ladder item goes");
   const carer = clone(SAMPLE_YOUNG_SINGLE);
-  carer.parents = [JSON.parse(JSON.stringify(SAMPLE_FAMILY.parents[1]))];
+  // Section 3: the father's care today is his $4,000 Family you support line (version 1: care tier 2 from now).
+  setParents(carer, [SAMPLE_FAMILY.parents[1]!], { [SAMPLE_FAMILY.parents[1]!.personId]: 4000 });
   const r = computeFactFinder(carer);
   assert.ok(r.careGraph.goals.some((g) => g.kind === "care" && g.presentValue > 0), "the father's care is charged to the client");
   assert.ok(r.closing.ladderSpecs.some((s) => s.key === "life-ruin"), "so she has a dependant and a ruin-level item");
