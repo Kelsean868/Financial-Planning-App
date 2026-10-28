@@ -17,10 +17,12 @@ import { clone, eachCase, variants, CENT } from "./ladder-cases.ts";
 
 const money2 = (x: number): string => x.toFixed(2);
 
-export function assertWithinRecommended(r: FactFinderResult, label: string): void {
-  const rec = r.budget.stage === 0 ? 0 : r.budget.band.recommended;
-  assert.ok(r.closing.ladder.insuranceAllocated <= rec + 1e-9, `${label}: insurance allocated ${r.closing.ladder.insuranceAllocated} is above the recommended ${rec}`);
-  assert.ok(r.insuranceBudget.groups[0].totalMonthly <= rec + 1e-9, `${label}: the Protection total ${r.insuranceBudget.groups[0].totalMonthly} is above the recommended ${rec}`);
+/** Guard 23 (F-18): insurance is never above the cap in use: the slider's amount when given, else the recommended figure. */
+export function assertWithinCap(r: FactFinderResult, label: string, budgetMonthly?: number): void {
+  const cap = r.budget.stage === 0 ? 0 : budgetMonthly ?? r.budget.band.recommended;
+  assert.ok(r.closing.ladder.insuranceAllocated <= cap + 1e-9, `${label}: insurance allocated ${r.closing.ladder.insuranceAllocated} is above the cap in use ${cap}`);
+  assert.ok(r.insuranceBudget.groups[0].totalMonthly <= cap + 1e-9, `${label}: the Protection total ${r.insuranceBudget.groups[0].totalMonthly} is above the cap in use ${cap}`);
+  assert.ok(r.buckets.protection <= cap + 1e-9, `${label}: the budget card's Protection bucket ${r.buckets.protection} is above the cap in use ${cap}`);
 }
 
 /** Issue ages from the product table, on rated age: worked out here, not by the engine's own check. */
@@ -53,13 +55,25 @@ export function assertBasketIsLadder(r: FactFinderResult, label: string): void {
   for (const x of bk.items) assert.equal(x.product, ruin?.product, `${label}: the basket is written on the ladder's life product`);
 }
 
-test("guard 23: insurance allocated is never above the recommended figure", () => {
+test("guard 23: insurance allocated is never above the cap in use (the slider, else the recommended figure)", () => {
   const fam = computeFactFinder(SAMPLE_FAMILY);
-  assert.equal(money2(fam.closing.ladder.insuranceCapMonthly), money2(fam.budget.band.recommended), "the cap is the recommended figure");
+  assert.equal(money2(fam.closing.ladder.insuranceCapMonthly), money2(fam.budget.band.recommended), "with no slider amount the cap is the recommended figure");
   assert.equal(money2(fam.closing.ladder.insuranceCeilingMonthly), money2(fam.budget.ceilingMonthly), "the ceiling stays on the result");
-  assertWithinRecommended(fam, "sample family");
-  const n = eachCase(assertWithinRecommended);
-  assert.ok(n > 400, `${n} cases checked`);
+  assertWithinCap(fam, "sample family");
+  let n = eachCase((r, label) => assertWithinCap(r, label));
+  for (const f of variants()) {
+    const { band, stage } = computeFactFinder(f).budget;
+    if (stage === 0) continue;
+    for (const cap of [band.floor, (band.floor + band.recommended) / 2, band.ceiling]) {
+      for (const pkg of ["essential", "recommended", "full"] as const) {
+        const r = computeFactFinder(f, { package: pkg, budgetMonthly: cap });
+        assert.equal(r.closing.ladder.insuranceCapMonthly, cap, "the slider's amount is the cap");
+        assertWithinCap(r, `${pkg} at ${money2(cap)}`, cap);
+        n++;
+      }
+    }
+  }
+  assert.ok(n > 1000, `${n} cases checked`);
 });
 
 test("guard 24: no funded ladder item breaks its product's issue ages (rated age)", () => {
@@ -85,7 +99,9 @@ test("guard 24 fixture: a client of rated age 66 gets whole life to the ruin lev
 test("guard 25: the close screen's life package is the ladder's life allocation, to the cent", () => {
   let n = eachCase(assertBasketIsLadder);
   for (const f of variants().slice(0, 40)) {
-    for (const opt of [{ package: "essential" as const }, { package: "full" as const }, { budgetMonthly: 5000 }]) {
+    // F-18: budgetMonthly is the insurance cap, inside the band; the old $5,000 is now the band's ceiling.
+    const top = computeFactFinder(f).budget.band.ceiling;
+    for (const opt of [{ package: "recommended" as const }, { package: "full" as const }, { budgetMonthly: top }, { package: "full" as const, budgetMonthly: top }]) {
       assertBasketIsLadder(computeFactFinder(f, opt), JSON.stringify(opt));
       n++;
     }

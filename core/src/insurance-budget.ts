@@ -290,7 +290,9 @@ export function computeInsuranceBudget(facts: LifeCaseFacts, budget: HouseholdBu
   const savTotal = fromBuilder > 1 ? fromBuilder : Math.round(budget.netPay.householdNetMonthly * b.num("core:ff.budget.savingsDefaultShareOfNet"));
   const protNote = budget.stage === 0
     ? "Costs are bigger than income, so we hold new protection until the gap is closed."
-    : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(budget.band.recommended)}, the recommended amount, and fund plans in priority order.`;
+    : from.ladder.insuranceCapMonthly === budget.band.recommended
+      ? `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(budget.band.recommended)}, the recommended amount, and fund plans in priority order.`
+      : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(from.ladder.insuranceCapMonthly)}, the amount you chose, and fund plans in priority order.`;
   const savNote = fromBuilder > 1 ? "From your pay-yourself-first plan." : "About 10% of take-home, once your emergency fund is full.";
   b.rule("protection follows the priority ladder: each insurance plan gets its minimum or waits as 'not yet', inside the recommended figure");
   b.rule("each savings plan gets its minimum first; plans that cannot reach their minimum wait as 'not yet'");

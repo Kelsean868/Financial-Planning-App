@@ -5,8 +5,9 @@
  * disability income, own final expense); the §11.3 token annuity; tier 2 reversible and
  * near-dated; tier 3 reversible and far-dated.
  * Two passes: minimums top down, then fulls top down. Insurance items together are capped at the
- * band's recommended figure (Kyron, Decision 5 = A, 27 Oct 2026; guard 23), so they never exceed the
- * triage stage ceiling either (closing guard 3). An insurance item gets its minimum or nothing: when its
+ * band's recommended figure (Kyron, Decision 5 = A, 27 Oct 2026), or at the insurance budget the client
+ * set on the slider, inside the band (Decision 8 = B, 27 Oct 2026; guard 23: never above the cap in use),
+ * so they never exceed the triage stage ceiling either (closing guard 3). An insurance item gets its minimum or nothing: when its
  * minimum does not fit, it is "not yet" and the ladder moves on to the next item (guard 22: no
  * unbuyable plan). Non-insurance items take what is left, in part if need be.
  * At stage 0 there is no basket, only what would change it.
@@ -18,6 +19,7 @@
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import { scopeRow, type ScopeRow } from "./scope.ts";
+import { ClosingInputError } from "./errors.ts";
 import type { ProductId } from "./parameters/tatil-products-2026-10.ts";
 
 export type LadderTier = 0 | 1 | 1.5 | 2 | 3;
@@ -49,7 +51,7 @@ export interface Ladder {
   readonly whatWouldChange: { readonly shortfallMonthly: number; readonly hoursAtMinimumWage: number } | null;
   readonly items: readonly LadderItem[];
   readonly budgetMonthly: number;
-  /** What insurance items may take together: the band's recommended figure. */
+  /** What insurance items may take together: the slider's amount, else the band's recommended figure. */
   readonly insuranceCapMonthly: number;
   /** The triage stage ceiling, kept as a guard (closing guard 3). */
   readonly insuranceCeilingMonthly: number;
@@ -65,7 +67,43 @@ export function defaultOrder(specs: readonly LadderItemSpec[]): string[] {
   return TIER_ORDER.flatMap((t) => specs.filter((s) => s.tier === t).map((s) => s.key));
 }
 
-export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderItemSpec[], order?: readonly string[]): Ladder {
+/**
+ * The insurance cap in use (F-18, Change 2). The slider's amount when given, else the band's recommended figure
+ * (Decision 5 = A). Guard 27: an amount that is not a finite number, or is outside the band's floor to ceiling, throws
+ * `ClosingInputError`; it is never clamped.
+ */
+export function insuranceCap(budget: HouseholdBudget, budgetMonthly?: number | null): number {
+  if (budgetMonthly === undefined || budgetMonthly === null) return budget.band.recommended;
+  if (typeof budgetMonthly !== "number" || !Number.isFinite(budgetMonthly)) {
+    throw new ClosingInputError(`The insurance budget must be a finite number of dollars a month; got ${String(budgetMonthly)}.`);
+  }
+  const { floor, ceiling } = budget.band;
+  if (budgetMonthly < floor - CAP_TOLERANCE || budgetMonthly > ceiling + CAP_TOLERANCE) {
+    throw new ClosingInputError(`The insurance budget of ${budgetMonthly.toFixed(2)} a month is outside the safe range ${floor.toFixed(2)} to ${ceiling.toFixed(2)}.`);
+  }
+  return budgetMonthly;
+}
+
+/** Float noise only (a slider at its end stop returns the band figure as a decimal string). Not a clamp. */
+const CAP_TOLERANCE = 1e-9;
+
+/**
+ * A stored order with the keys it lacks put back at their default place, after the nearest key that comes before them
+ * in the default order. The spec list depends on the chosen card (life-beyond-ruin drops out when its full is 0), so an
+ * order saved under one card can lack a key another card needs.
+ */
+export function completeOrder(specs: readonly LadderItemSpec[], order: readonly string[]): string[] {
+  const def = defaultOrder(specs);
+  const out = order.filter((k) => def.includes(k));
+  for (const [i, k] of def.entries()) {
+    if (out.includes(k)) continue;
+    const prev = def.slice(0, i).reverse().find((p) => out.includes(p));
+    out.splice(prev === undefined ? 0 : out.indexOf(prev) + 1, 0, k);
+  }
+  return out;
+}
+
+export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderItemSpec[], order?: readonly string[], capMonthly?: number): Ladder {
   const b = new ProvenanceBuilder();
   if (budget.stage === 0) {
     return {
@@ -79,7 +117,8 @@ export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderIt
   const byKey = new Map(specs.map((s) => [s.key, s]));
   const ordered = keys.map((k) => byKey.get(k)!).filter(Boolean);
   let left = Math.max(0, budget.surplusMonthly);
-  let capLeft = budget.band.recommended;
+  const cap = capMonthly ?? budget.band.recommended;
+  let capLeft = cap;
   const got = new Map<string, number>(ordered.map((s) => [s.key, 0]));
   const notYet = new Set<string>();
   const roomFor = (s: LadderItemSpec): number => (s.insurance ? Math.min(left, capLeft) : left);
@@ -109,7 +148,7 @@ export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderIt
     whatWouldChange: null,
     items,
     budgetMonthly: Math.max(0, budget.surplusMonthly),
-    insuranceCapMonthly: budget.band.recommended,
+    insuranceCapMonthly: cap,
     insuranceCeilingMonthly: budget.ceilingMonthly,
     insuranceAllocated: items.filter((i) => i.insurance).reduce((a, i) => a + i.allocated, 0),
     preconditionsNotCaptured: ["Compulsory motor third-party cover"],

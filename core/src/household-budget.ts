@@ -183,15 +183,18 @@ export interface BudgetBuckets {
   readonly guiltFreeSpending: number;
 }
 
-/** The prototype's pay-yourself-first builder: the saving share is split in order, the rest is spending. */
-export function buildBudgetBuckets(budget: HouseholdBudget, facts: LifeCaseFacts, savePct?: number): BudgetBuckets {
+/**
+ * The prototype's pay-yourself-first builder: the saving share is split in order, the rest is spending.
+ * `protectionMonthly` is the insurance cap in use (the slider; F-18, Change 2); default the band's recommended figure.
+ */
+export function buildBudgetBuckets(budget: HouseholdBudget, facts: LifeCaseFacts, savePct?: number, protectionMonthly?: number): BudgetBuckets {
   const b = new ProvenanceBuilder();
   const pctUsed = savePct ?? b.num("core:ff.budget.payYourselfFirstPct");
   const s0 = Math.max(0, budget.surplusMonthly);
   const payFirst = Math.min(s0, budget.netPay.householdNetMonthly * pctUsed / 100);
   let left = payFirst;
   const take = (amt: number): number => { const x = Math.max(0, Math.min(left, amt)); left -= x; return x; };
-  const protection = take(budget.stage === 0 ? 0 : budget.band.recommended);
+  const protection = take(budget.stage === 0 ? 0 : protectionMonthly ?? budget.band.recommended);
   const debt = take(budget.expensiveDebt > 0 ? facts.debts.extraMonthly : 0);
   const months = b.num("core:ff.budget.bufferTargetMonths");
   const em = take(Math.max(0, budget.needsMonthly * months - facts.budget.savings) / b.num("core:ff.budget.builderBufferBuildMonths"));

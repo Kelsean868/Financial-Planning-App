@@ -16,6 +16,7 @@ import { computeGoals, type GoalsResult } from "./goals.ts";
 import { computeInsuranceBudget, type InsuranceBudgetResult } from "./insurance-budget.ts";
 import { computeHealthScore, type HealthScore } from "./health-score.ts";
 import { computeClosing, type ClosingComparison, type ClosingOptions } from "./closing.ts";
+import { insuranceCap } from "./closing-ladder.ts";
 import { computeLovedOnes, type LovedOnesResult } from "./loved-ones.ts";
 import { computeBusiness, type BusinessResult } from "./business.ts";
 import { ASSUMPTION_SET_ID } from "./parameters/fact-finder-2026-10.ts";
@@ -51,7 +52,9 @@ export function computeFactFinder(input: unknown, options: FactFinderOptions = {
   const deathNeed = computeDeathNeed({ facts, budget, debts: debts.summary, careGraph: cg });
   const retirement = computeRetirementIncome(facts, netPay);
   const goals = computeGoals(facts, budget);
-  const buckets = buildBudgetBuckets(budget, facts, options.savePct);
+  // The slider's insurance budget is checked once here, before any screen uses it (guard 27), and the budget card's
+  // Protection bucket follows it (F-18, Change 2).
+  const buckets = buildBudgetBuckets(budget, facts, options.savePct, insuranceCap(budget, options.budgetMonthly));
   const healthScore = computeHealthScore({ budget, deathNeed, retirement, savings: facts.budget.savings });
   const closing = computeClosing({ facts, budget, debts, careGraph: cg, deathNeed, retirement, goals }, options);
   const insuranceBudget = computeInsuranceBudget(facts, budget, buckets, closing);

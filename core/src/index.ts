@@ -60,9 +60,9 @@ export type { AnnuityRouting, AnnuityMode, VehicleFigures, FloorStress, Register
 export { computeClosing, money, LAYER_NAMES, UNKNOWN_SENTENCE } from "./closing.ts";
 export type {
   ClosingComparison, ClosingContext, ClosingOptions, ScenarioOutcome, ScenarioPair, DeathLayer, ObligationLine,
-  LifeBasket, BasketItem, CloseBand, ParentFuneralCover, Package, RevealLayer,
+  LifeBasket, BasketItem, CloseBand, PackageCard, ParentFuneralCover, Package, RevealLayer,
 } from "./closing.ts";
-export { allocateLadder, requestReorder, defaultOrder } from "./closing-ladder.ts";
+export { allocateLadder, requestReorder, defaultOrder, insuranceCap, completeOrder } from "./closing-ladder.ts";
 export type { Ladder, LadderItem, LadderItemSpec, LadderTier, ReorderResult } from "./closing-ladder.ts";
 export { buildScopeStatement, scopeRow, validateScopeRow, buildSnapshot } from "./scope.ts";
 export type { ScopeRow, ScopeState, ScopeLine, ScopeLineState, ScopeGap, ScopeStatement, LifeCaseSnapshot } from "./scope.ts";

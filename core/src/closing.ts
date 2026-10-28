@@ -20,7 +20,7 @@ import { survivorCashflow, type DeathNeedResult, type Obligation, type SurvivorC
 import type { RetirementIncome } from "./retirement-income.ts";
 import type { GoalsResult } from "./goals.ts";
 import { ratePer1000, roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, canIssue, ratedAge, premiumFor, type PremiumBand } from "./premiums.ts";
-import { allocateLadder, defaultOrder, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
+import { allocateLadder, completeOrder, defaultOrder, insuranceCap, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
 import { minimumFor, profileFor } from "./insurance-budget.ts";
 import type { ScopeGap } from "./scope.ts";
 import type { ProductId, ProductSpec } from "./parameters/tatil-products-2026-10.ts";
@@ -46,9 +46,15 @@ export interface ClosingContext {
 }
 
 export interface ClosingOptions {
-  /** Default "recommended". Ignored when `budgetMonthly` is set. */
+  /**
+   * The package card the client chose: the Tier 1 life target (Kyron, Decision 8 = B, 27 Oct 2026). Default
+   * "essential", the ruin level.
+   */
   readonly package?: Package;
-  /** A monthly amount the client chose instead of a package. */
+  /**
+   * The insurance budget a month (the slider): the cap insurance items share on the ladder. Default the band's
+   * recommended figure. Outside the band's floor to ceiling, or not a finite number, it throws `ClosingInputError`.
+   */
   readonly budgetMonthly?: number | null;
   /** Ladder order (Option B); see `requestReorder`. */
   readonly ladderOrder?: readonly string[];
@@ -109,9 +115,32 @@ export interface LifeBasket {
   readonly notYet: boolean;
 }
 
+/** One package card on the choose screen, worked out by running the ladder with that card chosen (guard 26). */
+export interface PackageCard {
+  readonly package: Package;
+  /** The card's life cover: its death-need tier, at least the plan minimum cover, at most the underwriting limit. */
+  readonly cover: number;
+  /** The premium a month on that cover. */
+  readonly premiumMonthly: number;
+  readonly covers: readonly string[];
+  readonly doesNotCover: readonly string[];
+  /**
+   * "in-plan": with this card chosen, at the cap in use, the life item gets the card's premium. "needs-more": it gets
+   * less, short by `needsMonthly`. "no-life-plan": there is no ruin-level life item (no one depends on the client, or
+   * costs are above income).
+   */
+  readonly status: "in-plan" | "needs-more" | "no-life-plan";
+  /** What the life item gets a month in that run. */
+  readonly lifeMonthly: number;
+  /** The card's premium less `lifeMonthly`; 0 unless "needs-more". */
+  readonly needsMonthly: number;
+  readonly statusText: string;
+}
+
 export interface CloseBand {
   readonly name: "Floor" | "Recommended" | "Ceiling";
   readonly monthly: number;
+  /** The life cover the ladder funds at this band's cap, with the chosen card. */
   readonly cover: number;
   readonly covers: readonly string[];
   readonly doesNotCover: readonly string[];
@@ -153,7 +182,9 @@ export interface ClosingComparison {
   readonly stage: HouseholdBudget["stage"];
   readonly underwater: boolean;
   readonly packages: Readonly<Record<Package, number>>;
-  readonly chosen: { readonly package: Package | null; readonly cover: number; readonly basket: LifeBasket };
+  /** Essential, Recommended, Full: each card's cover, premium, what it covers and its status at the cap in use. */
+  readonly cards: readonly PackageCard[];
+  readonly chosen: { readonly package: Package; readonly cover: number; readonly basket: LifeBasket };
   readonly layers: readonly DeathLayer[];
   readonly scenarios: {
     readonly death: ScenarioPair;
@@ -203,13 +234,8 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const uw = deathNeed.underwritingCeiling;
   const w = facts.wishes;
   const floorCover = (v: number): number => (v > 0 ? Math.max(minCover, v) : 0);
-  const permOf = (full: boolean): number => w.funeral + (full ? w.legacy : 0);
-  const coverFor = (prem: number, full: boolean): number => {
-    const pm = permOf(full);
-    const permP = pm * WL / 1000;
-    if (prem <= permP) return prem / WL * 1000;
-    return pm + (TR > 0 ? (prem - permP) / TR * 1000 : 0);
-  };
+  // The insurance cap in use: the slider's amount, else the recommended figure (F-18, Change 2; guard 27).
+  const cap = insuranceCap(budget, options.budgetMonthly);
 
   /* -------------------------------------------------------------- reveal layers */
   const parentsOffset = facts.parents.filter((p) => p.careTier > 0 && !careGraph.goals.some((g) => g.key === `${p.personId}:care`));
@@ -295,31 +321,18 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     };
   };
 
-  /* -------------------------------------------------------------- packages and basket */
-  const shares = b.get<{ floor: number; recommended: number; ceiling: number }>("core:ff.closing.bandShares");
+  /* -------------------------------------------------------------- package cards (F-18, Change 1) */
+  // Each card is its death-need tier, at least the plan minimum cover, at most the underwriting limit. The budget no
+  // longer caps the Recommended card: the slider sets the insurance budget (Decision 8 = B).
   const t = deathNeed.tiers;
   const packages: Record<Package, number> = {
-    essential: floorCover(t.essential),
-    recommended: floorCover(Math.min(uw, t.recommended, coverFor(budget.band.recommended, false))),
-    full: floorCover(t.full),
+    essential: floorCover(Math.min(uw, t.essential)),
+    recommended: floorCover(Math.min(uw, t.recommended)),
+    full: floorCover(Math.min(uw, t.full)),
   };
-  const usingBudget = options.budgetMonthly !== undefined && options.budgetMonthly !== null;
-  const pkg: Package = options.package ?? "recommended";
-  const wanted = usingBudget ? floorCover(Math.min(uw, coverFor(options.budgetMonthly as number, false))) : packages[pkg];
+  const pkg: Package = options.package ?? "essential";
+  const wanted = packages[pkg];
   const notCoveredAt = (cover: number): string[] => layerAt(5, cover).lines.filter((l) => !l.met).map((l) => l.label);
-
-  /* -------------------------------------------------------------- bands */
-  const bands: CloseBand[] = (["floor", "recommended", "ceiling"] as const).map((k) => {
-    const monthly = budget.ceilingMonthly * shares[k];
-    const cover = monthly > 0 ? floorCover(Math.min(uw, coverFor(monthly, false))) : 0;
-    const L5 = layerAt(5, cover);
-    return {
-      name: k === "floor" ? "Floor" : k === "recommended" ? "Recommended" : "Ceiling",
-      monthly, cover,
-      covers: L5.lines.filter((l) => l.met).map((l) => l.label),
-      doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label),
-    };
-  });
 
   /* -------------------------------------------------------------- critical illness */
   const lsg = b.get<ProductSpec>("core:products.life-span-gold");
@@ -422,6 +435,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const lifePremium = (cover: number): number => (cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, cover * lifeRate / 1000) : 0);
   const essPrem = lifePremium(packages.essential);
   const recPrem = lifePremium(packages.recommended);
+  const cardPrem = (k: Package): number => lifePremium(packages[k]);
   const issuable = (id: ProductId, insuredAge: number, what: string): boolean => {
     const ok = canIssue(b, id, insuredAge);
     if (!ok) b.rule(`${what}: ${id} cannot be issued at rated age ${ratedAge(insuredAge)}, so there is no ladder item`);
@@ -457,9 +471,12 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, ratedAge(age)));
     return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id }];
   });
-  const specs: LadderItemSpec[] = [
+  // Decision 8 = B: the chosen card is the Tier 1 life target. life-ruin's minimum stays the ruin level (pass one is
+  // unchanged); its full is the chosen card's premium, so in pass two spare money fills the chosen level first. The
+  // step from the chosen card to the Recommended card stays in Tier 3.
+  const specsFor = (chosen: Package): LadderItemSpec[] => [
     { key: "buffer-one-month", tier: 0, label: "One month of buffer cash", min: oneMonth, full: oneMonth, insurance: false },
-    ...(dependants ? [{ key: "life-ruin", tier: 1 as const, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true, product: lifeProduct }] : []),
+    ...(dependants ? [{ key: "life-ruin", tier: 1 as const, label: "Life cover to the ruin level", min: essPrem, full: Math.max(essPrem, cardPrem(chosen)), insurance: true, product: lifeProduct }] : []),
     { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciOn ? ciMin : 0, full: ciOn ? ciFull : 0, insurance: true, product: "life-span-gold" },
     ...funerals.map((x) => ({
       key: `parent-funeral:${x.personId}`, tier: 1 as const, label: `${x.who}'s funeral cover`, min: x.minimumMonthly, full: Math.max(x.minimumMonthly, x.fullMonthly), insurance: true, product: "rest-assured-ii" as const,
@@ -472,18 +489,32 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
     ...loanCover,
-    ...(dependants ? [{ key: "life-beyond-ruin", tier: 3 as const, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : []),
+    ...(dependants ? [{ key: "life-beyond-ruin", tier: 3 as const, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - cardPrem(chosen)), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : []),
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
     { key: "milestones", tier: 3, label: "Milestones and your own goals", min: 0, full: sum(futureGoals.filter((g) => g.kind === "milestone" && g.start > near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years > near).map((p) => p.monthlySaving)), insurance: false },
   ];
-  const ladderSpecs = specs.filter((s) => s.full > 0 || s.min > 0);
-  const ladder = allocateLadder(budget, ladderSpecs, options.ladderOrder ?? defaultOrder(ladderSpecs));
+  const order = options.ladderOrder;
+  const runLadder = (chosen: Package, capMonthly: number): { specs: LadderItemSpec[]; ladder: Ladder } => {
+    const s = specsFor(chosen).filter((x) => x.full > 0 || x.min > 0);
+    return { specs: s, ladder: allocateLadder(budget, s, order ? completeOrder(s, order) : defaultOrder(s), capMonthly) };
+  };
+  const { specs: ladderSpecs, ladder } = runLadder(pkg, cap);
 
   /* -------------------------------------------------------------- the life basket (Change 6) */
   // The life package on the close is the ladder's life allocation (life-ruin plus life-beyond-ruin); it does not split term
-  // and whole life on its own (guard 25). Its cover is what each item was sized to buy: the ruin level, plus the funded
-  // share of the step from the ruin level to the recommended cover.
+  // and whole life on its own (guard 25). Its cover is what the life items fund (F-18, Change 3): the ruin level; then, up
+  // to the chosen card, what life-ruin's premium above the ruin level buys; then the funded share of the step from the
+  // chosen card to the Recommended card.
+  const lifeCoverFunded = (lad: Ladder, chosen: Package): number => {
+    const ruin = lad.items.find((i) => i.key === "life-ruin");
+    const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
+    if (budget.stage === 0 || !ruin || ruin.allocated <= 0) return 0;
+    const target = Math.max(packages.essential, packages[chosen]);
+    const toCard = ruin.allocated >= ruin.full - 1e-9 ? target : Math.max(packages.essential, Math.min(target, lifeRate > 0 ? ruin.allocated / lifeRate * 1000 : 0));
+    const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
+    return toCard + share * Math.max(0, packages.recommended - target);
+  };
   const buildBasket = (lad: Ladder): LifeBasket => {
     const ruin = lad.items.find((i) => i.key === "life-ruin");
     const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
@@ -491,14 +522,51 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     if (budget.stage === 0 || !ruin || prem <= 0) {
       return { cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: !!ruin && wanted > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet: ruin?.notYet ?? false };
     }
-    const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
-    const cover = packages.essential + share * Math.max(0, packages.recommended - packages.essential);
+    const cover = lifeCoverFunded(lad, pkg);
     const band = roughBand(b, cover * lifeRate / 1000, lifeSpec.minPremiumMonthly);
     const items: BasketItem[] = [{ product: lifeProduct, cover, premiumMonthly: prem, band }];
     return { cover, items, totalMonthly: prem, totalHighMonthly: band.high, partial: cover < wanted - 0.5, permanentDropped: false, notCovered: notCoveredAt(cover), notYet: false };
   };
   const basket = buildBasket(ladder);
   b.rule("the life basket is the ladder's life allocation; when the need costs more than the cap, partial cover is shown and what is not covered is named");
+
+  /* -------------------------------------------------------------- cards (F-18, Change 3) */
+  // Each card's status comes from a ladder run with that card chosen, at the cap in use (guard 26).
+  const cards: PackageCard[] = (["essential", "recommended", "full"] as const).map((k) => {
+    const cover = packages[k];
+    const premiumMonthly = cardPrem(k);
+    const L5 = layerAt(5, cover);
+    const ruin = runLadder(k, cap).ladder.items.find((i) => i.key === "life-ruin");
+    const lifeMonthly = ruin?.allocated ?? 0;
+    const base = {
+      package: k, cover, premiumMonthly, lifeMonthly,
+      covers: L5.lines.filter((l) => l.met).map((l) => l.label), doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label),
+    };
+    if (!ruin || budget.stage === 0) {
+      const statusText = budget.stage === 0 ? "No life plan yet: costs are bigger than income." : "No life plan: no one depends on you, so no life cover is planned.";
+      return { ...base, status: "no-life-plan" as const, needsMonthly: 0, statusText };
+    }
+    const short = Math.max(0, ruin.full - lifeMonthly);
+    if (short <= 1e-9) return { ...base, status: "in-plan" as const, needsMonthly: 0, statusText: "In your plan" };
+    return { ...base, status: "needs-more" as const, needsMonthly: premiumMonthly - lifeMonthly, statusText: `Needs ${money(premiumMonthly - lifeMonthly)} more a month` };
+  });
+  b.rule("each package card's status is a ladder run with that card chosen, at the insurance budget in use");
+
+  /* -------------------------------------------------------------- bands (F-18, Change 3) */
+  // Each band's cover is the life cover the ladder funds at that band's cap, with the chosen card. No band assumes all of
+  // its premium goes to life.
+  const shares = b.get<{ floor: number; recommended: number; ceiling: number }>("core:ff.closing.bandShares");
+  const bands: CloseBand[] = (["floor", "recommended", "ceiling"] as const).map((k) => {
+    const monthly = budget.ceilingMonthly * shares[k];
+    const cover = monthly > 0 ? lifeCoverFunded(runLadder(pkg, monthly).ladder, pkg) : 0;
+    const L5 = layerAt(5, cover);
+    return {
+      name: k === "floor" ? "Floor" : k === "recommended" ? "Recommended" : "Ceiling",
+      monthly, cover,
+      covers: L5.lines.filter((l) => l.met).map((l) => l.label),
+      doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label),
+    };
+  });
 
   const layers = ([1, 2, 3, 4, 5] as const).map((L) => layerAt(L, basket.cover));
   const today = layers[3]!.outcome;
@@ -538,7 +606,8 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     stage: budget.stage,
     underwater: budget.stage === 0,
     packages,
-    chosen: { package: usingBudget ? null : pkg, cover: basket.cover, basket },
+    cards,
+    chosen: { package: pkg, cover: basket.cover, basket },
     layers,
     scenarios: { death: { today, plan }, criticalIllness, liveLong: { today: longToday, plan: longPlan }, legacy },
     bands,

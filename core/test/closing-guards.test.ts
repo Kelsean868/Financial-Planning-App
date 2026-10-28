@@ -47,7 +47,10 @@ function variants(): LifeCaseFacts[] {
 test("guard 3: no basket and no ladder exceeds the triage stage ceiling", () => {
   let checked = 0;
   for (const f of variants()) {
-    for (const opt of [{ package: "essential" as const }, { package: "recommended" as const }, { package: "full" as const }, { budgetMonthly: 5000 }]) {
+    // budgetMonthly is the insurance cap since F-18 and must sit inside the band, so the old $5,000 is now the band's
+    // ceiling: the most the slider allows, with the biggest card.
+    const top = computeFactFinder(f).budget.band.ceiling;
+    for (const opt of [{ package: "essential" as const }, { package: "recommended" as const }, { package: "full" as const }, { budgetMonthly: top }, { package: "full" as const, budgetMonthly: top }]) {
       const r = computeFactFinder(f, opt);
       const ceiling = r.budget.ceilingMonthly;
       const bk = r.closing.chosen.basket;

@@ -745,7 +745,7 @@ var D = "2026-10-27";
 var PROTO = "Fact-Finder Prototype v17 (docs/prototype/fact-finder-prototype-v17.html), 27 Oct 2026";
 var CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 var CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
-var ASSUMPTION_SET_ID = "ff-2026-10-27-ladder2";
+var ASSUMPTION_SET_ID = "ff-2026-10-28-cards1";
 var FF = deepFreeze2({
   assumptionSetId: row(ASSUMPTION_SET_ID, "rule", "Section 1 §1.2: the assumption set is a versioned constant in the engine", D),
   rates: {
@@ -1766,7 +1766,7 @@ function computeHouseholdBudget(input) {
     provenance: b.build()
   };
 }
-function buildBudgetBuckets(budget, facts, savePct) {
+function buildBudgetBuckets(budget, facts, savePct, protectionMonthly) {
   const b = new ProvenanceBuilder();
   const pctUsed = savePct ?? b.num("core:ff.budget.payYourselfFirstPct");
   const s0 = Math.max(0, budget.surplusMonthly);
@@ -1777,7 +1777,7 @@ function buildBudgetBuckets(budget, facts, savePct) {
     left -= x;
     return x;
   };
-  const protection = take(budget.stage === 0 ? 0 : budget.band.recommended);
+  const protection = take(budget.stage === 0 ? 0 : protectionMonthly ?? budget.band.recommended);
   const debt = take(budget.expensiveDebt > 0 ? facts.debts.extraMonthly : 0);
   const months = b.num("core:ff.budget.bufferTargetMonths");
   const em = take(Math.max(0, budget.needsMonthly * months - facts.budget.savings) / b.num("core:ff.budget.builderBufferBuildMonths"));
@@ -2772,7 +2772,7 @@ function computeInsuranceBudget(facts, budget, buckets, from) {
   const profile = profileFor(facts);
   const fromBuilder = buckets.retirement + buckets.goals;
   const savTotal = fromBuilder > 1 ? fromBuilder : Math.round(budget.netPay.householdNetMonthly * b.num("core:ff.budget.savingsDefaultShareOfNet"));
-  const protNote = budget.stage === 0 ? "Costs are bigger than income, so we hold new protection until the gap is closed." : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(budget.band.recommended)}, the recommended amount, and fund plans in priority order.`;
+  const protNote = budget.stage === 0 ? "Costs are bigger than income, so we hold new protection until the gap is closed." : from.ladder.insuranceCapMonthly === budget.band.recommended ? `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(budget.band.recommended)}, the recommended amount, and fund plans in priority order.` : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(from.ladder.insuranceCapMonthly)}, the amount you chose, and fund plans in priority order.`;
   const savNote = fromBuilder > 1 ? "From your pay-yourself-first plan." : "About 10% of take-home, once your emergency fund is full.";
   b.rule("protection follows the priority ladder: each insurance plan gets its minimum or waits as 'not yet', inside the recommended figure");
   b.rule("each savings plan gets its minimum first; plans that cannot reach their minimum wait as 'not yet'");
@@ -2876,7 +2876,29 @@ var TIER_ORDER = [0, 1, 1.5, 2, 3];
 function defaultOrder(specs) {
   return TIER_ORDER.flatMap((t) => specs.filter((s) => s.tier === t).map((s) => s.key));
 }
-function allocateLadder(budget, specs, order) {
+function insuranceCap(budget, budgetMonthly) {
+  if (budgetMonthly === void 0 || budgetMonthly === null) return budget.band.recommended;
+  if (typeof budgetMonthly !== "number" || !Number.isFinite(budgetMonthly)) {
+    throw new ClosingInputError(`The insurance budget must be a finite number of dollars a month; got ${String(budgetMonthly)}.`);
+  }
+  const { floor, ceiling } = budget.band;
+  if (budgetMonthly < floor - CAP_TOLERANCE || budgetMonthly > ceiling + CAP_TOLERANCE) {
+    throw new ClosingInputError(`The insurance budget of ${budgetMonthly.toFixed(2)} a month is outside the safe range ${floor.toFixed(2)} to ${ceiling.toFixed(2)}.`);
+  }
+  return budgetMonthly;
+}
+var CAP_TOLERANCE = 1e-9;
+function completeOrder(specs, order) {
+  const def = defaultOrder(specs);
+  const out = order.filter((k) => def.includes(k));
+  for (const [i, k] of def.entries()) {
+    if (out.includes(k)) continue;
+    const prev = def.slice(0, i).reverse().find((p) => out.includes(p));
+    out.splice(prev === void 0 ? 0 : out.indexOf(prev) + 1, 0, k);
+  }
+  return out;
+}
+function allocateLadder(budget, specs, order, capMonthly) {
   const b = new ProvenanceBuilder();
   if (budget.stage === 0) {
     return {
@@ -2894,7 +2916,8 @@ function allocateLadder(budget, specs, order) {
   const byKey = new Map(specs.map((s) => [s.key, s]));
   const ordered = keys.map((k) => byKey.get(k)).filter(Boolean);
   let left = Math.max(0, budget.surplusMonthly);
-  let capLeft = budget.band.recommended;
+  const cap = capMonthly ?? budget.band.recommended;
+  let capLeft = cap;
   const got = new Map(ordered.map((s) => [s.key, 0]));
   const notYet = /* @__PURE__ */ new Set();
   const roomFor = (s) => s.insurance ? Math.min(left, capLeft) : left;
@@ -2922,7 +2945,7 @@ function allocateLadder(budget, specs, order) {
     whatWouldChange: null,
     items,
     budgetMonthly: Math.max(0, budget.surplusMonthly),
-    insuranceCapMonthly: budget.band.recommended,
+    insuranceCapMonthly: cap,
     insuranceCeilingMonthly: budget.ceilingMonthly,
     insuranceAllocated: items.filter((i) => i.insurance).reduce((a, i) => a + i.allocated, 0),
     preconditionsNotCaptured: ["Compulsory motor third-party cover"]
@@ -2979,13 +3002,7 @@ function computeClosing(ctxIn, options = {}) {
   const uw = deathNeed.underwritingCeiling;
   const w = facts.wishes;
   const floorCover = (v) => v > 0 ? Math.max(minCover, v) : 0;
-  const permOf = (full) => w.funeral + (full ? w.legacy : 0);
-  const coverFor = (prem, full) => {
-    const pm = permOf(full);
-    const permP = pm * WL / 1e3;
-    if (prem <= permP) return prem / WL * 1e3;
-    return pm + (TR > 0 ? (prem - permP) / TR * 1e3 : 0);
-  };
+  const cap = insuranceCap(budget, options.budgetMonthly);
   const parentsOffset = facts.parents.filter((p) => p.careTier > 0 && !careGraph2.goals.some((g) => g.key === `${p.personId}:care`));
   const careGoal = new Map(careGraph2.goals.map((g) => [g.key, g]));
   const pronoun = (p) => /mother|grandmother/.test(p.relationship) ? "Her" : /father|grandfather/.test(p.relationship) ? "His" : "Their";
@@ -3091,29 +3108,15 @@ function computeClosing(ctxIn, options = {}) {
       }
     };
   };
-  const shares = b.get("core:ff.closing.bandShares");
   const t = deathNeed.tiers;
   const packages = {
-    essential: floorCover(t.essential),
-    recommended: floorCover(Math.min(uw, t.recommended, coverFor(budget.band.recommended, false))),
-    full: floorCover(t.full)
+    essential: floorCover(Math.min(uw, t.essential)),
+    recommended: floorCover(Math.min(uw, t.recommended)),
+    full: floorCover(Math.min(uw, t.full))
   };
-  const usingBudget = options.budgetMonthly !== void 0 && options.budgetMonthly !== null;
-  const pkg = options.package ?? "recommended";
-  const wanted = usingBudget ? floorCover(Math.min(uw, coverFor(options.budgetMonthly, false))) : packages[pkg];
+  const pkg = options.package ?? "essential";
+  const wanted = packages[pkg];
   const notCoveredAt = (cover) => layerAt(5, cover).lines.filter((l) => !l.met).map((l) => l.label);
-  const bands = ["floor", "recommended", "ceiling"].map((k) => {
-    const monthly = budget.ceilingMonthly * shares[k];
-    const cover = monthly > 0 ? floorCover(Math.min(uw, coverFor(monthly, false))) : 0;
-    const L5 = layerAt(5, cover);
-    return {
-      name: k === "floor" ? "Floor" : k === "recommended" ? "Recommended" : "Ceiling",
-      monthly,
-      cover,
-      covers: L5.lines.filter((l) => l.met).map((l) => l.label),
-      doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label)
-    };
-  });
   const lsg = b.get("core:products.life-span-gold");
   const ciNeed = Math.max(0, facts.client.grossMonthly * 12 * b.num("core:ff.closing.ciIncomeYears") - deathNeed.cover.knownCI);
   const ciCover = ciNeed > 0 ? Math.max(lsg.cover.min, Math.min(ciNeed, lsg.cover.max ?? ciNeed)) : 0;
@@ -3219,6 +3222,7 @@ function computeClosing(ctxIn, options = {}) {
   const lifePremium = (cover) => cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, cover * lifeRate / 1e3) : 0;
   const essPrem = lifePremium(packages.essential);
   const recPrem = lifePremium(packages.recommended);
+  const cardPrem = (k) => lifePremium(packages[k]);
   const issuable = (id2, insuredAge, what) => {
     const ok = canIssue(b, id2, insuredAge);
     if (!ok) b.rule(`${what}: ${id2} cannot be issued at rated age ${ratedAge(insuredAge)}, so there is no ladder item`);
@@ -3250,9 +3254,9 @@ function computeClosing(ctxIn, options = {}) {
     const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, ratedAge(age)));
     return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id2 }];
   });
-  const specs = [
+  const specsFor = (chosen) => [
     { key: "buffer-one-month", tier: 0, label: "One month of buffer cash", min: oneMonth, full: oneMonth, insurance: false },
-    ...dependants ? [{ key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true, product: lifeProduct }] : [],
+    ...dependants ? [{ key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: Math.max(essPrem, cardPrem(chosen)), insurance: true, product: lifeProduct }] : [],
     { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciOn ? ciMin : 0, full: ciOn ? ciFull : 0, insurance: true, product: "life-span-gold" },
     ...funerals.map((x) => ({
       key: `parent-funeral:${x.personId}`,
@@ -3271,13 +3275,26 @@ function computeClosing(ctxIn, options = {}) {
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
     ...loanCover,
-    ...dependants ? [{ key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : [],
+    ...dependants ? [{ key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - cardPrem(chosen)), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : [],
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
     { key: "milestones", tier: 3, label: "Milestones and your own goals", min: 0, full: sum(futureGoals.filter((g) => g.kind === "milestone" && g.start > near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years > near).map((p) => p.monthlySaving)), insurance: false }
   ];
-  const ladderSpecs = specs.filter((s) => s.full > 0 || s.min > 0);
-  const ladder = allocateLadder(budget, ladderSpecs, options.ladderOrder ?? defaultOrder(ladderSpecs));
+  const order = options.ladderOrder;
+  const runLadder = (chosen, capMonthly) => {
+    const s = specsFor(chosen).filter((x) => x.full > 0 || x.min > 0);
+    return { specs: s, ladder: allocateLadder(budget, s, order ? completeOrder(s, order) : defaultOrder(s), capMonthly) };
+  };
+  const { specs: ladderSpecs, ladder } = runLadder(pkg, cap);
+  const lifeCoverFunded = (lad, chosen) => {
+    const ruin = lad.items.find((i) => i.key === "life-ruin");
+    const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
+    if (budget.stage === 0 || !ruin || ruin.allocated <= 0) return 0;
+    const target = Math.max(packages.essential, packages[chosen]);
+    const toCard = ruin.allocated >= ruin.full - 1e-9 ? target : Math.max(packages.essential, Math.min(target, lifeRate > 0 ? ruin.allocated / lifeRate * 1e3 : 0));
+    const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
+    return toCard + share * Math.max(0, packages.recommended - target);
+  };
   const buildBasket = (lad) => {
     const ruin = lad.items.find((i) => i.key === "life-ruin");
     const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
@@ -3285,14 +3302,49 @@ function computeClosing(ctxIn, options = {}) {
     if (budget.stage === 0 || !ruin || prem <= 0) {
       return { cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: !!ruin && wanted > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet: ruin?.notYet ?? false };
     }
-    const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
-    const cover = packages.essential + share * Math.max(0, packages.recommended - packages.essential);
+    const cover = lifeCoverFunded(lad, pkg);
     const band = roughBand(b, cover * lifeRate / 1e3, lifeSpec.minPremiumMonthly);
     const items = [{ product: lifeProduct, cover, premiumMonthly: prem, band }];
     return { cover, items, totalMonthly: prem, totalHighMonthly: band.high, partial: cover < wanted - 0.5, permanentDropped: false, notCovered: notCoveredAt(cover), notYet: false };
   };
   const basket = buildBasket(ladder);
   b.rule("the life basket is the ladder's life allocation; when the need costs more than the cap, partial cover is shown and what is not covered is named");
+  const cards = ["essential", "recommended", "full"].map((k) => {
+    const cover = packages[k];
+    const premiumMonthly = cardPrem(k);
+    const L5 = layerAt(5, cover);
+    const ruin = runLadder(k, cap).ladder.items.find((i) => i.key === "life-ruin");
+    const lifeMonthly = ruin?.allocated ?? 0;
+    const base = {
+      package: k,
+      cover,
+      premiumMonthly,
+      lifeMonthly,
+      covers: L5.lines.filter((l) => l.met).map((l) => l.label),
+      doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label)
+    };
+    if (!ruin || budget.stage === 0) {
+      const statusText = budget.stage === 0 ? "No life plan yet: costs are bigger than income." : "No life plan: no one depends on you, so no life cover is planned.";
+      return { ...base, status: "no-life-plan", needsMonthly: 0, statusText };
+    }
+    const short = Math.max(0, ruin.full - lifeMonthly);
+    if (short <= 1e-9) return { ...base, status: "in-plan", needsMonthly: 0, statusText: "In your plan" };
+    return { ...base, status: "needs-more", needsMonthly: premiumMonthly - lifeMonthly, statusText: `Needs ${money(premiumMonthly - lifeMonthly)} more a month` };
+  });
+  b.rule("each package card's status is a ladder run with that card chosen, at the insurance budget in use");
+  const shares = b.get("core:ff.closing.bandShares");
+  const bands = ["floor", "recommended", "ceiling"].map((k) => {
+    const monthly = budget.ceilingMonthly * shares[k];
+    const cover = monthly > 0 ? lifeCoverFunded(runLadder(pkg, monthly).ladder, pkg) : 0;
+    const L5 = layerAt(5, cover);
+    return {
+      name: k === "floor" ? "Floor" : k === "recommended" ? "Recommended" : "Ceiling",
+      monthly,
+      cover,
+      covers: L5.lines.filter((l) => l.met).map((l) => l.label),
+      doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label)
+    };
+  });
   const layers = [1, 2, 3, 4, 5].map((L) => layerAt(L, basket.cover));
   const today = layers[3].outcome;
   const plan = layers[4].outcome;
@@ -3331,7 +3383,8 @@ function computeClosing(ctxIn, options = {}) {
     stage: budget.stage,
     underwater: budget.stage === 0,
     packages,
-    chosen: { package: usingBudget ? null : pkg, cover: basket.cover, basket },
+    cards,
+    chosen: { package: pkg, cover: basket.cover, basket },
     layers,
     scenarios: { death: { today, plan }, criticalIllness, liveLong: { today: longToday, plan: longPlan }, legacy },
     bands,
@@ -3577,7 +3630,7 @@ function computeFactFinder(input, options = {}) {
   const deathNeed = computeDeathNeed({ facts, budget, debts: debts.summary, careGraph: cg });
   const retirement = computeRetirementIncome(facts, netPay);
   const goals = computeGoals(facts, budget);
-  const buckets = buildBudgetBuckets(budget, facts, options.savePct);
+  const buckets = buildBudgetBuckets(budget, facts, options.savePct, insuranceCap(budget, options.budgetMonthly));
   const healthScore = computeHealthScore({ budget, deathNeed, retirement, savings: facts.budget.savings });
   const closing = computeClosing({ facts, budget, debts, careGraph: cg, deathNeed, retirement, goals }, options);
   const insuranceBudget = computeInsuranceBudget(facts, budget, buckets, closing);
@@ -3752,6 +3805,7 @@ export {
   careGraph,
   careGraphInputFromFacts,
   childLabel,
+  completeOrder,
   computeBusiness,
   computeClosing,
   computeDeathNeed,
@@ -3777,6 +3831,7 @@ export {
   fitToMinimums,
   futureValueMonthly,
   inForceCoverAt,
+  insuranceCap,
   minimumFor,
   money,
   mortgageBalance,
