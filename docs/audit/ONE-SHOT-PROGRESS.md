@@ -3,6 +3,52 @@
 Brief: `docs/briefs/2026-10-27-fact-finder-one-shot.md`. Rules: Section 2 §2.13.
 Orchestrator: Claude Opus 5.5 (effort high), one Claude Code session, started 27 Oct 2026.
 
+## Fix run 3, 27 Oct 2026 (cap, Tier 1 order, cover that follows the loan)
+
+Brief: `docs/briefs/2026-10-27-fix-ladder-advice.md`. Kyron, 27 Oct 2026 21:39: Decision 1 (ruin-level life all term),
+Decision 5 = A (cap = recommended), Decision 6 = A (Tier 1: life, CI, parent funerals), Decision 7 = A (no ruin-level
+life without dependants; life cover follows each loan goal). One session, Claude Opus 5.5, effort high. Nothing merged,
+deployed or applied; no live database access. No hard stop.
+
+**New hashes.**
+
+| What | Old | New |
+|---|---|---|
+| FPA `feat/fact-finder-engine` head (PR #5) | `76b121d` | `3b0e7f49d164161c84f5c91f038b7dbe67e92876` (engine `0f71c4a33fb38b3edca2a02a8f5904a871440ae0`, then the run record) |
+| `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `2c15c5f8…dae55f` | `14b9c994b6b7b2150b7249d7549649a962166e5ce0e7b6f933b2d3b32fb72e2a` |
+| Assumption set id | `ff-2026-10-27-ladder1` | `ff-2026-10-27-ladder2` |
+| GRP `feat/fact-finder` head (PR #160) | `d710a7e` | `2bfb6228bdce09bffc92cc2ec4cee76b2a394e04` (re-vendor pinned to FPA `0f71c4a`, page text, smoke walk evidence) |
+
+**What changed.** Insurance is capped at the recommended figure; the ceiling stays a guard. Tier 1 is life, CI, parent
+funerals, disability income, own final expense. No ruin-level life cover without a partner, children or parent care
+paid. One loan cover item per home or car loan goal (Tier 2 inside 3 years, else Tier 3). Every item is issued on rated
+age; past term's 65 the ruin-level plan is whole life. The close screen's life package is the ladder's life allocation.
+Family at $533.13: term $238.83, CI $294.30; both funerals and disability income wait. Young single at $280.61: CI
+$280.61; disability income, car loan cover and home loan cover wait. Both match the brief to the cent.
+
+**Goldens.** 0 of 37 moved; no care graph §3 golden moved. Re-baselined with the chain: the family's Tier 1, the Tier 1
+reorder (now the father above CI), both insurance budgets, and the "with the plan" death lines (family receives
+$843,567, was $1,747,351; the father's care now stops in month 1; the young single's plan holds no life cover). New
+goldens: both expected-result rows. New guards 23 (insurance ≤ recommended), 24 (issue ages on rated age) and 25 (the
+basket is the ladder), sabotage-tested; 21 and 22 re-run. FPA 152/152; GRP 3,090 tests, 0 fail, 30 skipped; guards 13
+and 15 pass; smoke walk 13/13 at 390. Full record: FPA `docs/audit/RUN-2026-10-27-fix-ladder-advice.md` (on
+`feat/fact-finder-engine`).
+
+**Follow-ups.**
+- **F-13** (open): the Savings group and the ladder's Tier 1.5 and Tier 3 savings items must be checked for the same
+  kind of fork. Part closed: the budget card's Protection bucket and the insurance budget's Protection total now agree
+  ($533 / $281).
+- **F-14** (open): Rest Assured II age growth is not re-fitted.
+- **F-15 (new):** plans for loved ones carry no sex in their facts, so they are priced on the male rate.
+- **F-16 (new):** a loan someone else co-signed leaves that person exposed; the fact-finder does not ask about
+  co-signers. Needs a new question.
+- **F-17 (new):** disability income has no need figure; it is funded at its $300 minimum only.
+- **Proposed F-18 (Kyron's call):** the choose screen's package cards and budget slider all show the ladder's basket
+  now, and its "Partial cover" text still names the safe ceiling (run record §1 items 2 and 9).
+
+The merge and deploy order from fix run 1 (below) stands. In step 4, guard SQL now expects `ff-2026-10-27-ladder2` and
+engine commit `0f71c4a`; the migrations themselves did not change.
+
 ## Fix run 2, 27 Oct 2026 (one allocator, real Rest Assured II rates)
 
 Brief: `docs/briefs/2026-10-27-fix-one-allocator.md`. Kyron, 27 Oct 2026 20:10: Decision 3 = A (one allocator),
