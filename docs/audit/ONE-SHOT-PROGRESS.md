@@ -3,6 +3,42 @@
 Brief: `docs/briefs/2026-10-27-fact-finder-one-shot.md`. Rules: Section 2 §2.13.
 Orchestrator: Claude Opus 5.5 (effort high), one Claude Code session, started 27 Oct 2026.
 
+## Fix run 2, 27 Oct 2026 (one allocator, real Rest Assured II rates)
+
+Brief: `docs/briefs/2026-10-27-fix-one-allocator.md`. Kyron, 27 Oct 2026 20:10: Decision 3 = A (one allocator),
+Decision 4 = A (funeral minimum = smallest Rest Assured II plan). One session, Claude Opus 5.5, effort high. Nothing
+merged, deployed or applied; no live database access. No hard stop.
+
+**New hashes.**
+
+| What | Old | New |
+|---|---|---|
+| FPA `feat/fact-finder-engine` head (PR #5) | `8bd31a13a9caef9e58a28a296867a1817595aa72` | `76b121d` (engine `c1537aa` and `fd5fc30553477e178ecef1a72944e15d0ffd227f`, then the run record) |
+| `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `7633c014…6f2d18` | `2c15c5f873398b3c912c108c263bf873e08f2fb060c58744c959675b85dae55f` |
+| Assumption set id | `ff-2026-10-27-nis70` | `ff-2026-10-27-ladder1` |
+| GRP `feat/fact-finder` head (PR #160) | `c24dd0f2f38bcf17cd44232503e3cc80d2a1e7c5` | `d710a7ef83de55a9630ea7455aa49e4bec7a4668` (re-vendor pinned to FPA `fd5fc30`, smoke walk evidence) |
+
+**What changed.** The closing ladder is the only allocator for protection: an insurance item gets its minimum or waits
+as "not yet". The insurance budget's Protection group is built from it, capped at the stage ceiling. Rest Assured II
+uses the two ApplyOn quotes, priced on age next birthday, through one function. Sample family at $711: term $238.83,
+father's funeral $293.45, mother's funeral $178.56; CI and Cashbuilder II with the rider wait. The ruin-level premium
+is $238.83 (all term, per the brief's mapping), not the brief's $370: Kyron's call (run record §1).
+
+**Goldens.** 0 of 37 moved; no care graph §3 golden moved. New goldens: the four Rest Assured II quotes ($262.88 /
+$438.14 male rated 72; $178.56 / $297.60 female rated 67), the death scenario lines for both samples (family: Child B's
+degree stops in month 2 with the plan), the family's Tier 1 allocation and the Tier 1 reorder. New guards 21 (parity)
+and 22 (no unbuyable plan), sabotage-tested. FPA 144/144; GRP 3,090 tests, 0 fail, 30 skipped; guards 13 and 15 pass;
+smoke walk 13/13 at 390. Full record: FPA `docs/audit/RUN-2026-10-27-fix-one-allocator.md` (on `feat/fact-finder-engine`).
+
+**New follow-ups.**
+- **F-13:** the Savings group (pay-yourself-first buckets) and the ladder's Tier 1.5 and Tier 3 savings items must be
+  checked for the same kind of fork. Seen now: the budget screen's "Protection (insurance)" bucket shows the
+  recommended figure ($533 / $281) while the insurance budget below funds up to the ceiling ($711 / $374).
+- **F-14:** Rest Assured II age growth (1.05, estimate) is not re-fitted: quote two more ages per sex and fit it.
+
+The merge and deploy order from fix run 1 (below) stands. In step 4, guard SQL now expects
+`ff-2026-10-27-ladder1` and the new engine commit; the migrations themselves did not change.
+
 ## Fix run, 27 Oct 2026 (NIS 70% and F-12)
 
 Brief: `docs/briefs/2026-10-27-fix-nis70-f12.md`. Kyron, 27 Oct 2026 19:30: Decision 1 = A, Decision 2 = A. One
