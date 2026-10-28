@@ -246,14 +246,38 @@ Privacy guards 7 and 8 pass (above). Guard 11 (the queue strip) passes in the GR
 
 ## 9. Follow-ups and open items
 
-- **§1 item 1 (Kyron's call):** accept the three lines as card lines, or revert `0a332cf`.
-- **§1 item 2 (Kyron's call):** raising the slider can lower life cover (pass one feeds more Tier 1 minimums).
+- **§1 item 1: decided** (Decision 1, §10): the three lines are card lines. `0a332cf` stands.
+- **§1 item 2: decided** (Decision 9, §10): the rule stays; the card says which plans take their minimum first.
 - F-13 to F-17 stay open (fence 1).
 - **F-19 (new, record only):** two NIS pension-age rows disagree. `fact-finder-2026-10.ts` has a flat 65
   (`nisPensionAge`); `retirement-2026-10.ts` has the 2028–2036 rise.
 - **F-20 (new, record only):** parameter refresh before **4 Jan 2027**: the NIS class table (rate up about 3 points)
   and the SCP income bands for the $3,750 rate. Both unpublished today.
 - Fence 4 held: no care graph change; no care graph §3 golden moved.
+
+## 10. Kyron's decisions, 28 Oct 2026, and the follow-up change
+
+- **Decision 1: accept.** `chosen.package`, `chosen.basket.partial` and life-beyond-ruin's `full` are card lines. Hard
+  stop 2 was not hit; nothing reverted.
+- **Decision 9: keep the rule** (raising the budget can lower life cover; pass one is unchanged). On a card whose
+  status is "Needs $X more a month", when other Tier 1 plans are funded at this budget, the page shows under the
+  status: "Other plans get their minimum first: {plan names}. To keep the {card} life cover as well, you need $X more a
+  month."
+  - GRP only (no engine change, no new maths): `cardNeedsLine` in `fact-finder-plan.js`. The plan names are the ladder
+    labels of the engine run with that card chosen at the budget in use (Tier 1, insurance, not life-ruin, allocated
+    above $0); $X is the card's own `needsMonthly`, formatted with the engine's `money`. No line on a card in the plan,
+    on a card with no life plan, or when no other Tier 1 plan is funded.
+  - Family at $711: Recommended: "Other plans get their minimum first: critical illness cover, your father's funeral
+    cover. To keep the Recommended life cover as well, you need $281 more a month." Full: the same plans, "$351". At
+    $533, Recommended: "… critical illness cover. … you need $195 more a month." Essential: no line.
+  - One test: `test/fact-finder-close.test.mjs` "Decision 9: …" (the $711 and $533 Recommended lines, no line on
+    Essential, no line for the young single). Break: $X from `card.premiumMonthly`; it failed with `… you need $579 more
+    a month.`; restored. The six fact-finder test files: 55/55.
+  - Smoke walk re-run at 390 (`scratch/fix4-walk.mjs`, Recommended at $711, Supabase stubbed, ZZ names): **13/13**,
+    the new check included; no page errors, no Supabase writes, no overflow. Evidence `fix4/` overwritten.
+  - GRP commit **`7dbe512c78c0256c0ab03014771fdcacf03d7140`** (PR #160). The engine and its hash did not change.
+  - Note: after a reorder that puts a plan above life in Tier 1, that plan can get more than its minimum, while the line
+    still says "minimum first". The wording is Kyron's; not changed.
 
 ## Appendix — every dump line that moved, was added or dropped
 
