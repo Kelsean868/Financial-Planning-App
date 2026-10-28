@@ -120,6 +120,70 @@ Open items from Build B:
    the Choose slider runs $200 to $711 (§5.2). Both are true.
 7. Sent to Build C: the furniture line label (65 characters) fails the 60-character label check; savings typed twice.
 
-### Build C — net worth
+### Build C — net worth (done, 28 Oct 2026)
+
+Commits added to the two open PRs (no new PRs). FPA: engine `520a6899876435c890dd7677713d3a0f4a90b64a`, head `422a9fe`;
+`core/dist/fpa-core.js` SHA-256 `246f0ae65df7853b1c6a8c253eedbdeb185b30213408db261d9b69d1fb207c82`; assumption set stays
+`ff-2026-10-28-s3` (no parameter row changed). Tests 186/186, typecheck clean. GRP: head `9f9aaaf`, vendored engine
+`520a689` with the new hash, every pin updated (the orchestrator grepped: no old hash or commit left outside `docs/`).
+Full portal suite 3,111 tests, 3,081 pass, 0 fail, 30 skipped (the same live-database tests). The orchestrator re-ran
+FPA `npm test` (186/186), both hashes, and the GRP fact-finder and life-case tests (76/76). No hard stop hit. Run records:
+FPA and GRP `docs/audit/RUN-2026-10-28-section3-c.md`.
+
+**What changed.** New `NetWorth` result (`computeFactFinder(...).netWorth`) and the "What you own and owe" card and
+report block 4. Cash for the emergency fund now reads from the asset rows (bank, credit union, unit trust); the version-1
+upgrade turns `budget.savings` into one bank row; the page no longer has a second savings field. The furniture catalogue
+label now fits the 60-character label check, with a test over every catalogue label.
+
+**Net worth goldens.**
+
+| Sample | Owns | Owes | Net worth | Debts ÷ gross yearly pay | Months covered by cash |
+|---|---|---|---|---|---|
+| Family | $1,155,000 | $483,000 | $672,000 | 192% | 1.32 |
+| Young single | $47,000 | $3,000 | $44,000 | 3% | 0.73 |
+| Weekly renter | $7,000 | $6,000 | $1,000 | 6% | 1.12 |
+
+The samples' old cash became one bank row of the same amount ($20,000; $4,000; $7,000). Non-cash assets (for example
+the family's home $950,000 and vehicle $85,000) were added so the card has something to show.
+
+**Evidence paste-back, after Build C.** Old = after Build A (`59224e2`); new = after Build C (`520a689`). The two golden
+dumps (`evidence-2026-10-28-section3-a/goldens-after.json` and `evidence-2026-10-28-section3-c/after-c-goldens.json`)
+are byte-identical (checked by the orchestrator). Against the Build A table above: every one of the 37 has the same old
+and new value. A full dump of both samples shows 0 changed, 0 dropped, 110 `netWorth` lines added.
+
+| # | Old | New | Moved | | # | Old | New | Moved |
+|---|---|---|---|---|---|---|---|---|
+| 1 | 2 | 2 | no | | 20 | 149000 | 149000 | no |
+| 2 | 711 | 711 | no | | 21 | 5450 | 5450 | no |
+| 3 | 3837 | 3837 | no | | 22 | 5300 | 5300 | no |
+| 4 | 4000 | 4000 | no | | 23 | 17391 | 17391 | no |
+| 5 | 1263107 | 1263107 | no | | 24 | 54 | 54 | no |
+| 6 | 17391 | 17391 | no | | 25 | 8 | 8 | no |
+| 7 | 54 | 54 | no | | 26 | 55 | 55 | no |
+| 8 | 8 | 8 | no | | 27 | 2078000 | 2078000 | no |
+| 9 | 55 | 55 | no | | 28 | 3837 | 3837 | no |
+| 10 | 823567 | 823567 | no | | 29 | 4000 | 4000 | no |
+| 11 | 1994846 | 1994846 | no | | 30 | 1263000 | 1263000 | no |
+| 12 | 2236674 | 2236674 | no | | 31 | 50753 | 50753 | no |
+| 13 | 15140 | 15140 | no | | 32 | 8 | 8 | no |
+| 14 | 6700 | 6700 | no | | 33 | 3406000 | 3406000 | no |
+| 15 | 1 | 1 | no | | 34 | 16487 | 16487 | no |
+| 16 | 374 | 374 | no | | 35 | 2161000 | 2161000 | no |
+| 17 | 0 | 0 | no | | 36 | Send Child B locally | Send Child B locally | no |
+| 18 | 149000 | 149000 | no | | 37 | 12650 | 12650 | no |
+| 19 | 149000 | 149000 | no | | | | | |
+
+(Row names as in the Build A table.)
+
+**Calls for Kyron (taken for him, reversible).**
+1. Cash = bank, credit union and unit trust. The spec puts unit trusts and money market funds in one kind, so a unit
+   trust that is not a money market fund also counts in full.
+2. "Debts as a share of gross yearly pay" includes the mortgage, as the spec and the brief say. **Rule clash:** the
+   prototype leaves the mortgage out. Spec followed: the family shows 192% (31% without the mortgage).
+3. Gross yearly pay = the client's usual gross plus the partner's pay as stored, which is take-home (partner gross is
+   not stored). The card says so.
+4. `budget.savings` stays in version 2 as a legacy field; it is read only when there are no cash asset rows.
+
+### Smoke walk
 
 Running.
