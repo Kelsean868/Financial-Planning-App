@@ -29,7 +29,8 @@ export interface PayoffRun {
   readonly balances: readonly number[];
 }
 
-export interface DebtPayoff {
+/** The three payoff runs (was `DebtPayoff` until Section 3; the name is now the per-debt result in debt-payoff.ts). */
+export interface DebtPayoffRuns {
   readonly minimumsOnly: PayoffRun;
   /** Highest rate first, with the extra. */
   readonly avalanche: PayoffRun;
@@ -39,7 +40,7 @@ export interface DebtPayoff {
 
 export interface DebtsResult {
   readonly summary: DebtSummary;
-  readonly payoff: DebtPayoff;
+  readonly payoff: DebtPayoffRuns;
   readonly extraMonthly: number;
   readonly provenance: Provenance;
 }
@@ -82,7 +83,7 @@ function simulate(b: ProvenanceBuilder, items: readonly DebtFacts[], extra: numb
 export function computeDebts(items: readonly DebtFacts[], extraMonthly: number): DebtsResult {
   const b = new ProvenanceBuilder();
   const summary = summariseDebts(b, items);
-  const payoff: DebtPayoff = {
+  const payoff: DebtPayoffRuns = {
     minimumsOnly: simulate(b, items, 0, "avalanche"),
     avalanche: simulate(b, items, extraMonthly, "avalanche"),
     snowball: simulate(b, items, extraMonthly, "snowball"),

@@ -24,18 +24,44 @@ export { computeGap } from "./gap.ts";
 export { computeFactFinder } from "./fact-finder.ts";
 export type { FactFinderResult, FactFinderOptions } from "./fact-finder.ts";
 
-export { validateLifeCaseFacts, assertNoHealthKeys, findHealthKeys, parentAge, parentSex } from "./life-case-facts.ts";
-export type {
-  LifeCaseFacts, ClientFacts, PartnerFacts, ChildFacts, MilestoneFacts, ParentFacts, BudgetFacts, CostLine,
-  DebtFacts, GoalFacts, CoverFacts, WishFacts, WorkPensionFacts, LovedOnesFacts, LovedOneFacts, BusinessFacts,
-  CareTier, Tristate, ParentRelationship, MilestoneKey, HousingKind, GoalKind, GoalRoute, LovedOneRelation, BuyerRole,
+/* ------------------------------------------------------------------ Section 3 (Build A) */
+
+export { computePayPlan } from "./pay.ts";
+export type { PayPlan, PayRhythm } from "./pay.ts";
+export { computeBudgetAnalysis } from "./budget-analysis.ts";
+export type { BudgetAnalysis, BudgetAnalysisInputs, BudgetGroupRow, BudgetLineRow, BudgetGap, GuideRow, GuideStatus } from "./budget-analysis.ts";
+export { computeDebtPayoff, payoffMonths, addMonths, monthIndex, monthLabel } from "./debt-payoff.ts";
+export type { DebtPayoff, DebtPayoffLine, DebtFreeDate } from "./debt-payoff.ts";
+export { computeRetirementFigure } from "./retirement-figure.ts";
+export type { RetirementFigure, RetirementFigureInputs, RetirementStop, RetirementStopKind } from "./retirement-figure.ts";
+export { computeRoomPlan, applyRoomPlan, roomPlanRecord, ROOM_ORDER } from "./room-plan.ts";
+export type { RoomPlanInput, RoomPlanResult, RoomGroupRow, RoomDestinationRow, RoomPlanEffects, RoomStep, RoomPlanRecord, RoomPlanTotals } from "./room-plan.ts";
+export { computeNetWorth, cashFromFacts, CASH_KINDS, ASSET_KIND_LABELS } from "./net-worth.ts";
+export type { NetWorth, NetWorthAsset, NetWorthOwed, NetWorthInputs } from "./net-worth.ts";
+
+export {
+  validateLifeCaseFacts, upgradeLifeCaseFacts, assertNoHealthKeys, findHealthKeys, parentAge, parentSex, isRoomDestination,
+  catalogueGroup, OWN_ITEMS_MAX, OWN_ITEM_MAX_CHARS,
 } from "./life-case-facts.ts";
+export type {
+  LifeCaseFacts, LifeCaseFactsV1, ParentFactsV1, CostLineV1, ClientFacts, PartnerFacts, PayFacts, PayFrequency, ChildFacts,
+  MilestoneFacts, ParentFacts, BudgetFacts, BudgetGroupFacts, BudgetLineFacts, RoomPlanFacts, RoomDestination, DebtFacts,
+  DebtType, GoalFacts, CoverFacts, CoverStatus, WishFacts, WorkPensionFacts, LovedOnesFacts, LovedOneFacts, BusinessFacts,
+  OpenerFacts, AssetFacts, AssetKind, CareTier, Tristate, ParentRelationship, MilestoneKey, HousingKind, GoalKind,
+  GoalRoute, LovedOneRelation, BuyerRole, BudgetGroupKey, LineFrequency, StopTag,
+} from "./life-case-facts.ts";
+export { toEngineFacts, toMonthly, toYearly, payMonthly, groupMonthly, splitBudget, parentSupported } from "./engine-facts.ts";
+export type { EngineFacts, EngineParent, BudgetSplit } from "./engine-facts.ts";
+export {
+  BUDGET_CATALOGUE, QUICK_GROUP, QUICK_YEARLY_LABEL, HOUSING_LINE_LABELS, GROUP_KEYS,
+} from "./parameters/budget-catalogue-2026-10.ts";
+export type { CatalogueGroup, CatalogueLine, GroupKind, GuideKey } from "./parameters/budget-catalogue-2026-10.ts";
 export { CareGraphInputError, ClosingInputError, LifeCaseFactsError, RegisteredRoutingError } from "./errors.ts";
 
-export { computeNetPay, computeHouseholdBudget, buildBudgetBuckets } from "./household-budget.ts";
+export { computeNetPay, computeHouseholdBudget, buildBudgetBuckets, stageAndCeiling } from "./household-budget.ts";
 export type { NetPay, HouseholdBudget, BudgetBuckets, BudgetInputs, Stage } from "./household-budget.ts";
 export { computeDebts, summariseDebts, carLoan, amortisedPayment } from "./debts.ts";
-export type { DebtsResult, DebtSummary, DebtPayoff, PayoffRun, CarLoanInput, CarLoanResult } from "./debts.ts";
+export type { DebtsResult, DebtSummary, DebtPayoffRuns, PayoffRun, CarLoanInput, CarLoanResult } from "./debts.ts";
 export { computeGoals } from "./goals.ts";
 export type { GoalsResult, GoalPlan, HomePlan } from "./goals.ts";
 export { computeInsuranceBudget, profileFor, minimumFor, assertRidersAllowed } from "./insurance-budget.ts";
@@ -45,7 +71,7 @@ export type { HealthScore, ScorePart } from "./health-score.ts";
 export { computeStartEarly, futureValueMonthly } from "./start-early.ts";
 export type { StartEarlyInput, StartEarlyResult, IllustrativeReturn } from "./start-early.ts";
 export { careGraph, careGraphInputFromFacts, applyLever, childLabel, parentLabel } from "./care-graph.ts";
-export type { CareGraphInput, CareGraphResult, CareYear, CareGoal, Lever, LeverKind, Verdict } from "./care-graph.ts";
+export type { CareGraphInput, CareParent, CareGraphResult, CareYear, CareGoal, Lever, LeverKind, Verdict } from "./care-graph.ts";
 export { computeDeathNeed, survivorCashflow, coverHeld } from "./death-need.ts";
 export type { DeathNeedResult, Obligation, SurvivorCashflow, SurvivorYear, CoverHeld, NeedMethod, CoverTier } from "./death-need.ts";
 export { computeRetirementIncome } from "./retirement-income.ts";
@@ -57,13 +83,13 @@ export {
   vehicleFigures, stressAgainstFloor, ADVENTURER_WORDING,
 } from "./annuity-routing.ts";
 export type { AnnuityRouting, AnnuityMode, VehicleFigures, FloorStress, RegisteredClient, RegisteredGoal } from "./annuity-routing.ts";
-export { computeClosing, money, LAYER_NAMES, UNKNOWN_SENTENCE } from "./closing.ts";
+export { computeClosing, money, savingsStep, LAYER_NAMES, UNKNOWN_SENTENCE } from "./closing.ts";
 export type {
   ClosingComparison, ClosingContext, ClosingOptions, ScenarioOutcome, ScenarioPair, DeathLayer, ObligationLine,
-  LifeBasket, BasketItem, CloseBand, PackageCard, ParentFuneralCover, Package, RevealLayer,
+  LifeBasket, BasketItem, CloseBand, PackageCard, ParentFuneralCover, Package, RevealLayer, SavingsStep,
 } from "./closing.ts";
-export { allocateLadder, requestReorder, defaultOrder, insuranceCap, completeOrder } from "./closing-ladder.ts";
-export type { Ladder, LadderItem, LadderItemSpec, LadderTier, ReorderResult } from "./closing-ladder.ts";
+export { allocateLadder, requestReorder, defaultOrder, insuranceCap, insuranceRange, completeOrder } from "./closing-ladder.ts";
+export type { Ladder, LadderItem, LadderItemSpec, LadderTier, ReorderResult, InsuranceRange } from "./closing-ladder.ts";
 export { buildScopeStatement, scopeRow, validateScopeRow, buildSnapshot } from "./scope.ts";
 export type { ScopeRow, ScopeState, ScopeLine, ScopeLineState, ScopeGap, ScopeStatement, LifeCaseSnapshot } from "./scope.ts";
 export { computeLovedOnes } from "./loved-ones.ts";
@@ -80,8 +106,8 @@ export { CORE_TABLES, coreRowPaths, resolveCoreRow, ASSUMPTION_SET_ID } from "./
 export type { Row, RowStatus } from "./parameters/index.ts";
 export { PRODUCTS as TATIL_PRODUCTS, RIDERS as TATIL_RIDERS, VEHICLES as RETURN_VEHICLES, REST_ASSURED_GRADING } from "./parameters/tatil-products-2026-10.ts";
 export type { ProductId, ProductSpec, RiderId, RiderSpec, VehicleSpec } from "./parameters/tatil-products-2026-10.ts";
-export type { EducationRoute, CostLevel } from "./parameters/fact-finder-2026-10.ts";
+export type { EducationRoute, CostLevel, Frequency, GuideRange } from "./parameters/fact-finder-2026-10.ts";
 
 export {
-  SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, SAMPLE_LOVED_ONE, SAMPLE_BUSINESS, CARE_GRAPH_FIXTURE_NET_MONTHLY, withChildBInUK,
+  SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, SAMPLE_FAMILY_V1, SAMPLE_YOUNG_SINGLE_V1, SAMPLE_WEEKLY_RENTER, SAMPLE_LOVED_ONE, SAMPLE_BUSINESS, CARE_GRAPH_FIXTURE_NET_MONTHLY, withChildBInUK,
 } from "./samples/index.ts";

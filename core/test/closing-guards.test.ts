@@ -8,17 +8,16 @@ import {
   computeFactFinder, computeClosing, buildScopeStatement, scopeRow, buildSnapshot, requestReorder, allocateLadder,
   routeAnnuity, requireRegistered, registeredWithdrawalGrossUp, vehicleFigures, ProvenanceBuilder, RETURN_VEHICLES,
   REST_ASSURED_GRADING, UNKNOWN_SENTENCE, ADVENTURER_WORDING, ClosingInputError, RegisteredRoutingError, computeLovedOnes,
-  SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, type LifeCaseFacts,
+  SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, toEngineFacts, type LifeCaseFacts,
 } from "../src/index.ts";
+import { clone, setGross, scaleCosts } from "./facts-helpers.ts";
 
 const b = (): ProvenanceBuilder => new ProvenanceBuilder();
-type Mutable<T> = { -readonly [K in keyof T]: T[K] };
-const clone = (f: LifeCaseFacts): Mutable<LifeCaseFacts> => JSON.parse(JSON.stringify(f));
 
 test("guard 2: unknown cover renders differently from a confirmed $0", () => {
   const unknown = clone(SAMPLE_FAMILY); // group life amount: null
   const zero = clone(SAMPLE_FAMILY);
-  zero.existingCover = zero.existingCover.map((c) => (c.amount === null ? { ...c, amount: 0 } : c));
+  zero.existingCover = zero.existingCover.map((c) => (c.amount === null ? { ...c, amount: 0, status: "none" as const } : c));
   const u = computeFactFinder(unknown).closing.scenarios.death.today;
   const z = computeFactFinder(zero).closing.scenarios.death.today;
   assert.deepEqual(u.unknowns, ["Group life through work"], "the uncaptured policy is named");
@@ -35,8 +34,8 @@ function variants(): LifeCaseFacts[] {
     for (const gross of [6000, 9000, 12000, 17000, 30000, 60000]) {
       for (const costScale of [0.6, 1, 1.4]) {
         const f = clone(base);
-        f.client = { ...f.client, grossMonthly: gross };
-        f.budget = { ...f.budget, costs: f.budget.costs.map((c) => ({ ...c, monthly: c.monthly * costScale })) };
+        setGross(f, gross);
+        scaleCosts(f, costScale);
         out.push(f);
       }
     }
@@ -44,15 +43,18 @@ function variants(): LifeCaseFacts[] {
   return out;
 }
 
-test("guard 3: no basket and no ladder exceeds the triage stage ceiling", () => {
+// Section 3 §5.3 (28 Oct 2026): guard 3 becomes "insurance ≤ max(ceiling, floor)". With the stage ceiling under $200 and
+// $200 or more left, the cap is the $200 floor, above the ceiling, and the screen says so (the ladder's aboveSafeRange).
+test("guard 3: no basket and no ladder exceeds max(the triage stage ceiling, the $200 floor)", () => {
   let checked = 0;
   for (const f of variants()) {
     // budgetMonthly is the insurance cap since F-18 and must sit inside the band, so the old $5,000 is now the band's
     // ceiling: the most the slider allows, with the biggest card.
-    const top = computeFactFinder(f).budget.band.ceiling;
+    // Section 3 §5: the slider's top is max(ceiling, $200).
+    const top = computeFactFinder(f).insuranceRange.maxMonthly;
     for (const opt of [{ package: "essential" as const }, { package: "recommended" as const }, { package: "full" as const }, { budgetMonthly: top }, { package: "full" as const, budgetMonthly: top }]) {
       const r = computeFactFinder(f, opt);
-      const ceiling = r.budget.ceilingMonthly;
+      const ceiling = Math.max(r.budget.ceilingMonthly, r.budget.stage === 0 ? 0 : r.insuranceRange.floorMonthly);
       const bk = r.closing.chosen.basket;
       assert.ok(bk.totalHighMonthly <= ceiling + 1e-9, `basket top ${bk.totalHighMonthly} over ceiling ${ceiling} (stage ${r.budget.stage}, ${JSON.stringify(opt)})`);
       assert.ok(bk.totalMonthly <= ceiling + 1e-9, "basket mid over ceiling");
@@ -155,7 +157,7 @@ test("guard 9: zero registered routings below the personal allowance (a hard blo
   }
   for (const grossMonthly of [3000, 5000, 7000, 7500]) {
     const f = clone(SAMPLE_YOUNG_SINGLE);
-    f.client = { ...f.client, grossMonthly };
+    setGross(f, grossMonthly);
     const r = computeFactFinder(f);
     assert.notEqual(r.retirement.routing.mode, "registered", `$${grossMonthly}/month routed registered`);
     assert.ok(!r.closing.ladderSpecs.some((s) => s.key === "token-annuity"), "no token registered annuity");
@@ -206,7 +208,7 @@ test("guard 12: a cross-tier reorder writes a declined record and leaves the ord
 
 test("§11.6 stage 0: the ladder returns no basket, only what would change the picture", () => {
   const f = clone(SAMPLE_FAMILY);
-  f.client = { ...f.client, grossMonthly: 9000 };
+  setGross(f, 9000);
   f.partner = null;
   const r = computeFactFinder(f);
   assert.equal(r.budget.stage, 0);
@@ -218,7 +220,8 @@ test("§11.6 stage 0: the ladder returns no basket, only what would change the p
 
 test("§8: ClosingInputError when an upstream engine did not run; never a default", () => {
   const r = computeFactFinder(SAMPLE_FAMILY);
-  const ctx = { facts: r.facts, budget: r.budget, debts: r.debts, careGraph: r.careGraph, deathNeed: r.deathNeed, retirement: r.retirement, goals: r.goals };
+  // Section 3: the closing reads the engine view of the facts (monthly figures worked out once by toEngineFacts).
+  const ctx = { facts: toEngineFacts(r.facts), budget: r.budget, debts: r.debts, careGraph: r.careGraph, deathNeed: r.deathNeed, retirement: r.retirement, goals: r.goals };
   for (const k of Object.keys(ctx) as (keyof typeof ctx)[]) {
     const partial = { ...ctx, [k]: undefined };
     assert.throws(() => computeClosing(partial), ClosingInputError, `missing ${k}`);

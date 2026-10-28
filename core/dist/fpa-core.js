@@ -878,14 +878,14 @@ function scpBenefit(assessedMonthlyIncome, age) {
 }
 function retirementFloor(lifetimeAvgMonthlyEarnings, totalContributions, age, otherMonthlyIncome = 0) {
   const nis = nisPension(lifetimeAvgMonthlyEarnings, totalContributions);
-  const nisMonthly = nis.type === "PENSION" ? nis.monthly : 0;
-  const assessed = otherMonthlyIncome + (nis.countsTowardScp ? nisMonthly : 0);
+  const nisMonthly2 = nis.type === "PENSION" ? nis.monthly : 0;
+  const assessed = otherMonthlyIncome + (nis.countsTowardScp ? nisMonthly2 : 0);
   const scp = scpBenefit(assessed, age);
   return {
     nis,
     scp,
     assessedIncome: assessed,
-    totalMonthly: nisMonthly + scp.monthly + otherMonthlyIncome,
+    totalMonthly: nisMonthly2 + scp.monthly + otherMonthlyIncome,
     note: "NIS retirement pension counts as SCP assessed income (grant does not). A 3,000 NIS pension typically delivers 2,000 net of the SCP reduction."
   };
 }
@@ -952,7 +952,11 @@ var D = "2026-10-27";
 var PROTO = "Fact-Finder Prototype v17 (docs/prototype/fact-finder-prototype-v17.html), 27 Oct 2026";
 var CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 var CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
-var ASSUMPTION_SET_ID = "ff-2026-10-28-cards1";
+var S3 = "Section 3 spec (signed by Kyron 28 Oct 2026)";
+var S3D = "2026-10-28";
+var PENNY = "The Penny Hoarder budget percentages (take-home basis)";
+var PALIG = "PALIG personal net worth calculator 2012 benchmarks";
+var ASSUMPTION_SET_ID = "ff-2026-10-28-s3fix";
 var FF = deepFreeze2({
   assumptionSetId: row(ASSUMPTION_SET_ID, "rule", "Section 1 §1.2: the assumption set is a versioned constant in the engine", D),
   rates: {
@@ -1002,13 +1006,62 @@ var FF = deepFreeze2({
         { tier: 0, label: "No support", monthly: 0 },
         { tier: 1, label: "Light top-up", monthly: 1500 },
         { tier: 2, label: "Help at home", monthly: 4e3 },
-        { tier: 3, label: "Private residential", monthly: 5600 },
-        { tier: 4, label: "High-dependency", monthly: 12e3 }
+        { tier: 3, label: "Day care", monthly: 5600 },
+        { tier: 4, label: "Full-time", monthly: 12e3 }
       ],
       "estimate",
-      `${CG} §5: parent care tiers, TTD a month today. Caregiver cost cross-check: Paylab 2026, $2,772–$7,808 a month (Section 2 risk 4)`,
+      `${CG} §5: parent care tiers, TTD a month today. Caregiver cost cross-check: Paylab 2026, $2,772–$7,808 a month (Section 2 risk 4). Labels for tiers 3 and 4 follow Section 3 §1.3 (were "Private residential" and "High-dependency"; amounts unchanged)`,
       D
     )
+  },
+  /** Section 3 §2 and §0 row 3.2: every amount is turned into a monthly figure. */
+  frequency: {
+    perYear: row(
+      { weekly: 52, fortnightly: 26, semimonthly: 24, monthly: 12, yearly: 1 },
+      "rule",
+      `${S3} §2.1: weekly ×52/12, fortnightly ×26/12, twice a month ×2, monthly ×1; §0 row 3.2: yearly ÷12`,
+      S3D
+    ),
+    planPaysPerMonth: row(
+      { weekly: 4, fortnightly: 2, semimonthly: 2, monthly: 1 },
+      "rule",
+      `${S3} §2.4: "Plan on 4 pays (or 2). Send the extra pay straight to savings."`,
+      S3D
+    )
+  },
+  /** Section 3 §5: the lowest insurance budget the tool plans, except at stage 0. */
+  insurance: {
+    floorMonthly: row(200, "advisor-set", "Kyron, 28 Oct 2026 (Section 3 spec §5.1): the $200 insurance floor", S3D)
+  },
+  /** Section 3 §6.1: common guides, share of household take-home. Shown as guides, never as a pass or fail. */
+  guides: {
+    home: row({ min: 0.25, max: 0.3 }, "advisor-set", `${PENNY} (Section 3 §6.1: Home, incl. mortgage or rent)`, S3D),
+    food: row({ min: 0.1, max: 0.15 }, "advisor-set", `${PENNY} (Section 3 §6.1: Food)`, S3D),
+    move: row({ min: 0.1, max: 0.15 }, "advisor-set", `${PENNY} (Section 3 §6.1: Getting around)`, S3D),
+    util: row({ min: 0.05, max: 0.1 }, "advisor-set", `${PENNY} (Section 3 §6.1: Utilities and bills)`, S3D),
+    health: row({ min: 0.05, max: 0.1 }, "advisor-set", `${PENNY} (Section 3 §6.1: Health and personal care)`, S3D),
+    debt: row({ min: null, max: 0.2 }, "advisor-set", `${PALIG}: "Loans 25%" of gross, restated on take-home (Section 3 §6.1: debt payments, not mortgage, at most 20%)`, S3D),
+    insurance: row({ min: 0.05, max: 0.1 }, "advisor-set", `${PALIG}: life 5%, general 5% (Section 3 §6.1: Insurance, life and general)`, S3D),
+    saving: row({ min: 0.1, max: 0.2 }, "advisor-set", `${PENNY}; ${PALIG}: "Savings + Investment 10%", "Pension 10%" (Section 3 §6.1)`, S3D),
+    fun: row({ min: 0.05, max: 0.1 }, "advisor-set", `${PENNY} (Section 3 §6.1: Fun and lifestyle, 5–10% each)`, S3D),
+    giving: row({ min: 0.05, max: 0.1 }, "advisor-set", `${PENNY} (Section 3 §6.1: Giving, 5–10% each)`, S3D),
+    farAboveFactor: row(1.5, "rule", `${S3} §6.2: far above the guide is more than 1.5 times its top`, S3D),
+    gapsShown: row(3, "rule", `${S3} §6.2: three lines at most under the graph`, S3D)
+  },
+  /** Section 3 §6.4, What you own and owe (Decision 11, Kyron, 28 Oct 2026). A common guide, never a pass or fail. */
+  netWorth: {
+    debtPaymentsGuide: row(
+      { min: null, max: 0.25 },
+      "advisor-set",
+      "PALIG net worth calculator benchmark, Loans 25%",
+      S3D,
+      { note: "Debt payments, including the mortgage, as a share of pay before deductions (the partner's pay is take-home)" }
+    )
+  },
+  /** Section 3 §9: the recommended retirement income. Inflation is the assumption set's projected rate (rates block). */
+  retirementFigure: {
+    replacementRate: row(0.7, "advisor-set", `${S3} §9 rule A: 70% of today's household take-home (advisor-editable)`, S3D),
+    childCostsStopAge: row(19, "assumed", `${S3} §9: children's costs stop by retirement once the youngest is 19 (the closing brief §2.0 age)`, S3D)
   },
   offsets: {
     scpMonthly: row(3750, "verified", "Senior Citizens' Pension $3,750 a month from 1 Jan 2027 (Budget Statement 12 Oct 2026; pension audit)", "2027-01-01"),
@@ -1144,6 +1197,7 @@ var FF = deepFreeze2({
     cushionPayments: row(3, "assumed", `${PROTO}: with no deposit, save three payments first`, D)
   },
   debts: {
+    mismatchMonths: row(3, "rule", `${S3} §7.2: the payoff date and the end date the client gave differ by more than 3 months`, S3D),
     maxMonths: row(600, "assumed", `${PROTO}: a payoff that has not finished in 50 years is stalled`, D),
     clearedBelow: row(5e-3, "assumed", "Half a cent counts as cleared", D)
   },
@@ -1625,7 +1679,7 @@ function computeRetirementNeeds(input) {
     input.retirementAge,
     other
   );
-  const nisMonthly = floor.nis.type === "PENSION" ? floor.nis.monthly ?? 0 : 0;
+  const nisMonthly2 = floor.nis.type === "PENSION" ? floor.nis.monthly ?? 0 : 0;
   const scpMonthly = floor.scp.monthly;
   b.use("nis.averaging_basis");
   b.rule(
@@ -1642,7 +1696,7 @@ function computeRetirementNeeds(input) {
     b.use("nis.benefit_rates.current");
     b.rule(`NIS pension: class ${floor.nis.class}`);
     if (floor.nis.minimumApplied) b.rule("the 3,000/month minimum pension binds");
-    if (nisMonthly > 0 && scpMonthly > 0) {
+    if (nisMonthly2 > 0 && scpMonthly > 0) {
       b.use("scp.assessed_income_includes_nis_pension");
       b.rule("NIS pension counts as SCP assessed income — SCP reduced accordingly");
     }
@@ -1660,11 +1714,11 @@ function computeRetirementNeeds(input) {
   }
   if (floor.nis.caveat) b.caveat(floor.nis.caveat);
   if (floor.scp.cliffWarning) b.caveat(floor.scp.cliffWarning);
-  const guaranteedFloorMonthly = nisMonthly + scpMonthly + other;
+  const guaranteedFloorMonthly = nisMonthly2 + scpMonthly + other;
   const monthlyShortfall = Math.max(0, input.targetMonthlyIncome - guaranteedFloorMonthly);
   return {
     targetMonthlyIncome: input.targetMonthlyIncome,
-    nisMonthly,
+    nisMonthly: nisMonthly2,
     scpMonthly,
     otherMonthlyIncome: other,
     guaranteedFloorMonthly,
@@ -1723,11 +1777,215 @@ var RegisteredRoutingError = class extends Error {
   name = "RegisteredRoutingError";
 };
 
+// src/parameters/budget-catalogue-2026-10.ts
+var L = (key, label, frequency = "monthly", stop) => stop ? { key, label, frequency, stop } : { key, label, frequency };
+var HOUSING_LINE_LABELS = deepFreeze2({
+  mortgage: "Mortgage",
+  rent: "Rent",
+  contribution: "Household contribution",
+  own: null
+});
+var BUDGET_CATALOGUE = deepFreeze2([
+  {
+    key: "home",
+    label: "Home",
+    kind: "spending",
+    guide: "home",
+    otherLabel: "Other home cost",
+    lines: [
+      // The first line: Mortgage (stop: mortgage), Rent, or Household contribution; none when the home is owned outright.
+      L("housing", "Mortgage", "monthly", "mortgage"),
+      L("land-tax", "Land and building tax", "yearly"),
+      L("home-insurance", "Home insurance", "yearly"),
+      L("repairs", "Repairs and maintenance"),
+      L("security", "Security"),
+      L("domestic-help", "Domestic help and yard work"),
+      L("furniture", "Furniture and appliances (cash; hire purchase in Debts)")
+    ]
+  },
+  {
+    key: "util",
+    label: "Utilities and bills",
+    kind: "spending",
+    guide: "util",
+    otherLabel: "Other bill",
+    lines: [
+      L("ttec", "T&TEC"),
+      L("wasa", "WASA", "yearly"),
+      L("gas", "Cooking gas"),
+      L("mobile", "Mobile phone (bMobile / Digicel)"),
+      L("internet", "Home internet and cable"),
+      L("streaming", "Streaming and apps")
+    ]
+  },
+  {
+    key: "food",
+    label: "Food",
+    kind: "spending",
+    guide: "food",
+    otherLabel: "Other food",
+    lines: [
+      L("groceries", "Groceries and market", "weekly"),
+      L("lunches", "Work and school lunches, snacks", "weekly", "work"),
+      L("eating-out", "Eating out, doubles and takeaway", "weekly"),
+      L("drinks", "Drinks")
+    ]
+  },
+  {
+    key: "move",
+    label: "Getting around",
+    kind: "spending",
+    guide: "move",
+    otherLabel: "Other travel",
+    lines: [
+      L("fuel", "Fuel", "weekly"),
+      L("public-transport", "Maxi taxi, taxi, bus or ferry", "weekly"),
+      L("motor-insurance", "Motor insurance", "yearly"),
+      L("licence", "Licence and inspection", "yearly"),
+      L("servicing", "Servicing and tyres", "yearly"),
+      L("parking", "Parking and car wash")
+    ]
+  },
+  {
+    key: "kids",
+    label: "Children",
+    kind: "spending",
+    guide: null,
+    otherLabel: "Other child cost",
+    lines: [
+      L("school-fees", "School fees", "yearly", "kids"),
+      L("books-uniforms", "Books and uniforms", "yearly", "kids"),
+      L("lunch-money", "Lunch money", "weekly", "kids"),
+      L("school-transport", "Transport to school", "monthly", "kids"),
+      L("lessons", "Lessons and extra classes", "monthly", "kids"),
+      L("daycare", "Daycare or babysitter", "monthly", "kids"),
+      L("activities", "Sport and activities", "monthly", "kids"),
+      L("allowances", "Allowances", "weekly", "kids")
+    ]
+  },
+  {
+    key: "health",
+    label: "Health and personal care",
+    kind: "spending",
+    guide: "health",
+    otherLabel: "Other personal cost",
+    lines: [
+      L("health-insurance", "Health insurance premium"),
+      L("doctor", "Doctor, dentist, optician (not covered)", "yearly"),
+      L("medication", "Medication"),
+      L("gym", "Gym"),
+      L("hair", "Hair and barber"),
+      L("nails", "Nails and beauty"),
+      L("toiletries", "Toiletries"),
+      L("clothing", "Clothing and shoes")
+    ]
+  },
+  {
+    key: "family",
+    label: "Family you support",
+    kind: "support",
+    guide: null,
+    otherLabel: "A relative",
+    hint: "Count only money not already in the lines above. If you buy their groceries with yours, leave them in Food.",
+    // One line per person, added with "+ Add a person": Mother, Father, a relative, a grown child. A parent's line carries
+    // that parent's personId and `stop: care`.
+    lines: []
+  },
+  {
+    key: "giving",
+    label: "Giving",
+    kind: "spending",
+    guide: "giving",
+    otherLabel: "Other giving",
+    lines: [L("church", "Church, tithes and offerings"), L("gifts", "Gifts and birthdays", "yearly"), L("child-support", "Child support")]
+  },
+  {
+    key: "ins",
+    label: "Insurance you pay now",
+    kind: "spending",
+    guide: "insurance",
+    otherLabel: "Other premium",
+    hint: "Motor and home insurance are in their own groups.",
+    lines: [L("life", "Life"), L("other-premiums", "Other premiums")]
+  },
+  {
+    key: "save",
+    label: "Saving you already do",
+    kind: "saving",
+    guide: "saving",
+    otherLabel: "Other saving",
+    hint: "Counted as saving, not spending.",
+    lines: [
+      L("sou-sou", "Sou-sou hand"),
+      L("credit-union", "Credit union shares"),
+      L("pension", "Pension or annuity contributions"),
+      L("unit-trust", "Unit trust or standing orders")
+    ]
+  },
+  {
+    key: "fun",
+    label: "Fun and lifestyle",
+    kind: "spending",
+    guide: "fun",
+    otherLabel: "Other fun",
+    lines: [
+      L("entertainment", "Entertainment and outings"),
+      L("hobbies", "Hobbies"),
+      L("travel", "Travel and vacation", "yearly"),
+      L("carnival", "Carnival and fetes", "yearly"),
+      L("lotto", "Lotto and betting", "weekly")
+    ]
+  },
+  {
+    key: "yearly",
+    label: "Once-a-year costs",
+    kind: "yearly",
+    guide: null,
+    otherLabel: "Other yearly cost",
+    hint: "Enter each one per year; we show the monthly set-aside.",
+    lines: [
+      L("christmas", "Christmas", "yearly"),
+      L("back-to-school", "Back to school", "yearly"),
+      L("carnival-season", "Carnival season (if not above)", "yearly"),
+      L("motor-renewal", "Motor renewal", "yearly"),
+      L("home-repairs", "Home repairs", "yearly"),
+      L("medical", "Medical and dental not covered", "yearly")
+    ]
+  },
+  {
+    key: "other",
+    label: "Pets and other",
+    kind: "spending",
+    guide: null,
+    otherLabel: "Anything else",
+    lines: [L("pets", "Pet food and vet"), L("bank-fees", "Bank fees"), L("anything-else", "Anything else")]
+  }
+]);
+var QUICK_GROUP = deepFreeze2({
+  key: "quick",
+  label: "Your costs",
+  kind: "spending",
+  guide: null,
+  otherLabel: "Other cost",
+  lines: [
+    L("housing", "Mortgage, rent or contribution", "monthly", "mortgage"),
+    L("groceries", "Groceries"),
+    L("utilities", "Utilities"),
+    L("transport", "Transport"),
+    L("phone", "Phone and internet"),
+    L("school", "School and childcare", "monthly", "kids"),
+    L("insurance", "Insurance premiums")
+  ]
+});
+var QUICK_YEARLY_LABEL = "Once-a-year bills";
+var GROUP_KEYS = deepFreeze2([...BUDGET_CATALOGUE.map((g) => g.key), "quick"]);
+
 // src/life-case-facts.ts
 var UUID_V4 = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 var FIRST_NAME = /^\p{L}[\p{L}'-]{0,19}$/u;
 var HEALTH_KEY = /^health(flag|note)$/i;
-var PARENT_KEYS = /* @__PURE__ */ new Set([
+var YEAR_MONTH = /^\d{4}-(0[1-9]|1[0-2])$/;
+var PARENT_KEYS_V1 = /* @__PURE__ */ new Set([
   "personId",
   "relationship",
   "firstName",
@@ -1737,6 +1995,7 @@ var PARENT_KEYS = /* @__PURE__ */ new Set([
   "receivesSCP",
   "nisContributions"
 ]);
+var PARENT_KEYS = /* @__PURE__ */ new Set([...PARENT_KEYS_V1, "growth"]);
 var PARENT_STRING_KEYS = /* @__PURE__ */ new Set(["personId", "relationship", "firstName", "nisContributions"]);
 var PARENT_RELATIONSHIPS = /* @__PURE__ */ new Set([
   "mother",
@@ -1749,6 +2008,17 @@ var PARENT_RELATIONSHIPS = /* @__PURE__ */ new Set([
 ]);
 var LOVED_ONE_KEYS = /* @__PURE__ */ new Set(["personId", "firstName", "age", "relation"]);
 var TRISTATE = /* @__PURE__ */ new Set(["yes", "no", "unknown"]);
+var PAY_FREQUENCIES = /* @__PURE__ */ new Set(["weekly", "fortnightly", "semimonthly", "monthly"]);
+var LINE_FREQUENCIES = /* @__PURE__ */ new Set(["weekly", "fortnightly", "monthly", "yearly"]);
+var STOP_TAGS = /* @__PURE__ */ new Set(["mortgage", "kids", "work", "care"]);
+var HOUSING = /* @__PURE__ */ new Set(["mortgage", "rent", "contribution", "own"]);
+var DEBT_TYPES = /* @__PURE__ */ new Set(["credit-card", "car-loan", "personal", "hire-purchase", "student-loan", "informal", "other"]);
+var COVER_STATUS = /* @__PURE__ */ new Set(["none", "unsure", "have"]);
+var ASSET_KINDS = /* @__PURE__ */ new Set(["bank", "credit-union", "unit-trust", "shares-bonds", "pension-cash", "life-cash", "property", "vehicle", "furniture", "other"]);
+var ROOM_DESTINATIONS = /* @__PURE__ */ new Set(["shortfall", "buffer", "protection", "debt", "emergency", "retirement", "goals"]);
+var OWN_ITEMS_MAX = 3;
+var OWN_ITEM_MAX_CHARS = 80;
+var LABEL_MAX_CHARS = 60;
 function findHealthKeys(value, path = "$") {
   const hits = [];
   if (Array.isArray(value)) {
@@ -1773,19 +2043,25 @@ function isObj(v) {
 function isNum(v) {
   return typeof v === "number" && Number.isFinite(v);
 }
+function isAmount(v) {
+  return isNum(v) && v >= 0;
+}
+function isShortText(v) {
+  return typeof v === "string" && v.length <= LABEL_MAX_CHARS;
+}
 function checkPerson(where, p, problems) {
   if (typeof p.personId !== "string" || !UUID_V4.test(p.personId)) problems.push(`${where}.personId must be a UUIDv4`);
   if (p.firstName !== void 0 && (typeof p.firstName !== "string" || !FIRST_NAME.test(p.firstName))) {
     problems.push(`${where}.firstName must be one first name (letters, hyphen or apostrophe, at most 20 characters)`);
   }
 }
-function checkParent(where, p, problems) {
+function checkParent(where, p, problems, keys) {
   if (!isObj(p)) {
     problems.push(`${where} must be an object`);
     return;
   }
   for (const [k, v] of Object.entries(p)) {
-    if (!PARENT_KEYS.has(k)) problems.push(`${where}.${k} is not allowed on a parent (no free text on a parent, ever)`);
+    if (!keys.has(k)) problems.push(`${where}.${k} is not allowed on a parent (no free text on a parent, ever)`);
     else if (typeof v === "string" && !PARENT_STRING_KEYS.has(k)) problems.push(`${where}.${k} must not be text`);
   }
   checkPerson(where, p, problems);
@@ -1795,6 +2071,7 @@ function checkParent(where, p, problems) {
   if (p.careFromAge !== void 0 && !Number.isInteger(p.careFromAge)) problems.push(`${where}.careFromAge must be a whole age`);
   if (typeof p.receivesSCP !== "boolean") problems.push(`${where}.receivesSCP must be true or false`);
   if (!TRISTATE.has(p.nisContributions)) problems.push(`${where}.nisContributions must be yes, no or unknown`);
+  if (keys.has("growth") && typeof p.growth !== "boolean") problems.push(`${where}.growth must be true or false`);
 }
 function checkLovedOne(where, o, problems) {
   if (!isObj(o)) {
@@ -1809,17 +2086,23 @@ function checkLovedOne(where, o, problems) {
   if (!isNum(o.age) || o.age < 0) problems.push(`${where}.age must be a number`);
   if (!["child", "adult", "elder"].includes(o.relation)) problems.push(`${where}.relation must be child, adult or elder`);
 }
-function validateLifeCaseFacts(input) {
-  const problems = [];
-  for (const h of findHealthKeys(input)) problems.push(`health answer at ${h}; health answers live only in the intake row`);
-  if (!isObj(input)) throw new LifeCaseFactsError(["facts must be an object", ...problems]);
-  const f = input;
-  if (f.schemaVersion !== 1) problems.push("schemaVersion must be 1");
+function checkPay(where, p, problems) {
+  if (!isObj(p)) {
+    problems.push(`${where} is required`);
+    return;
+  }
+  if (!PAY_FREQUENCIES.has(p.frequency)) problems.push(`${where}.frequency must be weekly, fortnightly, semimonthly or monthly`);
+  if (!isAmount(p.amountPerPay)) problems.push(`${where}.amountPerPay must be a number, not negative`);
+  if (typeof p.varies !== "boolean") problems.push(`${where}.varies must be true or false`);
+  if (p.lowestMonthly !== null && !isAmount(p.lowestMonthly)) problems.push(`${where}.lowestMonthly must be a number, not negative, or null`);
+  if (p.varies === true && p.lowestMonthly === null) problems.push(`${where}.lowestMonthly is required when pay changes`);
+}
+function checkCommon(f, problems, parentKeys) {
   if (!Number.isInteger(f.asOfYear)) problems.push("asOfYear must be a whole year");
   if (!isObj(f.client)) problems.push("client is required");
   else {
     checkPerson("client", f.client, problems);
-    for (const k of ["age", "grossMonthly"]) if (!isNum(f.client[k])) problems.push(`client.${k} must be a number`);
+    if (!isNum(f.client.age)) problems.push("client.age must be a number");
     if (!["male", "female"].includes(f.client.sex)) problems.push("client.sex must be male or female");
     if (!TRISTATE.has(f.client.hasHealthCover)) problems.push("client.hasHealthCover must be yes, no or unknown");
   }
@@ -1827,7 +2110,7 @@ function validateLifeCaseFacts(input) {
     if (!isObj(f.partner)) problems.push("partner must be an object or null");
     else {
       checkPerson("partner", f.partner, problems);
-      if (!isNum(f.partner.age) || !isNum(f.partner.incomeMonthly)) problems.push("partner.age and partner.incomeMonthly must be numbers");
+      if (!isNum(f.partner.age)) problems.push("partner.age must be a number");
     }
   }
   for (const key of ["children", "parents", "goals", "existingCover"]) {
@@ -1842,7 +2125,7 @@ function validateLifeCaseFacts(input) {
     if (!isNum(c.age) || !isNum(c.studyStartAge)) problems.push(`children[${i}].age and studyStartAge must be numbers`);
     if (!Array.isArray(c.milestones)) problems.push(`children[${i}].milestones must be a list`);
   });
-  if (Array.isArray(f.parents)) f.parents.forEach((p, i) => checkParent(`parents[${i}]`, p, problems));
+  if (Array.isArray(f.parents)) f.parents.forEach((p, i) => checkParent(`parents[${i}]`, p, problems, parentKeys));
   if (Array.isArray(f.existingCover)) f.existingCover.forEach((c, i) => {
     if (!isObj(c)) {
       problems.push(`existingCover[${i}] must be an object`);
@@ -1864,8 +2147,234 @@ function validateLifeCaseFacts(input) {
     if (!isObj(f.lovedOnes) || !Array.isArray(f.lovedOnes.ones)) problems.push("lovedOnes.ones must be a list");
     else f.lovedOnes.ones.forEach((o, i) => checkLovedOne(`lovedOnes.ones[${i}]`, o, problems));
   }
+}
+function checkLine(where, l, parentIds, problems) {
+  if (!isObj(l)) {
+    problems.push(`${where} must be an object`);
+    return;
+  }
+  if (!isShortText(l.label)) problems.push(`${where}.label must be text of at most ${LABEL_MAX_CHARS} characters`);
+  if (!isAmount(l.amount)) problems.push(`${where}.amount must be a number, not negative`);
+  if (!LINE_FREQUENCIES.has(l.frequency)) problems.push(`${where}.frequency must be weekly, fortnightly, monthly or yearly`);
+  if (l.stop !== void 0 && !STOP_TAGS.has(l.stop)) problems.push(`${where}.stop must be mortgage, kids, work or care`);
+  if (l.personId !== void 0 && (typeof l.personId !== "string" || !parentIds.has(l.personId))) {
+    problems.push(`${where}.personId must be one of the parents' personIds`);
+  }
+}
+function checkBudgetV2(b, parentIds, problems) {
+  if (!Array.isArray(b.groups)) {
+    problems.push("budget.groups must be a list");
+  } else {
+    const seen = /* @__PURE__ */ new Set();
+    b.groups.forEach((g, i) => {
+      const w = `budget.groups[${i}]`;
+      if (!isObj(g)) {
+        problems.push(`${w} must be an object`);
+        return;
+      }
+      if (!GROUP_KEYS.includes(g.key)) problems.push(`${w}.key must be a catalogue group key`);
+      else if (seen.has(g.key)) problems.push(`${w}.key "${String(g.key)}" appears twice`);
+      seen.add(g.key);
+      if (typeof g.skip !== "boolean") problems.push(`${w}.skip must be true or false`);
+      if (g.total !== null && !isAmount(g.total)) problems.push(`${w}.total must be a number, not negative, or null`);
+      if (g.totalFrequency !== null && !LINE_FREQUENCIES.has(g.totalFrequency)) problems.push(`${w}.totalFrequency must be weekly, fortnightly, monthly or yearly, or null`);
+      if (g.skip === true && (g.total === null || g.totalFrequency === null)) problems.push(`${w} is skipped, so it needs a total and how often`);
+      if (!Array.isArray(g.lines)) problems.push(`${w}.lines must be a list`);
+      else g.lines.forEach((l, j) => checkLine(`${w}.lines[${j}]`, l, parentIds, problems));
+    });
+  }
+  if (!HOUSING.has(b.housing)) problems.push("budget.housing must be mortgage, rent, contribution or own");
+  if (b.mortgage !== null) {
+    if (!isObj(b.mortgage) || !isAmount(b.mortgage.balance) || !isAmount(b.mortgage.yearsLeft) || typeof b.mortgage.clearOnDeath !== "boolean") {
+      problems.push("budget.mortgage must be null or { balance, yearsLeft, clearOnDeath }");
+    }
+  }
+  if (!isAmount(b.savings)) problems.push("budget.savings must be a number, not negative");
+  if (b.roomPlan !== null) {
+    const r = b.roomPlan;
+    if (!isObj(r) || !isObj(r.groupTargets) || !isObj(r.split) || typeof r.applied !== "boolean") {
+      problems.push("budget.roomPlan must be null or { groupTargets, split, applied }");
+    } else {
+      for (const [k, v] of Object.entries(r.groupTargets)) {
+        if (!GROUP_KEYS.includes(k)) problems.push(`budget.roomPlan.groupTargets.${k} is not a group key`);
+        if (!isAmount(v)) problems.push(`budget.roomPlan.groupTargets.${k} must be a number, not negative`);
+      }
+      for (const [k, v] of Object.entries(r.split)) {
+        if (!isRoomDestination(k)) problems.push(`budget.roomPlan.split.${k} is not a Make room destination`);
+        if (!isAmount(v)) problems.push(`budget.roomPlan.split.${k} must be a number, not negative`);
+      }
+    }
+  }
+}
+function isRoomDestination(k) {
+  if (ROOM_DESTINATIONS.has(k)) return true;
+  const m = /^group:(.+)$/.exec(k);
+  return !!m && GROUP_KEYS.includes(m[1]) && m[1] !== "save";
+}
+function checkDebtV2(where, d, problems) {
+  if (!isObj(d)) {
+    problems.push(`${where} must be an object`);
+    return;
+  }
+  if (!isShortText(d.label)) problems.push(`${where}.label must be text of at most ${LABEL_MAX_CHARS} characters`);
+  if (!DEBT_TYPES.has(d.type)) problems.push(`${where}.type must be one of the listed debt types`);
+  if (d.lender !== null && !isShortText(d.lender)) problems.push(`${where}.lender must be text of at most ${LABEL_MAX_CHARS} characters, or null`);
+  for (const k of ["balance", "ratePct", "minimumMonthly"]) if (!isAmount(d[k])) problems.push(`${where}.${k} must be a number, not negative`);
+  if (d.endDate !== null && (typeof d.endDate !== "string" || !YEAR_MONTH.test(d.endDate))) problems.push(`${where}.endDate must be "YYYY-MM" or null`);
+  if (typeof d.cosigned !== "boolean") problems.push(`${where}.cosigned must be true or false`);
+  if (d.cosignerName !== null && !isShortText(d.cosignerName)) problems.push(`${where}.cosignerName must be text of at most ${LABEL_MAX_CHARS} characters, or null`);
+}
+function checkOwnItems(where, v, problems) {
+  if (!Array.isArray(v)) {
+    problems.push(`${where} must be a list`);
+    return;
+  }
+  if (v.length > OWN_ITEMS_MAX) problems.push(`${where} has ${v.length} items; at most ${OWN_ITEMS_MAX}`);
+  v.forEach((x, i) => {
+    if (typeof x !== "string" || x.length > OWN_ITEM_MAX_CHARS) problems.push(`${where}[${i}] must be text of at most ${OWN_ITEM_MAX_CHARS} characters`);
+  });
+}
+function checkV2(f, problems) {
+  checkCommon(f, problems, PARENT_KEYS);
+  if (isObj(f.client)) checkPay("client.pay", f.client.pay, problems);
+  if (isObj(f.partner)) checkPay("partner.pay", f.partner.pay, problems);
+  const parentIds = new Set((Array.isArray(f.parents) ? f.parents : []).map((p) => isObj(p) ? String(p.personId) : ""));
+  if (isObj(f.budget)) checkBudgetV2(f.budget, parentIds, problems);
+  if (isObj(f.debts) && Array.isArray(f.debts.items)) {
+    f.debts.items.forEach((d, i) => checkDebtV2(`debts.items[${i}]`, d, problems));
+    if (!isAmount(f.debts.extraMonthly)) problems.push("debts.extraMonthly must be a number, not negative");
+  }
+  if (Array.isArray(f.existingCover)) f.existingCover.forEach((c, i) => {
+    if (!isObj(c)) return;
+    const w = `existingCover[${i}]`;
+    if (!COVER_STATUS.has(c.status)) problems.push(`${w}.status must be none, unsure or have`);
+    else if (c.status === "none" && c.amount !== 0) problems.push(`${w}: status none means an amount of 0`);
+    else if (c.status === "unsure" && c.amount !== null) problems.push(`${w}: status unsure means the amount is not captured (null)`);
+    else if (c.status === "have" && !isAmount(c.amount)) problems.push(`${w}: status have needs an amount`);
+  });
+  if (!isObj(f.opener)) problems.push("opener is required");
+  else {
+    for (const k of ["worries", "dreams"]) {
+      if (!Array.isArray(f.opener[k]) || !f.opener[k].every((x) => typeof x === "string")) problems.push(`opener.${k} must be a list of keys`);
+    }
+    checkOwnItems("opener.ownWorries", f.opener.ownWorries, problems);
+    checkOwnItems("opener.ownDreams", f.opener.ownDreams, problems);
+  }
+  if (!Array.isArray(f.assets)) problems.push("assets must be a list");
+  else f.assets.forEach((a, i) => {
+    if (!isObj(a) || !ASSET_KINDS.has(a.kind) || !isAmount(a.value)) problems.push(`assets[${i}] must be { kind (a §6.4 kind), value (not negative) }`);
+  });
+}
+function checkV1(f, problems) {
+  checkCommon(f, problems, PARENT_KEYS_V1);
+  if (isObj(f.client) && !isNum(f.client.grossMonthly)) problems.push("client.grossMonthly must be a number");
+  if (isObj(f.partner) && !isNum(f.partner.incomeMonthly)) problems.push("partner.incomeMonthly must be a number");
+  if (isObj(f.budget)) {
+    const b = f.budget;
+    if (!Array.isArray(b.costs) || !b.costs.every((c) => isObj(c) && typeof c.label === "string" && isNum(c.monthly))) problems.push("budget.costs must be a list of { label, monthly }");
+    for (const k of ["irregularAnnual", "housingPaymentMonthly", "savings"]) if (!isNum(b[k])) problems.push(`budget.${k} must be a number`);
+    if (!HOUSING.has(b.housing)) problems.push("budget.housing must be mortgage, rent, contribution or own");
+  }
+}
+function validateLifeCaseFacts(input) {
+  const problems = [];
+  for (const h of findHealthKeys(input)) problems.push(`health answer at ${h}; health answers live only in the intake row`);
+  if (!isObj(input)) throw new LifeCaseFactsError(["facts must be an object", ...problems]);
+  if (input.schemaVersion === 1) {
+    checkV1(input, problems);
+    if (problems.length) throw new LifeCaseFactsError(problems);
+    return validateLifeCaseFacts(upgradeChecked(input));
+  }
+  if (input.schemaVersion !== 2) problems.push("schemaVersion must be 2 (or 1, which is upgraded on read)");
+  else checkV2(input, problems);
   if (problems.length) throw new LifeCaseFactsError(problems);
   return input;
+}
+var PARENT_LINE_LABEL = {
+  mother: "Mother",
+  father: "Father",
+  grandmother: "Grandmother",
+  grandfather: "Grandfather",
+  "mother-in-law": "Mother-in-law",
+  "father-in-law": "Father-in-law",
+  "other-elder": "A relative"
+};
+function debtTypeFromLabel(label) {
+  if (/credit card/i.test(label)) return "credit-card";
+  if (/hire purchase/i.test(label)) return "hire-purchase";
+  if (/student/i.test(label)) return "student-loan";
+  if (/\b(car|vehicle)\b/i.test(label)) return "car-loan";
+  if (/personal|credit union/i.test(label)) return "personal";
+  return "other";
+}
+function v1CareShareToday(b, p, asOfYear) {
+  const age = parentAge(p, asOfYear);
+  if ((p.careFromAge ?? age) > age) return 0;
+  const tier = b.get("core:ff.careGraph.careTiers")[p.careTier].monthly;
+  const scpAge = b.useNode("scp.eligibility").node.age;
+  const off = p.receivesSCP && age >= scpAge ? b.num("core:ff.offsets.scpMonthly") : 0;
+  return Math.max(0, tier - off);
+}
+function upgradeChecked(v1) {
+  const b = new ProvenanceBuilder();
+  const problems = [];
+  const bud = v1.budget;
+  const quickStops = new Map(QUICK_GROUP.lines.filter((l) => l.stop && l.stop !== "mortgage").map((l) => [l.label, l.stop]));
+  let mortgageTagged = false;
+  const costLines = bud.costs.map((c) => {
+    const line = { label: c.label, amount: c.monthly, frequency: "monthly" };
+    if (!mortgageTagged && bud.housing === "mortgage" && bud.housingPaymentMonthly > 0 && c.monthly === bud.housingPaymentMonthly) {
+      mortgageTagged = true;
+      return { ...line, stop: "mortgage" };
+    }
+    const stop = quickStops.get(c.label);
+    return stop ? { ...line, stop } : line;
+  });
+  if (bud.housing === "mortgage" && bud.housingPaymentMonthly > 0 && !mortgageTagged) {
+    problems.push("version 1 housingPaymentMonthly is not one of the cost lines, so the mortgage line cannot be found");
+  }
+  if (problems.length) throw new LifeCaseFactsError(problems);
+  const group = (key, lines) => ({ key, skip: false, total: null, totalFrequency: null, lines });
+  const groups = [
+    group("quick", costLines),
+    group("yearly", bud.irregularAnnual > 0 ? [{ label: QUICK_YEARLY_LABEL, amount: bud.irregularAnnual, frequency: "yearly" }] : []),
+    group("family", v1.parents.map((p) => ({
+      label: PARENT_LINE_LABEL[p.relationship],
+      amount: v1CareShareToday(b, p, v1.asOfYear),
+      frequency: "monthly",
+      stop: "care",
+      personId: p.personId
+    })))
+  ];
+  const { grossMonthly, ...client } = v1.client;
+  const monthlyPay2 = (amount) => ({ frequency: "monthly", amountPerPay: amount, varies: false, lowestMonthly: null });
+  return {
+    schemaVersion: 2,
+    asOfYear: v1.asOfYear,
+    client: { ...client, pay: monthlyPay2(grossMonthly) },
+    partner: v1.partner ? { personId: v1.partner.personId, ...v1.partner.firstName !== void 0 ? { firstName: v1.partner.firstName } : {}, age: v1.partner.age, pay: monthlyPay2(v1.partner.incomeMonthly) } : null,
+    children: v1.children,
+    // careTier / careFromAge are kept as the future level; growth when a level was set.
+    parents: v1.parents.map((p) => ({ ...p, growth: p.careTier > 0 })),
+    // Build C: version 1 cash becomes one bank asset row; `budget.savings` is then 0 (assets are the one source).
+    budget: { groups, housing: bud.housing, mortgage: bud.mortgage, savings: 0, roomPlan: null },
+    debts: {
+      items: v1.debts.items.map((d) => ({ ...d, type: debtTypeFromLabel(d.label), lender: null, endDate: null, cosigned: false, cosignerName: null })),
+      extraMonthly: v1.debts.extraMonthly
+    },
+    goals: v1.goals,
+    existingCover: v1.existingCover.map((c) => ({ ...c, status: c.amount === null ? "unsure" : c.amount === 0 ? "none" : "have" })),
+    wishes: v1.wishes,
+    workPension: v1.workPension,
+    opener: { worries: [], dreams: [], ownWorries: [], ownDreams: [] },
+    assets: bud.savings > 0 ? [{ kind: "bank", value: bud.savings }] : [],
+    ...v1.lovedOnes ? { lovedOnes: v1.lovedOnes } : {},
+    ...v1.business ? { business: v1.business } : {}
+  };
+}
+function upgradeLifeCaseFacts(input) {
+  if (!isObj(input) || input.schemaVersion !== 1) throw new LifeCaseFactsError(["upgradeLifeCaseFacts takes version 1 facts"]);
+  return validateLifeCaseFacts(input);
 }
 function parentAge(p, asOfYear) {
   return asOfYear - p.birthYear;
@@ -1874,6 +2383,100 @@ function parentSex(p) {
   if (p.relationship === "mother" || p.relationship === "grandmother" || p.relationship === "mother-in-law") return "female";
   if (p.relationship === "father" || p.relationship === "grandfather" || p.relationship === "father-in-law") return "male";
   return null;
+}
+function catalogueGroup(key) {
+  return key === "quick" ? QUICK_GROUP : BUDGET_CATALOGUE.find((g) => g.key === key);
+}
+
+// src/engine-facts.ts
+var MONTHS_A_YEAR = 12;
+var CASH_KINDS = ["bank", "credit-union", "unit-trust"];
+function cashFromFacts(facts) {
+  const rows = facts.assets.filter((a) => CASH_KINDS.includes(a.kind));
+  return rows.length > 0 ? rows.reduce((s, a) => s + a.value, 0) : facts.budget.savings;
+}
+function toMonthly(b, amount, frequency) {
+  if (frequency === "monthly") return amount;
+  const perYear = b.get("core:ff.frequency.perYear")[frequency];
+  return perYear === 1 ? amount / MONTHS_A_YEAR : amount * perYear / MONTHS_A_YEAR;
+}
+function toYearly(b, amount, frequency) {
+  return amount * b.get("core:ff.frequency.perYear")[frequency];
+}
+function payMonthly(b, pay) {
+  const usual = toMonthly(b, pay.amountPerPay, pay.frequency);
+  return { usual, plan: pay.varies && pay.lowestMonthly !== null ? pay.lowestMonthly : usual };
+}
+function groupMonthly(b, g) {
+  if (g.skip) return toMonthly(b, g.total ?? 0, g.totalFrequency ?? "monthly");
+  return g.lines.reduce((a, l) => a + toMonthly(b, l.amount, l.frequency), 0);
+}
+function splitBudget(b, facts) {
+  const costs = [];
+  let irregularAnnual = 0;
+  let saving = 0;
+  let mortgage = 0;
+  const parentToday = new Map(facts.parents.map((p) => [p.personId, 0]));
+  const stops = { mortgage: 0, kids: 0, work: 0, care: 0 };
+  for (const g of facts.budget.groups) {
+    const kind = catalogueGroup(g.key).kind;
+    if (g.skip) {
+      const m = groupMonthly(b, g);
+      if (kind === "saving") saving += m;
+      else if (kind === "yearly") irregularAnnual += toYearly(b, g.total ?? 0, g.totalFrequency ?? "monthly");
+      else costs.push({ label: catalogueGroup(g.key).label, monthly: m });
+      continue;
+    }
+    for (const l of g.lines) {
+      const m = toMonthly(b, l.amount, l.frequency);
+      if (l.personId !== void 0) {
+        parentToday.set(l.personId, (parentToday.get(l.personId) ?? 0) + m);
+        stops.care += m;
+        continue;
+      }
+      if (l.stop) {
+        if (l.stop !== "mortgage" || facts.budget.housing === "mortgage") stops[l.stop] += m;
+        if (l.stop === "mortgage" && facts.budget.housing === "mortgage") mortgage += m;
+      }
+      if (kind === "saving") saving += m;
+      else if (kind === "yearly") irregularAnnual += toYearly(b, l.amount, l.frequency);
+      else costs.push({ label: l.label, monthly: m });
+    }
+  }
+  return { costs, irregularAnnual, savingMonthly: saving, parentToday, mortgagePaymentMonthly: mortgage, stopMonthly: stops };
+}
+function parentSupported(p) {
+  return p.todayMonthly > 0 || p.growth && p.careTier > 0;
+}
+function toEngineFacts(facts) {
+  const b = new ProvenanceBuilder();
+  const split = splitBudget(b, facts);
+  const pay = payMonthly(b, facts.client.pay);
+  return {
+    schemaVersion: 2,
+    asOfYear: facts.asOfYear,
+    client: { ...facts.client, grossMonthly: pay.plan, usualGrossMonthly: pay.usual },
+    partner: facts.partner ? { ...facts.partner, incomeMonthly: payMonthly(b, facts.partner.pay).plan } : null,
+    children: facts.children,
+    parents: facts.parents.map((p) => ({ ...p, todayMonthly: split.parentToday.get(p.personId) ?? 0 })),
+    budget: {
+      costs: split.costs,
+      irregularAnnual: split.irregularAnnual,
+      savingMonthly: split.savingMonthly,
+      stopMonthly: split.stopMonthly,
+      housing: facts.budget.housing,
+      housingPaymentMonthly: split.mortgagePaymentMonthly,
+      mortgage: facts.budget.mortgage,
+      savings: cashFromFacts(facts)
+    },
+    debts: facts.debts,
+    goals: facts.goals,
+    existingCover: facts.existingCover,
+    wishes: facts.wishes,
+    workPension: facts.workPension,
+    ...facts.lovedOnes ? { lovedOnes: facts.lovedOnes } : {},
+    ...facts.business ? { business: facts.business } : {}
+  };
 }
 
 // src/household-budget.ts
@@ -1887,12 +2490,21 @@ function payeAnnual(chargeable, bands) {
   }
   return tax;
 }
+function nisMonthly(b, c) {
+  if (!c.nisPaying) return 0;
+  const rate = b.num("core:ff.tax.nisEmployeeRate");
+  const ceilingNis = b.num("nis.insurable_earnings_ceiling");
+  if (c.pay.frequency !== "weekly") return rate * Math.min(c.grossMonthly, ceilingNis);
+  const weeks = b.get("core:ff.frequency.perYear").weekly;
+  const weekly = c.grossMonthly * MONTHS / weeks;
+  return rate * Math.min(weekly, ceilingNis * MONTHS / weeks) * weeks / MONTHS;
+}
+var MONTHS = 12;
 function computeNetPay(facts) {
   const b = new ProvenanceBuilder();
   const c = facts.client;
   const g = c.grossMonthly;
-  const ceilingNis = b.num("nis.insurable_earnings_ceiling");
-  const nis = c.nisPaying ? b.num("core:ff.tax.nisEmployeeRate") * Math.min(g, ceilingNis) : 0;
+  const nis = nisMonthly(b, c);
   let surchargeWeekly = 0;
   if (c.age < b.num("core:ff.tax.surchargeExemptFromAge")) {
     const rates = b.get("health_surcharge.rates");
@@ -1934,15 +2546,13 @@ function computeHouseholdBudget(input) {
   const housingStops = bud.housing === "mortgage" && !!bud.mortgage && bud.mortgage.clearOnDeath && bud.mortgage.balance > 0;
   const living = needs - (housingStops ? bud.housingPaymentMonthly : 0) - debts.minimumsMonthly - input.carePaidMonthly;
   const hhNet = netPay.householdNetMonthly;
-  const surplus = hhNet - needs;
+  const saving = bud.savingMonthly;
+  const surplus = hhNet - needs - saving;
   const buffer = needs > 0 ? bud.savings / needs : 0;
-  const deps = facts.children.length + facts.parents.filter((p) => p.careTier > 0).length;
+  const deps = facts.children.length + facts.parents.filter(parentSupported).length;
   const ef = facts.client.selfEmployed ? b.num("core:ff.budget.emergencyMonthsSelfEmployed") : deps > 0 ? b.num("core:ff.budget.emergencyMonthsDependants") : b.num("core:ff.budget.emergencyMonthsAlone");
   const bad = debts.expensiveDebt;
-  const stage = surplus <= 0 ? 0 : buffer < 1 ? 1 : bad > 0 ? 2 : buffer < ef ? 3 : 4;
-  const pcts = b.get("core:ff.budget.stagePercents");
-  const pct = pcts[stage];
-  const ceiling = stage === 0 ? 0 : Math.max(0, Math.min(pct.ofNet * hhNet, pct.ofSurplus * surplus));
+  const { stage, ceiling } = stageAndCeiling(b, { hhNet, surplus, buffer, expensiveDebt: bad, emergencyFundMonths: ef });
   const shares = b.get("core:ff.closing.bandShares");
   const needsRatio = needs / hhNet;
   const hardballRatio = b.num("core:ff.budget.hardballNeedsRatio");
@@ -1958,6 +2568,7 @@ function computeHouseholdBudget(input) {
     needsMonthly: needs,
     livingMonthly: living,
     housingStopsOnDeath: housingStops,
+    savingMonthly: saving,
     surplusMonthly: surplus,
     bufferMonths: buffer,
     dependants: deps,
@@ -1972,6 +2583,13 @@ function computeHouseholdBudget(input) {
     expensiveDebt: bad,
     provenance: b.build()
   };
+}
+function stageAndCeiling(b, x) {
+  const stage = x.surplus <= 0 ? 0 : x.buffer < 1 ? 1 : x.expensiveDebt > 0 ? 2 : x.buffer < x.emergencyFundMonths ? 3 : 4;
+  const pcts = b.get("core:ff.budget.stagePercents");
+  const pct = pcts[stage];
+  const ceiling = stage === 0 ? 0 : Math.max(0, Math.min(pct.ofNet * x.hhNet, pct.ofSurplus * x.surplus));
+  return { stage, ceiling };
 }
 function buildBudgetBuckets(budget, facts, savePct, protectionMonthly) {
   const b = new ProvenanceBuilder();
@@ -2129,7 +2747,13 @@ function parentLabel(p) {
   return PARENT_LABELS[p.relationship];
 }
 function careGraphInputFromFacts(facts) {
-  return { clientAge: facts.client.age, asOfYear: facts.asOfYear, children: facts.children, parents: facts.parents };
+  const today = splitBudget(new ProvenanceBuilder(), facts).parentToday;
+  return {
+    clientAge: facts.client.age,
+    asOfYear: facts.asOfYear,
+    children: facts.children,
+    parents: facts.parents.map((p) => ({ ...p, todayMonthly: today.get(p.personId) ?? 0 }))
+  };
 }
 function validate(b, input, H) {
   const minH = b.num("core:ff.careGraph.minimumHorizonYears");
@@ -2205,17 +2829,26 @@ function run(b, input) {
       goals.push({ key: `${k.personId}:${m.key}`, personId: k.personId, who, what: MILESTONE_NAMES[m.key].toLowerCase(), kind: "milestone", pv: disc(v, y), start: y, years: 0 });
     }
   });
+  const parentsToday = [];
   for (const p of input.parents) {
     const age = parentAge(p, input.asOfYear);
     const from = p.careFromAge ?? age;
     const monthly = tiers[p.careTier].monthly;
+    const today = p.todayMonthly;
     let pv = 0;
     let start = null;
     let yearsOn = 0;
-    for (let y = Math.max(0, from - age); y <= H && age + y <= careTo; y++) {
-      const gross = monthly * Math.pow(1 + f, y);
-      const off = p.receivesSCP && age + y >= scpAge ? scp * Math.pow(1 + i, y) : 0;
-      const nt = Math.max(0, gross - off);
+    let graphToday = 0;
+    const first = today > 0 ? 0 : p.growth ? Math.max(0, from - age) : H + 1;
+    for (let y = first; y <= H && age + y <= careTo; y++) {
+      const todayY = today * Math.pow(1 + f, y);
+      let nt = todayY;
+      if (p.growth && y >= from - age) {
+        const gross = monthly * Math.pow(1 + f, y);
+        const off = p.receivesSCP && age + y >= scpAge ? scp * Math.pow(1 + i, y) : 0;
+        nt = Math.max(todayY, Math.max(0, gross - off));
+      }
+      if (y === 0) graphToday = nt;
       yrs[y].par += nt;
       if (nt > 0) {
         yrs[y].parOn = true;
@@ -2227,6 +2860,7 @@ function run(b, input) {
     if (start !== null && pv > 0) {
       goals.push({ key: `${p.personId}:care`, personId: p.personId, who: parentLabel(p), what: "care", kind: "care", pv, start, years: yearsOn });
     }
+    parentsToday.push({ personId: p.personId, budgetMonthly: today, graphMonthly: graphToday });
   }
   const rm = Math.pow(1 + r, 1 / 12) - 1;
   let save = 0;
@@ -2267,7 +2901,8 @@ function run(b, input) {
     save,
     already: yrs[0].edu + yrs[0].par,
     pv: pvTotal,
-    nominal
+    nominal,
+    parentsToday
   };
 }
 function applyLever(input, lever) {
@@ -2329,6 +2964,7 @@ function careGraph(input, householdNetMonthly) {
     verdict,
     levers,
     topLevers: levers.filter((l) => l.monthlyReduction > minLever).slice(0, topN),
+    parentsToday: core.parentsToday,
     provenance: b.build()
   };
 }
@@ -2861,6 +3497,18 @@ function protectionPlanFor(b, facts, profile, item) {
       cover: at(loan.product, loan.product)
     };
   }
+  const cosigned = key.startsWith("cosigned-cover:") ? facts.debts.items[Number(key.slice("cosigned-cover:".length))] : void 0;
+  if (cosigned) {
+    const loan = item.product === "whole-life" ? { product: "whole-life", name: "Whole life" } : { product: "term", name: "Term life" };
+    const who = cosigned.cosignerName ?? "The person who co-signed";
+    return {
+      name: `${loan.name} for the ${cosigned.label.toLowerCase()} ${cosigned.cosignerName ?? "someone"} co-signed`,
+      product: loan.product,
+      riders: [],
+      why: `${who} would owe the ${fmt(cosigned.balance)} if you died. This clears it. It costs about ${fmt(item.min)} a month.`,
+      cover: at(loan.product, loan.product)
+    };
+  }
   if (key === "critical-illness") {
     const why = profile === "single" ? "At your age a serious illness or injury is far more likely than death. This pays a lump sum to live on while you recover." : profile === "family" ? "Keeps the family going while you recover." : "Illness is the biggest money risk from 50.";
     return { name: "Critical illness (Life Span Gold)", product: "life-span-gold", riders: [], why, cover: at("ci", "life-span-gold") };
@@ -3067,11 +3715,12 @@ function buildScopeStatement(gaps, rows) {
 }
 function buildSnapshot(input) {
   if (!input.engineVersion) throw new ClosingInputError("a snapshot needs the pinned engine version");
+  const closing = input.roomPlan ? { ...input.closing, roomPlan: input.roomPlan } : input.closing;
   const snap = JSON.parse(JSON.stringify({
     kind: "life_case_snapshot",
     assumptionSetId: input.assumptionSetId,
     engineVersion: input.engineVersion,
-    closing: input.closing,
+    closing,
     scope: input.scope
   }));
   assertNoHealthKeys(snap, "snapshot");
@@ -3083,16 +3732,37 @@ var TIER_ORDER = [0, 1, 1.5, 2, 3];
 function defaultOrder(specs) {
   return TIER_ORDER.flatMap((t) => specs.filter((s) => s.tier === t).map((s) => s.key));
 }
+function insuranceRange(budget) {
+  const b = new ProvenanceBuilder();
+  const floor = b.num("core:ff.insurance.floorMonthly");
+  const stage0 = budget.stage === 0;
+  const left = budget.surplusMonthly;
+  const short = !stage0 && left < floor ? floor - left : 0;
+  const noPlan = stage0 || short > 0;
+  return {
+    floorMonthly: floor,
+    stage0,
+    noPlan,
+    shortByMonthly: short,
+    minMonthly: stage0 ? 0 : floor,
+    maxMonthly: stage0 ? 0 : Math.max(budget.ceilingMonthly, floor),
+    defaultMonthly: noPlan ? 0 : Math.max(floor, budget.band.recommended),
+    ceilingMonthly: budget.ceilingMonthly,
+    recommendedMonthly: budget.band.recommended
+  };
+}
 function insuranceCap(budget, budgetMonthly) {
-  if (budgetMonthly === void 0 || budgetMonthly === null) return budget.band.recommended;
+  const r = insuranceRange(budget);
+  if (budgetMonthly === void 0 || budgetMonthly === null) return r.stage0 ? budget.band.recommended : r.defaultMonthly;
   if (typeof budgetMonthly !== "number" || !Number.isFinite(budgetMonthly)) {
     throw new ClosingInputError(`The insurance budget must be a finite number of dollars a month; got ${String(budgetMonthly)}.`);
   }
-  const { floor, ceiling } = budget.band;
-  if (budgetMonthly < floor - CAP_TOLERANCE || budgetMonthly > ceiling + CAP_TOLERANCE) {
-    throw new ClosingInputError(`The insurance budget of ${budgetMonthly.toFixed(2)} a month is outside the safe range ${floor.toFixed(2)} to ${ceiling.toFixed(2)}.`);
+  const lo = r.stage0 ? budget.band.floor : r.minMonthly;
+  const hi = r.stage0 ? budget.band.ceiling : r.maxMonthly;
+  if (budgetMonthly < lo - CAP_TOLERANCE || budgetMonthly > hi + CAP_TOLERANCE) {
+    throw new ClosingInputError(`The insurance budget of ${budgetMonthly.toFixed(2)} a month is outside the range ${lo.toFixed(2)} to ${hi.toFixed(2)}.`);
   }
-  return budgetMonthly;
+  return r.noPlan && !r.stage0 ? 0 : budgetMonthly;
 }
 var CAP_TOLERANCE = 1e-9;
 function completeOrder(specs, order) {
@@ -3107,6 +3777,7 @@ function completeOrder(specs, order) {
 }
 function allocateLadder(budget, specs, order, capMonthly) {
   const b = new ProvenanceBuilder();
+  const range = insuranceRange(budget);
   if (budget.stage === 0) {
     return {
       underwater: true,
@@ -3115,6 +3786,8 @@ function allocateLadder(budget, specs, order, capMonthly) {
       budgetMonthly: 0,
       insuranceCapMonthly: 0,
       insuranceCeilingMonthly: 0,
+      insuranceRange: range,
+      aboveSafeRange: false,
       insuranceAllocated: 0,
       preconditionsNotCaptured: ["Compulsory motor third-party cover"]
     };
@@ -3123,7 +3796,7 @@ function allocateLadder(budget, specs, order, capMonthly) {
   const byKey = new Map(specs.map((s) => [s.key, s]));
   const ordered = keys.map((k) => byKey.get(k)).filter(Boolean);
   let left = Math.max(0, budget.surplusMonthly);
-  const cap = capMonthly ?? budget.band.recommended;
+  const cap = range.noPlan ? 0 : capMonthly ?? range.defaultMonthly;
   let capLeft = cap;
   const got = new Map(ordered.map((s) => [s.key, 0]));
   const notYet = /* @__PURE__ */ new Set();
@@ -3154,6 +3827,8 @@ function allocateLadder(budget, specs, order, capMonthly) {
     budgetMonthly: Math.max(0, budget.surplusMonthly),
     insuranceCapMonthly: cap,
     insuranceCeilingMonthly: budget.ceilingMonthly,
+    insuranceRange: range,
+    aboveSafeRange: cap > budget.ceilingMonthly + CAP_TOLERANCE,
     insuranceAllocated: items.filter((i) => i.insurance).reduce((a, i) => a + i.allocated, 0),
     preconditionsNotCaptured: ["Compulsory motor third-party cover"]
   };
@@ -3184,6 +3859,22 @@ var LAYER_NAMES = {
   5: "Your plan"
 };
 var UNKNOWN_SENTENCE = "We did not capture this. It is not counted either way.";
+var RUNG_MONTHS = { one: 1, three: 3, six: 6 };
+function savingsStep(budget) {
+  if (budget.stage === 0) return 0;
+  const reached = [budget.bufferMonths >= RUNG_MONTHS.one, budget.expensiveDebt <= 0, budget.bufferMonths >= RUNG_MONTHS.three, budget.bufferMonths >= RUNG_MONTHS.six];
+  const i = reached.findIndex((x) => !x);
+  return i < 0 ? 5 : i + 1;
+}
+var DEBT_WORDS = {
+  "credit-card": "credit card",
+  "car-loan": "car loan",
+  personal: "personal loan",
+  "hire-purchase": "hire purchase",
+  "student-loan": "student loan",
+  informal: "family loan",
+  other: "loan"
+};
 function money(n) {
   const s = Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return (n < 0 ? "-$" : "$") + s;
@@ -3210,7 +3901,7 @@ function computeClosing(ctxIn, options = {}) {
   const w = facts.wishes;
   const floorCover = (v) => v > 0 ? Math.max(minCover, v) : 0;
   const cap = insuranceCap(budget, options.budgetMonthly);
-  const parentsOffset = facts.parents.filter((p) => p.careTier > 0 && !careGraph2.goals.some((g) => g.key === `${p.personId}:care`));
+  const parentsOffset = facts.parents.filter((p) => parentSupported(p) && !careGraph2.goals.some((g) => g.key === `${p.personId}:care`));
   const careGoal = new Map(careGraph2.goals.map((g) => [g.key, g]));
   const pronoun = (p) => /mother|grandmother/.test(p.relationship) ? "Her" : /father|grandfather/.test(p.relationship) ? "His" : "Their";
   const lineSentence = (o, paid, met, sv) => {
@@ -3237,13 +3928,13 @@ function computeClosing(ctxIn, options = {}) {
     }
     return met ? `${o.label} is funded.` : `${o.label} is not funded.`;
   };
-  const layerAt = (L, cover) => {
-    const usePartner = L >= 2;
-    const useNis = L >= 3;
+  const layerAt = (L2, cover) => {
+    const usePartner = L2 >= 2;
+    const useNis = L2 >= 3;
     const sv0 = survivorCashflow(b, facts, budget.livingMonthly, usePartner, useNis, 0);
     let lump = 0;
-    if (L >= 4) lump += deathNeed.cover.knownLife + facts.budget.savings;
-    if (L >= 5) lump += Math.min(uw, cover);
+    if (L2 >= 4) lump += deathNeed.cover.knownLife + facts.budget.savings;
+    if (L2 >= 5) lump += Math.min(uw, cover);
     let left = lump;
     const paidLines = deathNeed.obligations.map((o) => {
       const amount = o.key === "income" ? sv0.pvGap : o.amount;
@@ -3281,25 +3972,25 @@ function computeClosing(ctxIn, options = {}) {
     const notes = [];
     const partner = facts.partner;
     const spouseName = partner?.firstName ?? "Your partner";
-    if (L >= 2) notes.push(partner ? `${spouseName}'s income: ${money(partner.incomeMonthly)} a month, to age ${b.num("core:ff.deathNeed.partnerWorksToAge")}.` : "No partner income.");
-    if (L >= 3) notes.push(facts.client.nisPaying ? `NIS survivors' benefit: ${money(b.num("core:ff.offsets.nisSurvivorSpouseMonthly"))} a month to your spouse, and ${money(b.num("core:ff.offsets.nisSurvivorChildMonthly"))} a month for each child to ${b.num("core:ff.offsets.nisSurvivorChildToAge")}.` : "No NIS record, so no survivors' benefit.");
-    const unknowns = L >= 4 ? deathNeed.cover.unknownLabels : [];
-    if (L >= 4) {
+    if (L2 >= 2) notes.push(partner ? `${spouseName}'s income: ${money(partner.incomeMonthly)} a month, to age ${b.num("core:ff.deathNeed.partnerWorksToAge")}.` : "No partner income.");
+    if (L2 >= 3) notes.push(facts.client.nisPaying ? `NIS survivors' benefit: ${money(b.num("core:ff.offsets.nisSurvivorSpouseMonthly"))} a month to your spouse, and ${money(b.num("core:ff.offsets.nisSurvivorChildMonthly"))} a month for each child to ${b.num("core:ff.offsets.nisSurvivorChildToAge")}.` : "No NIS record, so no survivors' benefit.");
+    const unknowns = L2 >= 4 ? deathNeed.cover.unknownLabels : [];
+    if (L2 >= 4) {
       notes.push(`Savings of ${money(facts.budget.savings)} are counted.`);
       for (const u of unknowns) notes.push(`${u}: ${UNKNOWN_SENTENCE}`);
     }
-    if (L >= 5) notes.push(`Your plan adds ${money(Math.min(uw, cover))} of cover.`);
+    if (L2 >= 5) notes.push(`Your plan adds ${money(Math.min(uw, cover))} of cover.`);
     const mort = lines.find((l) => l.key === "mortgage");
     const inc = lines.find((l) => l.key === "income");
     const head = [`Your family receives ${money(lump)}.`];
     if (mort) head.push(mort.met ? "The mortgage clears." : `The mortgage of ${money(mort.amount)} stays.`);
-    if (L >= 5 && partner && inc?.met) head.push(`${spouseName}'s income is replaced to age ${partner.age + b.num("core:ff.deathNeed.survivorYears")}.`);
+    if (L2 >= 5 && partner && inc?.met) head.push(`${spouseName}'s income is replaced to age ${partner.age + b.num("core:ff.deathNeed.survivorYears")}.`);
     else if (sv.monthOfShortfall !== null && !inc?.met) head.push(`The money runs out in month ${sv.monthOfShortfall}.`);
     const sentences = [...head, ...lines.map((l) => l.sentence), ...unknowns.length ? [UNKNOWN_SENTENCE] : []];
     const r0 = sv.rows[0];
     return {
-      layer: L,
-      name: LAYER_NAMES[L],
+      layer: L2,
+      name: LAYER_NAMES[L2],
       need: lines.reduce((a, l) => a + l.amount, 0),
       lines,
       notes,
@@ -3461,6 +4152,14 @@ function computeClosing(ctxIn, options = {}) {
     const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, ratedAge(age)));
     return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id2 }];
   });
+  const cosignedCover = facts.debts.items.flatMap((d, ix) => {
+    if (!d.cosigned || d.balance <= 0) return [];
+    const id2 = canIssue(b, "term", age) ? "term" : "whole-life";
+    const spec = id2 === "term" ? term : whole;
+    const cover = Math.min(spec.cover.max ?? Infinity, Math.max(spec.cover.min, d.balance));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, ratedAge(age)));
+    return [{ key: `cosigned-cover:${ix}`, tier: 2, label: `Life cover for the ${DEBT_WORDS[d.type]} ${d.cosignerName ?? "someone"} co-signed`, min: prem, full: prem, insurance: true, product: id2 }];
+  });
   const specsFor = (chosen) => [
     { key: "buffer-one-month", tier: 0, label: "One month of buffer cash", min: oneMonth, full: oneMonth, insurance: false },
     ...dependants ? [{ key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: Math.max(essPrem, cardPrem(chosen)), insurance: true, product: lifeProduct }] : [],
@@ -3482,6 +4181,7 @@ function computeClosing(ctxIn, options = {}) {
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
     ...loanCover,
+    ...cosignedCover,
     ...dependants ? [{ key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - cardPrem(chosen)), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : [],
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
@@ -3540,8 +4240,9 @@ function computeClosing(ctxIn, options = {}) {
   });
   b.rule("each package card's status is a ladder run with that card chosen, at the insurance budget in use");
   const shares = b.get("core:ff.closing.bandShares");
+  const range = insuranceRange(budget);
   const bands = ["floor", "recommended", "ceiling"].map((k) => {
-    const monthly = budget.ceilingMonthly * shares[k];
+    const monthly = range.noPlan ? 0 : Math.max(range.floorMonthly, budget.ceilingMonthly * shares[k]);
     const cover = monthly > 0 ? lifeCoverFunded(runLadder(pkg, monthly).ladder, pkg) : 0;
     const L5 = layerAt(5, cover);
     return {
@@ -3552,7 +4253,7 @@ function computeClosing(ctxIn, options = {}) {
       doesNotCover: L5.lines.filter((l) => !l.met).map((l) => l.label)
     };
   });
-  const layers = [1, 2, 3, 4, 5].map((L) => layerAt(L, basket.cover));
+  const layers = [1, 2, 3, 4, 5].map((L2) => layerAt(L2, basket.cover));
   const today = layers[3].outcome;
   const plan = layers[4].outcome;
   const legLine = layers[4].lines.find((l) => l.key === "legacy");
@@ -3588,6 +4289,7 @@ function computeClosing(ctxIn, options = {}) {
   return {
     assumptionSetId: ASSUMPTION_SET_ID,
     stage: budget.stage,
+    savingsStep: savingsStep(budget),
     underwater: budget.stage === 0,
     packages,
     cards,
@@ -3827,12 +4529,331 @@ function computeBusiness(bz) {
   return { multiOwner: multi, yourShare: share, typeNote: TYPE_NOTE[bz.type], needs, whyAsked: WHY, provenance: b.build() };
 }
 
+// src/pay.ts
+function rhythm(b, pay) {
+  const m = payMonthly(b, pay);
+  return {
+    frequency: pay.frequency,
+    paysPerYear: b.get("core:ff.frequency.perYear")[pay.frequency],
+    amountPerPay: pay.amountPerPay,
+    varies: pay.varies,
+    usualMonthly: m.usual,
+    planMonthly: m.plan
+  };
+}
+var MONTHS2 = 12;
+function computePayPlan(facts, netPay, buckets) {
+  const b = new ProvenanceBuilder();
+  const client = rhythm(b, facts.client.pay);
+  const partner = facts.partner ? rhythm(b, facts.partner.pay) : null;
+  const good = client.varies ? computeNetPay({ client: { ...facts.client, grossMonthly: client.usualMonthly }, partner: facts.partner }).netMonthly : null;
+  const planPays = b.get("core:ff.frequency.planPaysPerMonth")[client.frequency];
+  b.rule("the plan uses the lowest month when pay changes; saving is shown per pay in the client's own rhythm");
+  return {
+    client,
+    partner,
+    planNetMonthly: netPay.netMonthly,
+    goodMonthNetMonthly: good,
+    takeHomePerPay: netPay.netMonthly * MONTHS2 / client.paysPerYear,
+    savePerPay: buckets.payYourselfFirstMonthly * MONTHS2 / client.paysPerYear,
+    planPaysPerMonth: planPays,
+    extraPaysPerYear: Math.max(0, client.paysPerYear - planPays * MONTHS2),
+    provenance: b.build()
+  };
+}
+
+// src/budget-analysis.ts
+var MONEY_TOLERANCE = 1e-6;
+function computeBudgetAnalysis(input) {
+  const b = new ProvenanceBuilder();
+  const { facts, budget, debts, careGraph: careGraph2 } = input;
+  const take = budget.netPay.householdNetMonthly;
+  const far = b.num("core:ff.guides.farAboveFactor");
+  const graphToday = new Map(careGraph2.parentsToday.map((p) => [p.personId, p.graphMonthly]));
+  const guideRow = (key) => {
+    if (!key) return null;
+    const node = b.useNode(`core:ff.guides.${key}`).node;
+    return { key, min: node.value.min, max: node.value.max, source: node.source, asOf: node.asOf };
+  };
+  const row2 = (key, label, kind, monthly, guide, estimated, lines) => {
+    const share = take > 0 ? monthly / take : null;
+    let status = "no-guide";
+    let above = 0;
+    if (guide && share !== null) {
+      above = Math.max(0, monthly - guide.max * take);
+      status = share > guide.max * far ? "far-above" : share > guide.max ? "above" : guide.min !== null && share < guide.min ? "below" : "within";
+    }
+    return { key, label, kind, monthly, share, guide, status, aboveByMonthly: above, estimated, lines };
+  };
+  const rows = [];
+  const order = ["quick", ...facts.budget.groups.map((g) => g.key).filter((k) => k !== "quick")];
+  const groups = [...facts.budget.groups].sort((x, y) => order.indexOf(x.key) - order.indexOf(y.key));
+  const counted = /* @__PURE__ */ new Set();
+  for (const g of groups) {
+    const cat = catalogueGroup(g.key);
+    if (g.skip) {
+      const m = toMonthly(b, g.total ?? 0, g.totalFrequency ?? "monthly");
+      rows.push(row2(g.key, cat.label, cat.kind, m, guideRow(cat.guide), true, []));
+      continue;
+    }
+    const lines = g.lines.map((l) => ({
+      label: l.label,
+      amount: l.amount,
+      frequency: l.frequency,
+      monthly: toMonthly(b, l.amount, l.frequency),
+      stop: l.stop ?? null,
+      personId: l.personId ?? null
+    }));
+    const parents = [...new Set(lines.filter((l) => l.personId !== null).map((l) => l.personId))].filter((id2) => !counted.has(id2));
+    for (const id2 of parents) counted.add(id2);
+    const ownLines = g.lines.filter((l) => l.personId === void 0);
+    const ownMonthly = cat.kind === "yearly" ? ownLines.reduce((a, l) => a + toYearly(b, l.amount, l.frequency), 0) / MONTHS3 : ownLines.reduce((a, l) => a + toMonthly(b, l.amount, l.frequency), 0);
+    const monthly = ownMonthly + parents.reduce((a, id2) => a + (graphToday.get(id2) ?? 0), 0);
+    rows.push(row2(g.key, cat.label, cat.kind, monthly, guideRow(cat.guide), false, lines));
+  }
+  const inLines = new Set(groups.filter((g) => !g.skip).flatMap((g) => g.lines.map((l) => l.personId)).filter((x) => !!x));
+  const unlisted = careGraph2.parentsToday.filter((p) => !inLines.has(p.personId) && p.graphMonthly > 0);
+  if (unlisted.length) {
+    const extra = unlisted.reduce((a, p) => a + p.graphMonthly, 0);
+    const at = rows.findIndex((r) => r.key === "family");
+    if (at >= 0) rows[at] = row2("family", rows[at].label, "support", rows[at].monthly + extra, null, rows[at].estimated, [...rows[at].lines]);
+    else rows.push(row2("family", catalogueGroup("family").label, "support", extra, null, false, []));
+  }
+  const study = careGraph2.years[0]?.eduMonthly ?? 0;
+  if (study > MONEY_TOLERANCE) rows.push(row2("study", "Study costs today", "study", study, null, false, []));
+  rows.push(row2("debts", "Loan and card payments", "debts", debts.minimumsMonthly, guideRow("debt"), false, []));
+  const split = splitBudget(b, facts);
+  const saving = rows.filter((r) => r.kind === "saving").reduce((a, r) => a + r.monthly, 0);
+  const gapsShown = b.num("core:ff.guides.gapsShown");
+  const gaps = rows.filter((r) => r.aboveByMonthly > MONEY_TOLERANCE).sort((x, y) => y.aboveByMonthly - x.aboveByMonthly).slice(0, gapsShown).map((r) => ({ key: r.key, label: r.label, monthly: r.monthly, aboveByMonthly: r.aboveByMonthly }));
+  b.rule("each group is a share of household take-home against its common guide; above the top is amber, more than 1.5 times the top is red");
+  return {
+    takeHomeMonthly: take,
+    groups: rows,
+    spendingMonthly: budget.needsMonthly - budget.debtMinimumsMonthly,
+    savingMonthly: saving,
+    debtPaymentsMonthly: budget.debtMinimumsMonthly,
+    careMonthly: budget.carePaidMonthly,
+    needsMonthly: budget.needsMonthly,
+    outgoingMonthly: budget.needsMonthly + saving,
+    leftMonthly: take - budget.needsMonthly - saving,
+    gaps,
+    estimatedGroups: facts.budget.groups.filter((g) => g.skip).map((g) => g.key),
+    stopMonthly: split.stopMonthly,
+    careAboveBudget: careGraph2.parentsToday.filter((p) => p.graphMonthly > p.budgetMonthly + MONEY_TOLERANCE),
+    provenance: b.build()
+  };
+}
+var MONTHS3 = 12;
+
+// src/debt-payoff.ts
+var YEAR_MONTH2 = /^(\d{4})-(\d{2})$/;
+var MONTHS_A_YEAR2 = 12;
+var PAYMENT_TOLERANCE = 1e-6;
+function monthIndex(ym) {
+  const m = YEAR_MONTH2.exec(ym);
+  if (!m) throw new Error(`Not a "YYYY-MM" month: ${ym}`);
+  return Number(m[1]) * MONTHS_A_YEAR2 + Number(m[2]) - 1;
+}
+function monthLabel(index) {
+  const y = Math.floor(index / MONTHS_A_YEAR2);
+  const mo2 = index - y * MONTHS_A_YEAR2 + 1;
+  return `${y}-${String(mo2).padStart(2, "0")}`;
+}
+function addMonths(ym, n) {
+  return monthLabel(monthIndex(ym) + n);
+}
+function payoffMonths(balance, ratePct, payment) {
+  if (balance <= 0) return 0;
+  const r = ratePct / 1200;
+  if (payment <= balance * r + PAYMENT_TOLERANCE) return null;
+  if (r === 0) return Math.ceil(balance / payment - PAYMENT_TOLERANCE);
+  return Math.ceil(-Math.log(1 - r * balance / payment) / Math.log(1 + r) - PAYMENT_TOLERANCE);
+}
+function freeDate(asOf, months) {
+  return { months, month: months === null ? null : addMonths(asOf, months) };
+}
+function runDate(asOf, run2) {
+  return freeDate(asOf, run2.stalled ? null : run2.months);
+}
+function computeDebtPayoff(items, runs, extraMonthly, asOfYear, asOfMonth) {
+  const b = new ProvenanceBuilder();
+  if (asOfMonth !== void 0 && !YEAR_MONTH2.test(asOfMonth)) throw new Error(`asOfMonth must be "YYYY-MM"; got ${asOfMonth}`);
+  const asOf = asOfMonth ?? monthLabel(asOfYear * MONTHS_A_YEAR2);
+  const badAbove = b.num("core:ff.budget.badDebtAbovePct");
+  const tolerance = b.num("core:ff.debts.mismatchMonths");
+  const debts = items.map((d, index) => {
+    const months = payoffMonths(d.balance, d.ratePct, d.minimumMonthly);
+    const payoffMonth = months === null ? null : addMonths(asOf, months);
+    const diff = payoffMonth !== null && d.endDate !== null ? monthIndex(payoffMonth) - monthIndex(d.endDate) : null;
+    return {
+      index,
+      label: d.label,
+      type: d.type,
+      lender: d.lender,
+      balance: d.balance,
+      ratePct: d.ratePct,
+      minimumMonthly: d.minimumMonthly,
+      interestMonthly: d.balance * d.ratePct / 1200,
+      expensive: d.ratePct > badAbove,
+      months,
+      payoffMonth,
+      neverClears: months === null,
+      endDate: d.endDate,
+      endDateDiffMonths: diff,
+      mismatch: diff !== null && Math.abs(diff) > tolerance,
+      cosigned: d.cosigned,
+      cosignerName: d.cosignerName
+    };
+  });
+  const each = debts.map((d) => d.months);
+  b.rule("each payoff date is worked from balance, rate and payment; a payment that does not cover the interest never clears the debt");
+  return {
+    asOfMonth: asOf,
+    asOfMonthAssumed: asOfMonth === void 0,
+    debts,
+    anyNeverClears: debts.some((d) => d.neverClears),
+    debtFree: {
+      minimumsOnly: freeDate(asOf, each.some((m) => m === null) ? null : Math.max(0, ...each)),
+      highestRateFirst: runDate(asOf, runs.avalanche),
+      smallestBalanceFirst: runDate(asOf, runs.snowball)
+    },
+    extraMonthly,
+    provenance: b.build()
+  };
+}
+
+// src/retirement-figure.ts
+function computeRetirementFigure(input) {
+  const b = new ProvenanceBuilder();
+  const { facts, budget, careGraph: careGraph2, retirement } = input;
+  const i = b.num("core:ff.rates.inflation");
+  const rate = b.num("core:ff.retirementFigure.replacementRate");
+  const careTo = b.num("core:ff.careGraph.careToParentAge");
+  const kidsStopAge = b.num("core:ff.retirementFigure.childCostsStopAge");
+  const retireAge = facts.wishes.retireAge;
+  const n = Math.max(0, retireAge - facts.client.age);
+  const year = facts.asOfYear + n;
+  const take = budget.netPay.householdNetMonthly;
+  const A = rate * take;
+  const stops = [];
+  const m = facts.budget.mortgage;
+  if (facts.budget.housing === "mortgage" && m && m.balance > 0 && m.yearsLeft <= n && facts.budget.housingPaymentMonthly > 0) {
+    stops.push({ kind: "mortgage", label: "The mortgage", monthly: facts.budget.housingPaymentMonthly, endsYear: facts.asOfYear + m.yearsLeft });
+  }
+  const tagged = (stop) => facts.budget.stopMonthly[stop];
+  const youngest = facts.children.reduce((a, c) => Math.min(a, c.age), Infinity);
+  const kids = tagged("kids");
+  if (kids > 0 && (youngest === Infinity || youngest + n >= kidsStopAge)) stops.push({ kind: "kids", label: "Children's costs", monthly: kids, endsYear: null });
+  const work = tagged("work");
+  if (work > 0) stops.push({ kind: "work", label: "Work costs", monthly: work, endsYear: null });
+  const today = new Map(careGraph2.parentsToday.map((p) => [p.personId, p.graphMonthly]));
+  for (const p of facts.parents) {
+    const now = today.get(p.personId) ?? 0;
+    const age = parentAge(p, facts.asOfYear);
+    if (now > 0 && age + n > careTo) stops.push({ kind: "care", label: `${parentLabel(p)}'s care`, monthly: now, endsYear: facts.asOfYear + careTo - age });
+  }
+  const study = careGraph2.years[0]?.eduMonthly ?? 0;
+  if (study > 0) stops.push({ kind: "study", label: "Study costs paid today", monthly: study, endsYear: null });
+  if (budget.debtMinimumsMonthly > 0) stops.push({ kind: "debts", label: "Loan and card payments", monthly: budget.debtMinimumsMonthly, endsYear: null });
+  const stopsMonthly = stops.reduce((a, s) => a + s.monthly, 0);
+  const B = Math.max(0, budget.needsMonthly - stopsMonthly);
+  const todayMonthly = Math.max(A, B);
+  const factor = Math.pow(1 + i, n);
+  const pensions = retirement.floorMonthly;
+  const gapToday = Math.max(0, todayMonthly - pensions);
+  b.rule("the recommended retirement income is the larger of the income rule and the lifestyle rule, grown by inflation to the year you retire");
+  return {
+    retireAge,
+    retireYear: year,
+    yearsToRetirement: n,
+    inflationRate: i,
+    replacementRate: rate,
+    takeHomeMonthly: take,
+    incomeRuleMonthly: A,
+    spendingMonthly: budget.needsMonthly,
+    stops,
+    stopsMonthly,
+    lifestyleRuleMonthly: B,
+    rule: A >= B ? "income" : "lifestyle",
+    todayMonthly,
+    factor,
+    atRetirementMonthly: todayMonthly * factor,
+    pensionsTodayMonthly: pensions,
+    gapTodayMonthly: gapToday,
+    gapAtRetirementMonthly: gapToday * factor,
+    wantedMonthly: facts.wishes.retireIncomeMonthly,
+    wantBelowRecommended: facts.wishes.retireIncomeMonthly < todayMonthly,
+    provenance: b.build()
+  };
+}
+
+// src/net-worth.ts
+var ASSET_KIND_LABELS = {
+  "bank": "Bank and fixed deposits",
+  "credit-union": "Credit union shares",
+  "unit-trust": "Unit trusts and money market funds",
+  "shares-bonds": "Shares and bonds",
+  "pension-cash": "Pension and annuity cash value",
+  "life-cash": "Life insurance cash value",
+  "property": "Home and other property",
+  "vehicle": "Vehicles",
+  "furniture": "Furniture and equipment",
+  "other": "Other"
+};
+var isCash = (kind) => CASH_KINDS.includes(kind);
+function computeNetWorth({ facts, engine, budget }) {
+  const b = new ProvenanceBuilder();
+  const assets = Object.keys(ASSET_KIND_LABELS).map((kind) => ({
+    kind,
+    label: ASSET_KIND_LABELS[kind],
+    cash: isCash(kind),
+    value: facts.assets.filter((a) => a.kind === kind).reduce((s, a) => s + a.value, 0)
+  }));
+  const assetsTotal = assets.reduce((s, a) => s + a.value, 0);
+  const mortgage = facts.budget.mortgage;
+  const owed = [
+    ...mortgage && mortgage.balance > 0 ? [{ label: "Mortgage", balance: mortgage.balance, kind: "mortgage" }] : [],
+    ...facts.debts.items.map((d) => ({ label: d.label, balance: d.balance, kind: "debt" }))
+  ];
+  const owedTotal = owed.reduce((s, o) => s + o.balance, 0);
+  const partnerPay = facts.partner ? payMonthly(b, facts.partner.pay).usual : 0;
+  const payBeforeDeductions = engine.client.usualGrossMonthly + partnerPay;
+  const loanAndCard = budget.debtMinimumsMonthly;
+  const mortgagePayment = engine.budget.housing === "mortgage" ? engine.budget.housingPaymentMonthly : 0;
+  const debtPayments = loanAndCard + mortgagePayment;
+  const guideNode = b.useNode("core:ff.netWorth.debtPaymentsGuide").node;
+  const cashTotal = cashFromFacts(facts);
+  const costsMonthly = budget.needsMonthly;
+  b.rule("net worth = assets - (debts + mortgage); debt payments share = (loan and card payments + mortgage payment) / pay before deductions; months covered = cash / monthly costs");
+  b.rule("cash = bank + credit union + unit trusts and money market funds; the version 1 savings field counts only when there are no cash rows");
+  return {
+    assets,
+    assetsTotal,
+    owed,
+    owedTotal,
+    netWorth: assetsTotal - owedTotal,
+    loanAndCardPaymentsMonthly: loanAndCard,
+    mortgagePaymentMonthly: mortgagePayment,
+    debtPaymentsMonthly: debtPayments,
+    payBeforeDeductionsMonthly: payBeforeDeductions,
+    debtPaymentsShareOfPay: payBeforeDeductions > 0 ? debtPayments / payBeforeDeductions : null,
+    debtPaymentsGuide: { max: guideNode.value.max, source: guideNode.source, asOf: guideNode.asOf },
+    cashTotal,
+    costsMonthly,
+    monthsCovered: costsMonthly > 0 ? cashTotal / costsMonthly : null,
+    partnerPayIsTakeHome: facts.partner !== null,
+    provenance: b.build()
+  };
+}
+
 // src/fact-finder.ts
 function computeFactFinder(input, options = {}) {
-  const facts = validateLifeCaseFacts(input);
+  const v2 = validateLifeCaseFacts(input);
+  const facts = toEngineFacts(v2);
   const netPay = computeNetPay(facts);
   const debts = computeDebts(facts.debts.items, facts.debts.extraMonthly);
-  const cg = careGraph(careGraphInputFromFacts(facts), netPay.householdNetMonthly);
+  const cg = careGraph(careGraphInputFromFacts(v2), netPay.householdNetMonthly);
   const budget = computeHouseholdBudget({ facts, netPay, debts: debts.summary, carePaidMonthly: cg.funding.alreadyPaying });
   const deathNeed = computeDeathNeed({ facts, budget, debts: debts.summary, careGraph: cg });
   const retirement = computeRetirementIncome(facts, netPay);
@@ -3843,7 +4864,7 @@ function computeFactFinder(input, options = {}) {
   const insuranceBudget = computeInsuranceBudget(facts, budget, buckets, closing);
   return {
     assumptionSetId: ASSUMPTION_SET_ID,
-    facts,
+    facts: v2,
     debts,
     careGraph: cg,
     budget,
@@ -3855,8 +4876,251 @@ function computeFactFinder(input, options = {}) {
     healthScore,
     closing,
     lovedOnes: facts.lovedOnes ? computeLovedOnes(facts.lovedOnes) : null,
-    business: facts.business ? computeBusiness(facts.business) : null
+    business: facts.business ? computeBusiness(facts.business) : null,
+    pay: computePayPlan(facts, netPay, buckets),
+    budgetAnalysis: computeBudgetAnalysis({ facts: v2, budget, debts: debts.summary, careGraph: cg }),
+    debtPayoff: computeDebtPayoff(facts.debts.items, debts.payoff, facts.debts.extraMonthly, facts.asOfYear, options.asOfMonth),
+    retirementFigure: computeRetirementFigure({ facts, budget, careGraph: cg, retirement }),
+    insuranceRange: insuranceRange(budget),
+    netWorth: computeNetWorth({ facts: v2, engine: facts, budget })
   };
+}
+
+// src/room-plan.ts
+var STEP_LABELS = {
+  shortfall: [0, "Costs above income"],
+  buffer: [1, "One month of costs saved"],
+  protection: [2, "Protection: the $200 floor, then the insurance budget"],
+  debt: [3, "Expensive debt"],
+  emergency: [4, "Emergency fund to three months"],
+  retirement: [5, "Retirement"],
+  goals: [5, "Your goals"]
+};
+var ROOM_ORDER = ["shortfall", "buffer", "protection", "debt", "emergency", "retirement", "goals"];
+var SPLIT_TOLERANCE = 5e-3;
+var MONEY_TOLERANCE2 = 1e-9;
+function unfilled(r, keys) {
+  return keys.reduce((a, k) => {
+    const spec = r.closing.ladderSpecs.find((s) => s.key === k);
+    const got = r.closing.ladder.items.find((s) => s.key === k)?.allocated ?? 0;
+    return a + (spec ? Math.max(0, spec.full - got) : 0);
+  }, 0);
+}
+function rangeAfter(b, r, deltaNeeds, deltaSaving) {
+  const bud = r.budget;
+  const needs = bud.needsMonthly + deltaNeeds;
+  const surplus = bud.netPay.householdNetMonthly - needs - (bud.savingMonthly + deltaSaving);
+  const { stage, ceiling } = stageAndCeiling(b, {
+    hhNet: bud.netPay.householdNetMonthly,
+    surplus,
+    buffer: needs > 0 ? cashFromFacts(r.facts) / needs : 0,
+    expensiveDebt: bud.expensiveDebt,
+    emergencyFundMonths: bud.emergencyFundMonths
+  });
+  const floor = b.num("core:ff.insurance.floorMonthly");
+  const rec = ceiling * b.get("core:ff.closing.bandShares").recommended;
+  const noPlan = stage === 0 || surplus < floor;
+  return { noPlan, min: floor, max: Math.max(ceiling, floor), defaultCap: noPlan ? 0 : Math.max(floor, rec) };
+}
+function computeRoomPlan(r, input) {
+  const b = new ProvenanceBuilder();
+  const take = r.budgetAnalysis.takeHomeMonthly;
+  const groups = r.budgetAnalysis.groups.flatMap((row2) => {
+    if (row2.key === "debts" || row2.key === "study") return [];
+    const key = row2.key;
+    const want = input.groupTargets[key];
+    if (want !== void 0 && (typeof want !== "number" || !Number.isFinite(want) || want < 0)) {
+      throw new LifeCaseFactsError([`Make room: the target for ${key} must be a number, not negative`]);
+    }
+    const target2 = want === void 0 ? row2.monthly : Math.min(want, row2.monthly);
+    const top = row2.guide && take > 0 ? row2.guide.max * take : null;
+    return [{
+      key,
+      label: row2.label,
+      kind: row2.kind,
+      todayMonthly: row2.monthly,
+      targetMonthly: target2,
+      freedMonthly: Math.max(0, row2.monthly - target2),
+      suggestedMonthly: top !== null && row2.aboveByMonthly > 0 ? top : null,
+      aboveByMonthly: row2.aboveByMonthly
+    }];
+  });
+  for (const k of Object.keys(input.groupTargets)) {
+    if (!groups.some((g) => g.key === k)) throw new LifeCaseFactsError([`Make room: ${k} is not a group in this budget`]);
+  }
+  const freed = groups.reduce((a, g) => a + g.freedMonthly, 0);
+  const freedNeeds = groups.filter((g) => g.kind !== "saving").reduce((a, g) => a + g.freedMonthly, 0);
+  const freedSaving = freed - freedNeeds;
+  const surplus = r.budget.surplusMonthly;
+  const capNow = r.closing.ladder.insuranceCapMonthly;
+  const near = b.num("core:ff.closing.nearDatedYears");
+  const expensive = r.facts.debts.items.filter((d) => d.balance > 0 && d.ratePct > b.num("core:ff.budget.badDebtAbovePct"));
+  const clearPay = expensive.reduce((a, d) => a + amortisedPayment(d.balance, d.ratePct, near), 0);
+  const expMins = expensive.reduce((a, d) => a + d.minimumMonthly, 0);
+  const needed = {
+    shortfall: Math.max(0, -surplus),
+    buffer: unfilled(r, ["buffer-one-month"]),
+    protection: Math.max(0, rangeAfter(b, r, -freedNeeds, -freedSaving).defaultCap - capNow),
+    debt: expensive.length ? Math.max(0, clearPay - expMins - allocatedTo(r, "expensive-debt")) : 0,
+    emergency: unfilled(r, ["buffer-three-months"]),
+    retirement: unfilled(r, ["retirement"]),
+    goals: unfilled(r, ["near-dated", "education", "milestones"])
+  };
+  let left = freed;
+  const defaults = /* @__PURE__ */ new Map();
+  for (const k of ROOM_ORDER) {
+    const x = Math.max(0, Math.min(left, needed[k]));
+    defaults.set(k, x);
+    left -= x;
+  }
+  defaults.set("retirement", defaults.get("retirement") + Math.max(0, left));
+  const destRow = (k, monthly) => {
+    if (k.startsWith("group:")) {
+      const g = k.slice("group:".length);
+      return { key: k, label: `Spend more on ${catalogueGroup(g).label}`, step: null, neededMonthly: null, monthly };
+    }
+    const [step, label] = STEP_LABELS[k];
+    return { key: k, label, step, neededMonthly: needed[k], monthly };
+  };
+  const defaultSplit = ROOM_ORDER.filter((k) => k !== "shortfall" || needed.shortfall > 0).map((k) => destRow(k, defaults.get(k)));
+  const customIn = input.split ?? null;
+  const custom = !!customIn && Object.keys(customIn).length > 0;
+  let split = defaultSplit;
+  if (custom) {
+    const problems = [];
+    for (const [k, v] of Object.entries(customIn)) {
+      if (!isRoomDestination(k)) problems.push(`Make room: ${k} is not a destination`);
+      if (typeof v !== "number" || !Number.isFinite(v) || v < 0) problems.push(`Make room: the amount for ${k} must be a number, not negative`);
+    }
+    if (problems.length) throw new LifeCaseFactsError(problems);
+    const total = Object.values(customIn).reduce((a, v) => a + (v ?? 0), 0);
+    if (total > freed + SPLIT_TOLERANCE) {
+      throw new LifeCaseFactsError([`Make room: the split gives $${total.toFixed(2)} a month, more than the $${freed.toFixed(2)} freed`]);
+    }
+    const keys = [...ROOM_ORDER.filter((k) => k in customIn), ...Object.keys(customIn).filter((k) => k.startsWith("group:"))];
+    split = keys.map((k) => destRow(k, customIn[k] ?? 0));
+  }
+  const assigned = split.reduce((a, d) => a + d.monthly, 0);
+  const get = (k) => split.find((d) => d.key === k)?.monthly ?? 0;
+  const spendMore = (k) => get(`group:${k}`);
+  const groupsAfter = groups.map((g) => ({ key: g.key, todayMonthly: g.todayMonthly, afterMonthly: g.targetMonthly + spendMore(g.key) }));
+  for (const d of split) {
+    if (!d.key.startsWith("group:")) continue;
+    const k = d.key.slice("group:".length);
+    if (!groupsAfter.some((g) => g.key === k)) groupsAfter.push({ key: k, todayMonthly: 0, afterMonthly: d.monthly });
+  }
+  const spendMoreNeeds = split.filter((d) => d.key.startsWith("group:")).reduce((a, d) => a + d.monthly, 0);
+  const after = rangeAfter(b, r, -freedNeeds + spendMoreNeeds, -freedSaving);
+  const insAfter = after.noPlan ? 0 : Math.min(after.max, Math.max(after.min, capNow + get("protection")));
+  const target = [...expensive].sort((x, y) => y.ratePct - x.ratePct)[0];
+  const extraBefore = r.facts.debts.extraMonthly;
+  const debtTarget = target ? (() => {
+    const index = r.facts.debts.items.indexOf(target);
+    const at = (pay) => {
+      const n = payoffMonths(target.balance, target.ratePct, pay);
+      return n === null ? null : addMonths(r.debtPayoff.asOfMonth, n);
+    };
+    return { index, label: target.label, payoffBefore: at(target.minimumMonthly + extraBefore), payoffAfter: at(target.minimumMonthly + extraBefore + get("debt")) };
+  })() : null;
+  b.rule("freed money is filled in plan order: one month saved, the insurance floor and budget, expensive debt, three months saved, retirement and goals");
+  return {
+    groups,
+    suggestions: groups.filter((g) => g.suggestedMonthly !== null).sort((x, y) => y.aboveByMonthly - x.aboveByMonthly),
+    freedMonthly: freed,
+    defaultSplit,
+    split,
+    custom,
+    assignedMonthly: assigned,
+    notGivenAJobMonthly: Math.max(0, freed - assigned),
+    effects: {
+      groupsAfter,
+      insuranceBudgetBeforeMonthly: capNow,
+      insuranceBudgetMonthly: insAfter,
+      debtExtraBeforeMonthly: extraBefore,
+      debtExtraMonthly: extraBefore + get("debt"),
+      debtTarget,
+      shortfallMonthly: get("shortfall"),
+      bufferMonthly: get("buffer"),
+      emergencyMonthly: get("emergency"),
+      retirementMonthly: get("retirement"),
+      goalsMonthly: get("goals")
+    },
+    provenance: b.build()
+  };
+}
+function allocatedTo(r, key) {
+  return r.closing.ladder.items.find((s) => s.key === key)?.allocated ?? 0;
+}
+function resizeGroup(b, g, afterMonthly) {
+  if (g.skip) return { ...g, total: afterMonthly, totalFrequency: "monthly" };
+  const monthly = (l) => toMonthly(b, l.amount, l.frequency);
+  const today = g.lines.reduce((a, l) => a + monthly(l), 0);
+  if (afterMonthly > today + MONEY_TOLERANCE2) {
+    return { ...g, lines: [...g.lines, { label: "More from Make room", amount: afterMonthly - today, frequency: "monthly" }] };
+  }
+  let cut = Math.max(0, today - afterMonthly);
+  const free = (l) => !l.stop && l.personId === void 0;
+  const scale = (lines, pick) => {
+    const pool = lines.filter(pick).reduce((a, l) => a + monthly(l), 0);
+    if (pool <= 0 || cut <= 0) return lines;
+    const take = Math.min(cut, pool);
+    cut -= take;
+    const k = (pool - take) / pool;
+    return lines.map((l) => pick(l) ? { ...l, amount: l.amount * k } : l);
+  };
+  return { ...g, lines: scale(scale([...g.lines], free), (l) => !free(l)) };
+}
+function applyRoomPlan(facts, plan) {
+  const b = new ProvenanceBuilder();
+  const byKey = new Map(plan.effects.groupsAfter.map((g) => [g.key, g]));
+  const groups = facts.budget.groups.map((g) => {
+    const a = byKey.get(g.key);
+    return a && Math.abs(a.afterMonthly - a.todayMonthly) > MONEY_TOLERANCE2 ? resizeGroup(b, g, a.afterMonthly - (a.todayMonthly - lineMonthly(b, g))) : g;
+  });
+  for (const a of plan.effects.groupsAfter) {
+    if (!facts.budget.groups.some((g) => g.key === a.key) && a.afterMonthly > 0) {
+      groups.push({ key: a.key, skip: false, total: null, totalFrequency: null, lines: [{ label: "More from Make room", amount: a.afterMonthly, frequency: "monthly" }] });
+    }
+  }
+  const applied = {
+    ...facts,
+    budget: { ...facts.budget, groups, roomPlan: facts.budget.roomPlan ? { ...facts.budget.roomPlan, applied: true } : null },
+    debts: { ...facts.debts, extraMonthly: plan.effects.debtExtraMonthly }
+  };
+  const ins = plan.effects.insuranceBudgetMonthly;
+  if (ins <= 0) return { facts: applied, options: { budgetMonthly: null } };
+  const range = computeFactFinder(applied).closing.ladder.insuranceRange;
+  return { facts: applied, options: { budgetMonthly: range.noPlan ? null : Math.min(range.maxMonthly, Math.max(range.minMonthly, ins)) } };
+}
+function lineMonthly(b, g) {
+  if (g.skip) return toMonthly(b, g.total ?? 0, g.totalFrequency ?? "monthly");
+  return g.lines.reduce((a, l) => a + toMonthly(b, l.amount, l.frequency), 0);
+}
+function totals(r, insuranceBudgetMonthly, debtExtraMonthly) {
+  const ba = r.budgetAnalysis;
+  return {
+    takeHomeMonthly: ba.takeHomeMonthly,
+    needsMonthly: ba.needsMonthly,
+    savingMonthly: ba.savingMonthly,
+    outgoingMonthly: ba.outgoingMonthly,
+    leftMonthly: ba.leftMonthly,
+    insuranceBudgetMonthly,
+    debtExtraMonthly
+  };
+}
+function roomPlanRecord(input) {
+  const { plan, real, withPlan } = input;
+  const e = plan.effects;
+  return JSON.parse(JSON.stringify({
+    applied: true,
+    groupTargets: plan.groups.filter((g) => g.freedMonthly > MONEY_TOLERANCE2).map((g) => ({ key: g.key, label: g.label, todayMonthly: g.todayMonthly, targetMonthly: g.targetMonthly })),
+    split: plan.split.map((d) => ({ key: d.key, label: d.label, step: d.step, monthly: d.monthly })),
+    custom: plan.custom,
+    freedMonthly: plan.freedMonthly,
+    notGivenAJobMonthly: plan.notGivenAJobMonthly,
+    real: totals(real, e.insuranceBudgetBeforeMonthly, e.debtExtraBeforeMonthly),
+    withPlan: totals(withPlan, e.insuranceBudgetMonthly, e.debtExtraMonthly)
+  }));
 }
 
 // src/samples/index.ts
@@ -3867,12 +5131,166 @@ var milestones = (vehicleOn, weddingOn) => [
   { key: "business", on: false, atAge: 25, amountToday: 5e4 },
   { key: "home", on: false, atAge: 30, amountToday: 1e5 }
 ];
-var COVER_DEFAULT = [
+var COVER_DEFAULT_V1 = [
   { policyId: id(257), label: "Group life through work", kind: "life", group: true, amount: null },
   { policyId: id(258), label: "Individual life", kind: "life", group: false, amount: 0 },
   { policyId: id(259), label: "Critical illness", kind: "ci", group: false, amount: 0 }
 ];
+var COVER_DEFAULT = [
+  { policyId: id(257), label: "Group life through work", kind: "life", group: true, amount: null, status: "unsure" },
+  { policyId: id(258), label: "Individual life", kind: "life", group: false, amount: 0, status: "none" },
+  { policyId: id(259), label: "Critical illness", kind: "ci", group: false, amount: 0, status: "none" }
+];
+var monthlyPay = (amountPerPay) => ({ frequency: "monthly", amountPerPay, varies: false, lowestMonthly: null });
+var grp = (key, lines) => ({ key, skip: false, total: null, totalFrequency: null, lines });
+var mo = (label, amount, extra = {}) => ({ label, amount, frequency: "monthly", ...extra });
+var yr = (label, amount) => ({ label, amount, frequency: "yearly" });
+var NO_OPENER = { worries: [], dreams: [], ownWorries: [], ownDreams: [] };
 var SAMPLE_FAMILY = deepFreeze2({
+  schemaVersion: 2,
+  asOfYear: 2026,
+  client: { personId: id(1), age: 38, sex: "male", longLived: false, pay: monthlyPay(17e3), nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
+  partner: { personId: id(2), age: 36, pay: monthlyPay(4e3) },
+  children: [
+    { personId: id(3), age: 4, route: "local", costLevel: "typical", studyStartAge: 18, milestones: milestones(false, false) },
+    { personId: id(4), age: 11, route: "local", costLevel: "typical", studyStartAge: 18, milestones: milestones(true, true) }
+  ],
+  parents: [
+    { personId: id(5), relationship: "mother", birthYear: 1960, careTier: 1, careFromAge: 66, growth: true, receivesSCP: true, nisContributions: "yes" },
+    { personId: id(6), relationship: "father", birthYear: 1955, careTier: 2, careFromAge: 71, growth: false, receivesSCP: false, nisContributions: "unknown" }
+  ],
+  budget: {
+    // Version 1: Mortgage payment 3,000; Groceries 2,000; Utilities 600; Transport 1,100; Phone and internet 400;
+    // School and childcare 800; Insurance premiums 300 (8,200 a month); once-a-year bills 18,000 a year.
+    groups: [
+      grp("home", [mo("Mortgage", 3e3, { stop: "mortgage" })]),
+      grp("util", [mo("T&TEC", 600), mo("Home internet and cable", 400)]),
+      grp("food", [mo("Groceries and market", 2e3)]),
+      grp("move", [mo("Fuel", 1100)]),
+      grp("kids", [mo("School fees", 800, { stop: "kids" })]),
+      grp("family", [mo("Mother", 0, { stop: "care", personId: id(5) }), mo("Father", 4e3, { stop: "care", personId: id(6) })]),
+      grp("ins", [mo("Other premiums", 300)]),
+      grp("yearly", [yr("Christmas", 6e3), yr("Back to school", 4e3), yr("Motor renewal", 5e3), yr("Home repairs", 3e3)])
+    ],
+    housing: "mortgage",
+    mortgage: { balance: 42e4, yearsLeft: 18, clearOnDeath: true },
+    savings: 0,
+    roomPlan: null
+  },
+  debts: {
+    items: [
+      { label: "Credit card", type: "credit-card", lender: null, balance: 18e3, ratePct: 24, minimumMonthly: 540, endDate: null, cosigned: false, cosignerName: null },
+      { label: "Personal loan", type: "personal", lender: null, balance: 45e3, ratePct: 14, minimumMonthly: 900, endDate: null, cosigned: false, cosignerName: null }
+    ],
+    extraMonthly: 600
+  },
+  goals: [
+    { goalId: id(513), kind: "home", on: false, price: 9e5, years: 5, saved: 0, route: "mortgage" },
+    { goalId: id(514), kind: "vehicle", on: false, price: 18e4, years: 2, saved: 0, route: "loan", newVehicle: true, depositPct: 0, termYears: 8 },
+    { goalId: id(515), kind: "study", on: false, price: 12e4, years: 3, saved: 0, route: "save" },
+    { goalId: id(516), kind: "business", on: false, price: 1e5, years: 3, saved: 0, route: "save" }
+  ],
+  existingCover: COVER_DEFAULT,
+  wishes: { funeral: 5e4, finalMedical: 0, legacy: 15e4, retireAge: 65, retireIncomeMonthly: 8e3 },
+  workPension: { kind: "none" },
+  opener: NO_OPENER,
+  // Build C: the version 1 cash ($20,000) is one bank row, so the emergency fund sees the same cash; the rest is what the
+  // family owns (none of it is cash, so no golden moves).
+  assets: [
+    { kind: "bank", value: 2e4 },
+    { kind: "pension-cash", value: 6e4 },
+    { kind: "property", value: 95e4 },
+    { kind: "vehicle", value: 85e3 },
+    { kind: "furniture", value: 4e4 }
+  ]
+});
+var SAMPLE_YOUNG_SINGLE = deepFreeze2({
+  schemaVersion: 2,
+  asOfYear: 2026,
+  client: { personId: id(17), age: 24, sex: "female", longLived: false, pay: monthlyPay(8e3), nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
+  partner: null,
+  children: [],
+  parents: [],
+  budget: {
+    // Version 1: Rent 2,500; Groceries 900; Utilities 300; Transport 800; Phone and internet 300 (4,800 a month);
+    // once-a-year bills 6,000 a year.
+    groups: [
+      grp("home", [mo("Rent", 2500)]),
+      grp("util", [mo("T&TEC", 300), mo("Mobile phone (bMobile / Digicel)", 300)]),
+      grp("food", [mo("Groceries and market", 900)]),
+      grp("move", [mo("Maxi taxi, taxi, bus or ferry", 800)]),
+      grp("yearly", [yr("Christmas", 3e3), yr("Carnival season (if not above)", 2e3), yr("Medical and dental not covered", 1e3)])
+    ],
+    housing: "rent",
+    mortgage: null,
+    savings: 0,
+    roomPlan: null
+  },
+  debts: { items: [{ label: "Credit card", type: "credit-card", lender: null, balance: 3e3, ratePct: 24, minimumMonthly: 150, endDate: null, cosigned: false, cosignerName: null }], extraMonthly: 200 },
+  goals: [
+    { goalId: id(529), kind: "home", on: true, price: 85e4, years: 6, saved: 0, route: "mortgage" },
+    { goalId: id(530), kind: "vehicle", on: true, price: 15e4, years: 2, saved: 0, route: "loan", newVehicle: true, depositPct: 0, termYears: 8 },
+    { goalId: id(531), kind: "study", on: false, price: 12e4, years: 3, saved: 0, route: "save" },
+    { goalId: id(532), kind: "business", on: false, price: 1e5, years: 3, saved: 0, route: "save" }
+  ],
+  existingCover: COVER_DEFAULT,
+  wishes: { funeral: 5e4, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 6e3 },
+  workPension: { kind: "none" },
+  opener: NO_OPENER,
+  // Build C: the version 1 cash ($4,000) is one bank row; she also owns a small vehicle and some furniture.
+  assets: [
+    { kind: "bank", value: 4e3 },
+    { kind: "vehicle", value: 35e3 },
+    { kind: "furniture", value: 8e3 }
+  ]
+});
+var SAMPLE_WEEKLY_RENTER = deepFreeze2({
+  schemaVersion: 2,
+  asOfYear: 2026,
+  client: {
+    personId: id(33),
+    age: 29,
+    sex: "male",
+    longLived: false,
+    nisPaying: true,
+    selfEmployed: false,
+    hasHealthCover: "no",
+    pay: { frequency: "weekly", amountPerPay: 2e3, varies: true, lowestMonthly: 7500 }
+  },
+  partner: null,
+  children: [],
+  parents: [],
+  budget: {
+    groups: [
+      grp("home", [mo("Rent", 2500), yr("Home insurance", 1200)]),
+      grp("util", [mo("T&TEC", 250), yr("WASA", 600), mo("Mobile phone (bMobile / Digicel)", 200)]),
+      grp("food", [{ label: "Groceries and market", amount: 180, frequency: "weekly" }, { label: "Work and school lunches, snacks", amount: 100, frequency: "weekly", stop: "work" }]),
+      grp("move", [{ label: "Maxi taxi, taxi, bus or ferry", amount: 100, frequency: "weekly" }]),
+      { key: "fun", skip: true, total: 400, totalFrequency: "monthly", lines: [] },
+      { key: "other", skip: true, total: 300, totalFrequency: "fortnightly", lines: [] },
+      grp("save", [mo("Credit union shares", 300)]),
+      grp("yearly", [yr("Christmas", 2400)])
+    ],
+    housing: "rent",
+    mortgage: null,
+    savings: 0,
+    roomPlan: null
+  },
+  debts: {
+    items: [{ label: "Credit card", type: "credit-card", lender: "Republic Bank", balance: 6e3, ratePct: 24, minimumMonthly: 250, endDate: "2028-06", cosigned: false, cosignerName: null }],
+    extraMonthly: 0
+  },
+  goals: [],
+  existingCover: COVER_DEFAULT,
+  wishes: { funeral: 5e4, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 5e3 },
+  workPension: { kind: "none" },
+  opener: NO_OPENER,
+  // Build C: the version 1 cash ($7,000) is one bank row, and her credit union shares ($300 a month) count as cash.
+  assets: [
+    { kind: "bank", value: 7e3 }
+  ]
+});
+var SAMPLE_FAMILY_V1 = deepFreeze2({
   schemaVersion: 1,
   asOfYear: 2026,
   client: { personId: id(1), age: 38, sex: "male", longLived: false, grossMonthly: 17e3, nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
@@ -3914,11 +5332,11 @@ var SAMPLE_FAMILY = deepFreeze2({
     { goalId: id(515), kind: "study", on: false, price: 12e4, years: 3, saved: 0, route: "save" },
     { goalId: id(516), kind: "business", on: false, price: 1e5, years: 3, saved: 0, route: "save" }
   ],
-  existingCover: COVER_DEFAULT,
+  existingCover: COVER_DEFAULT_V1,
   wishes: { funeral: 5e4, finalMedical: 0, legacy: 15e4, retireAge: 65, retireIncomeMonthly: 8e3 },
   workPension: { kind: "none" }
 });
-var SAMPLE_YOUNG_SINGLE = deepFreeze2({
+var SAMPLE_YOUNG_SINGLE_V1 = deepFreeze2({
   schemaVersion: 1,
   asOfYear: 2026,
   client: { personId: id(17), age: 24, sex: "female", longLived: false, grossMonthly: 8e3, nisPaying: true, selfEmployed: false, hasHealthCover: "unknown" },
@@ -3948,7 +5366,7 @@ var SAMPLE_YOUNG_SINGLE = deepFreeze2({
     { goalId: id(531), kind: "study", on: false, price: 12e4, years: 3, saved: 0, route: "save" },
     { goalId: id(532), kind: "business", on: false, price: 1e5, years: 3, saved: 0, route: "save" }
   ],
-  existingCover: COVER_DEFAULT,
+  existingCover: COVER_DEFAULT_V1,
   wishes: { funeral: 5e4, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 6e3 },
   workPension: { kind: "none" }
 });
@@ -3976,31 +5394,46 @@ var SAMPLE_BUSINESS = deepFreeze2({
 });
 export {
   ADVENTURER_WORDING,
+  ASSET_KIND_LABELS,
   ASSUMPTION_SET_ID,
+  BUDGET_CATALOGUE,
   CARE_GRAPH_FIXTURE_NET_MONTHLY,
+  CASH_KINDS,
   CORE_TABLES,
   CareGraphInputError,
   ClosingInputError,
+  GROUP_KEYS,
   GROUP_LIFE_REDUCTION_AGE,
   GROUP_LIFE_REDUCTION_FACTOR,
   GROUP_LIFE_TERMINATION_AGE,
+  HOUSING_LINE_LABELS,
   LAYER_NAMES,
   LifeCaseFactsError,
+  OWN_ITEMS_MAX,
+  OWN_ITEM_MAX_CHARS,
   ProvenanceBuilder,
+  QUICK_GROUP,
+  QUICK_YEARLY_LABEL,
   REST_ASSURED_GRADING,
   VEHICLES as RETURN_VEHICLES,
+  ROOM_ORDER,
   RegisteredRoutingError,
   SAMPLE_BUSINESS,
   SAMPLE_FAMILY,
+  SAMPLE_FAMILY_V1,
   SAMPLE_LOVED_ONE,
+  SAMPLE_WEEKLY_RENTER,
   SAMPLE_YOUNG_SINGLE,
+  SAMPLE_YOUNG_SINGLE_V1,
   PRODUCTS as TATIL_PRODUCTS,
   RIDERS as TATIL_RIDERS,
   UNKNOWN_SENTENCE,
+  addMonths,
   ageAt,
   allocateLadder,
   amortisedPayment,
   applyLever,
+  applyRoomPlan,
   assertNoHealthKeys,
   assertRidersAllowed,
   belowAllowance,
@@ -4011,12 +5444,16 @@ export {
   carLoan,
   careGraph,
   careGraphInputFromFacts,
+  cashFromFacts,
+  catalogueGroup,
   childLabel,
   completeOrder,
+  computeBudgetAnalysis,
   computeBusiness,
   computeClosing,
   computeDeathNeed,
   computeDeathNeeds,
+  computeDebtPayoff,
   computeDebts,
   computeFactFinder,
   computeGap,
@@ -4026,8 +5463,12 @@ export {
   computeInsuranceBudget,
   computeLovedOnes,
   computeNetPay,
+  computeNetWorth,
+  computePayPlan,
+  computeRetirementFigure,
   computeRetirementIncome,
   computeRetirementNeeds,
+  computeRoomPlan,
   computeStartEarly,
   coreRowPaths,
   coverForPremium,
@@ -4037,16 +5478,24 @@ export {
   findHealthKeys,
   fitToMinimums,
   futureValueMonthly,
+  groupMonthly,
   inForceCoverAt,
   insuranceCap,
+  insuranceRange,
+  isRoomDestination,
   minimumFor,
   money,
+  monthIndex,
+  monthLabel,
   mortgageBalance,
   nonMortgageDebtBalance,
   obligationDeclineSchedule,
   parentAge,
   parentLabel,
   parentSex,
+  parentSupported,
+  payMonthly,
+  payoffMonths,
   policiesByType,
   premiumFor,
   profileFor,
@@ -4063,16 +5512,24 @@ export {
   restAssuredPer1000,
   restAssuredPremium,
   restAssuredRatedAge,
+  roomPlanRecord,
   roughBand,
   routeAnnuity,
+  savingsStep,
   scopeRow,
+  splitBudget,
+  stageAndCeiling,
   stressAgainstFloor,
   summariseDebts,
   survivorCashflow,
+  toEngineFacts,
+  toMonthly,
+  toYearly,
   totalCashValue,
   totalDebtBalance,
   totalMonthlyPremium,
   universalLifePolicies,
+  upgradeLifeCaseFacts,
   validateLifeCaseFacts,
   validateScopeRow,
   vehicleFigures,

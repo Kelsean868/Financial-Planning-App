@@ -11,13 +11,23 @@ import type { Provenance } from "./types.ts";
 import { CareGraphInputError } from "./errors.ts";
 import type { ChildFacts, ParentFacts, LifeCaseFacts, MilestoneKey, ParentRelationship } from "./life-case-facts.ts";
 import { parentAge } from "./life-case-facts.ts";
+import { splitBudget } from "./engine-facts.ts";
 import type { RouteSpec, EducationRoute, CostLevel } from "./parameters/fact-finder-2026-10.ts";
+
+/**
+ * A parent on the care graph (Section 3 §1.3): today's care from the budget, then, when `growth` is true, the larger of
+ * today's amount and the future level (`careTier` from `careFromAge`) less the pension.
+ */
+export interface CareParent extends ParentFacts {
+  /** The budget's Family you support lines for this parent, a month, today. */
+  readonly todayMonthly: number;
+}
 
 export interface CareGraphInput {
   readonly clientAge: number;
   readonly asOfYear: number;
   readonly children: readonly ChildFacts[];
-  readonly parents: readonly ParentFacts[];
+  readonly parents: readonly CareParent[];
 }
 
 export interface CareYear {
@@ -90,6 +100,8 @@ export interface CareGraphResult {
   readonly levers: readonly Lever[];
   /** The top two levers worth showing. */
   readonly topLevers: readonly Lever[];
+  /** Each parent's care in year 0: the budget amount and the amount the graph uses (§1.3; Your people shows the first). */
+  readonly parentsToday: readonly { readonly personId: string; readonly budgetMonthly: number; readonly graphMonthly: number }[];
   readonly provenance: Provenance;
 }
 
@@ -110,8 +122,13 @@ export function parentLabel(p: Pick<ParentFacts, "relationship">): string {
   return PARENT_LABELS[p.relationship];
 }
 
+/** The care graph input from the facts: each parent's care today is the sum of the budget lines with its personId (§1.3). */
 export function careGraphInputFromFacts(facts: LifeCaseFacts): CareGraphInput {
-  return { clientAge: facts.client.age, asOfYear: facts.asOfYear, children: facts.children, parents: facts.parents };
+  const today = splitBudget(new ProvenanceBuilder(), facts).parentToday;
+  return {
+    clientAge: facts.client.age, asOfYear: facts.asOfYear, children: facts.children,
+    parents: facts.parents.map((p) => ({ ...p, todayMonthly: today.get(p.personId) ?? 0 })),
+  };
 }
 
 interface Core {
@@ -124,6 +141,7 @@ interface Core {
   already: number;
   pv: number;
   nominal: number;
+  parentsToday: { personId: string; budgetMonthly: number; graphMonthly: number }[];
 }
 
 function validate(b: ProvenanceBuilder, input: CareGraphInput, H: number): void {
@@ -196,17 +214,28 @@ function run(b: ProvenanceBuilder, input: CareGraphInput): Core {
     }
   });
 
+  const parentsToday: Core["parentsToday"] = [];
   for (const p of input.parents) {
     const age = parentAge(p, input.asOfYear);
     const from = p.careFromAge ?? age;
     const monthly = tiers[p.careTier]!.monthly;
+    const today = p.todayMonthly;
     let pv = 0;
     let start: number | null = null;
     let yearsOn = 0;
-    for (let y = Math.max(0, from - age); y <= H && age + y <= careTo; y++) {
-      const gross = monthly * Math.pow(1 + f, y);
-      const off = p.receivesSCP && age + y >= scpAge ? scp * Math.pow(1 + i, y) : 0;
-      const nt = Math.max(0, gross - off);
+    let graphToday = 0;
+    // §1.3: today's budget amount (grown at the care basket rate) until the age chosen; then, if care will grow, the
+    // larger of today's amount and the future level less the pension; stopping at 88. No care today and no growth: none.
+    const first = today > 0 ? 0 : p.growth ? Math.max(0, from - age) : H + 1;
+    for (let y = first; y <= H && age + y <= careTo; y++) {
+      const todayY = today * Math.pow(1 + f, y);
+      let nt = todayY;
+      if (p.growth && y >= from - age) {
+        const gross = monthly * Math.pow(1 + f, y);
+        const off = p.receivesSCP && age + y >= scpAge ? scp * Math.pow(1 + i, y) : 0;
+        nt = Math.max(todayY, Math.max(0, gross - off));
+      }
+      if (y === 0) graphToday = nt;
       yrs[y]!.par += nt;
       if (nt > 0) { yrs[y]!.parOn = true; yearsOn++; }
       pv += disc(12 * nt, y);
@@ -215,6 +244,7 @@ function run(b: ProvenanceBuilder, input: CareGraphInput): Core {
     if (start !== null && pv > 0) {
       goals.push({ key: `${p.personId}:care`, personId: p.personId, who: parentLabel(p), what: "care", kind: "care", pv, start, years: yearsOn });
     }
+    parentsToday.push({ personId: p.personId, budgetMonthly: today, graphMonthly: graphToday });
   }
 
   const rm = Math.pow(1 + r, 1 / 12) - 1;
@@ -247,7 +277,7 @@ function run(b: ProvenanceBuilder, input: CareGraphInput): Core {
   });
   return {
     years, goals: out, peak: { monthly: peak, atAge: peakAge }, sandwichYears: sandwich, finishAge: finish,
-    save, already: yrs[0]!.edu + yrs[0]!.par, pv: pvTotal, nominal,
+    save, already: yrs[0]!.edu + yrs[0]!.par, pv: pvTotal, nominal, parentsToday,
   };
 }
 
@@ -317,6 +347,7 @@ export function careGraph(input: CareGraphInput, householdNetMonthly?: number): 
     verdict,
     levers,
     topLevers: levers.filter((l) => l.monthlyReduction > minLever).slice(0, topN),
+    parentsToday: core.parentsToday,
     provenance: b.build(),
   };
 }

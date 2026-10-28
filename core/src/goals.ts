@@ -4,7 +4,8 @@
  */
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
-import type { LifeCaseFacts, GoalFacts } from "./life-case-facts.ts";
+import type { GoalFacts } from "./life-case-facts.ts";
+import type { EngineFacts } from "./engine-facts.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import { amortisedPayment, carLoan, type CarLoanResult } from "./debts.ts";
 import { premiumFor } from "./premiums.ts";
@@ -65,7 +66,7 @@ function monthlyToSave(b: ProvenanceBuilder, target: number, years: number): num
   return target <= 0 ? 0 : target * m / (Math.pow(1 + m, n) - 1);
 }
 
-function homePlan(b: ProvenanceBuilder, facts: LifeCaseFacts, budget: HouseholdBudget, g: GoalFacts): { plan: HomePlan; target: number } {
+function homePlan(b: ProvenanceBuilder, facts: EngineFacts, budget: HouseholdBudget, g: GoalFacts): { plan: HomePlan; target: number } {
   const ltv = b.num("core:ff.goals.homeLoanToValue");
   const dep = g.price * (1 - ltv);
   const close = g.price * b.num("core:ff.goals.homeClosingCosts");
@@ -93,7 +94,7 @@ function homePlan(b: ProvenanceBuilder, facts: LifeCaseFacts, budget: HouseholdB
   };
 }
 
-export function computeGoals(facts: LifeCaseFacts, budget: HouseholdBudget): GoalsResult {
+export function computeGoals(facts: EngineFacts, budget: HouseholdBudget): GoalsResult {
   const b = new ProvenanceBuilder();
   const plans: GoalPlan[] = facts.goals.filter((g) => g.on).map((g) => {
     let target: number;

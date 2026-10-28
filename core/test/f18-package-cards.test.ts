@@ -47,9 +47,10 @@ export function assertCardsAreLadderRuns(r: FactFinderResult, label: string): vo
 test("guard 26: each card's status and X equal a ladder run with that card chosen", () => {
   let n = eachCase(assertCardsAreLadderRuns);
   for (const f of variants()) {
-    const { band, stage } = computeFactFinder(f).budget;
-    if (stage === 0) continue;
-    for (const budgetMonthly of [band.floor, band.ceiling]) {
+    // Section 3 §5: the slider runs from the $200 floor to max(ceiling, $200) (was the band's floor to its ceiling).
+    const range = computeFactFinder(f).insuranceRange;
+    if (range.noPlan) continue;
+    for (const budgetMonthly of [range.minMonthly, range.maxMonthly]) {
       for (const pkg of CARDS) {
         assertCardsAreLadderRuns(computeFactFinder(f, { package: pkg, budgetMonthly }), `${pkg} at ${money2(budgetMonthly)}`);
         n++;
@@ -59,11 +60,13 @@ test("guard 26: each card's status and X equal a ladder run with that card chose
   assert.ok(n > 1000, `${n} cases checked`);
 });
 
-test("guard 27: an insurance budget outside the floor to ceiling, or not finite, throws ClosingInputError", () => {
+// Section 3 §14.3 (28 Oct 2026): guard 27 becomes the new range. Below the $200 floor, above max(ceiling, $200), or not
+// finite throws (was: outside the band's floor to ceiling). Stage 0 is unchanged: only 0 is accepted.
+test("guard 27: an insurance budget below $200, above max(ceiling, $200), or not finite, throws ClosingInputError", () => {
   let n = 0;
   for (const f of [SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, ...variants().slice(0, 30)]) {
     const base = computeFactFinder(f);
-    const { floor, ceiling } = base.budget.band;
+    const { minMonthly: floor, maxMonthly: ceiling, noPlan } = base.insuranceRange;
     const bad: unknown[] = [floor - 1, floor - 0.01, ceiling + 0.01, ceiling + 1, Number.NaN, Number.POSITIVE_INFINITY, Number.NEGATIVE_INFINITY, "500"];
     if (base.budget.stage !== 0) bad.push(0, -1);
     for (const v of bad) {
@@ -72,7 +75,7 @@ test("guard 27: an insurance budget outside the floor to ceiling, or not finite,
       n++;
     }
     for (const ok of [floor, ceiling, (floor + ceiling) / 2]) {
-      assert.equal(computeFactFinder(f, { budgetMonthly: ok }).closing.ladder.insuranceCapMonthly, ok, "an amount inside the range is the cap, unchanged");
+      assert.equal(computeFactFinder(f, { budgetMonthly: ok }).closing.ladder.insuranceCapMonthly, noPlan ? 0 : ok, "an amount inside the range is the cap, unchanged (no plan: 0)");
     }
   }
   assert.ok(n > 200, `${n} bad amounts checked`);

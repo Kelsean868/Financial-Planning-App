@@ -11,12 +11,27 @@ const D = "2026-10-27";
 const PROTO = "Fact-Finder Prototype v17 (docs/prototype/fact-finder-prototype-v17.html), 27 Oct 2026";
 const CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 const CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
+const S3 = "Section 3 spec (signed by Kyron 28 Oct 2026)";
+const S3D = "2026-10-28";
+const PENNY = "The Penny Hoarder budget percentages (take-home basis)";
+const PALIG = "PALIG personal net worth calculator 2012 benchmarks";
+
+/** A common guide: a share of household take-home (Section 3 §6.1). `min` null: "at most". */
+export interface GuideRange {
+  readonly min: number | null;
+  readonly max: number;
+}
+
+/** How often an amount comes: pay frequencies and budget-line frequencies (Section 3 §0 rows 3.2, 3.3). */
+export type Frequency = "weekly" | "fortnightly" | "semimonthly" | "monthly" | "yearly";
 
 // Was "ff-2026-10-27" until the NIS 70% re-baseline (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-nis70.md), then
 // "ff-2026-10-27-nis70" until the one-allocator fix (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-one-allocator.md), then
 // "ff-2026-10-27-ladder1" until fix run 3 (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-ladder-advice.md), then
-// "ff-2026-10-27-ladder2" until fix run 4, the package cards (28 Oct 2026, docs/audit/RUN-2026-10-28-f18-package-cards.md).
-export const ASSUMPTION_SET_ID = "ff-2026-10-28-cards1";
+// "ff-2026-10-27-ladder2" until fix run 4, the package cards (28 Oct 2026, docs/audit/RUN-2026-10-28-f18-package-cards.md), then
+// "ff-2026-10-28-cards1" until Section 3 Build A (28 Oct 2026, docs/audit/RUN-2026-10-28-section3-a.md), then
+// "ff-2026-10-28-s3" until the Section 3 fix run, the debt payments guide row (28 Oct 2026, docs/audit/RUN-2026-10-28-section3-fix.md).
+export const ASSUMPTION_SET_ID = "ff-2026-10-28-s3fix";
 
 export type EducationRoute = "local" | "regional" | "uk" | "canada" | "usa" | "none";
 export type CostLevel = "lean" | "typical" | "full";
@@ -84,10 +99,53 @@ export const FF = deepFreeze({
         { tier: 0, label: "No support", monthly: 0 },
         { tier: 1, label: "Light top-up", monthly: 1500 },
         { tier: 2, label: "Help at home", monthly: 4000 },
-        { tier: 3, label: "Private residential", monthly: 5600 },
-        { tier: 4, label: "High-dependency", monthly: 12000 },
+        { tier: 3, label: "Day care", monthly: 5600 },
+        { tier: 4, label: "Full-time", monthly: 12000 },
       ] as const,
-      "estimate", `${CG} §5: parent care tiers, TTD a month today. Caregiver cost cross-check: Paylab 2026, $2,772–$7,808 a month (Section 2 risk 4)`, D),
+      "estimate", `${CG} §5: parent care tiers, TTD a month today. Caregiver cost cross-check: Paylab 2026, $2,772–$7,808 a month (Section 2 risk 4). Labels for tiers 3 and 4 follow Section 3 §1.3 (were "Private residential" and "High-dependency"; amounts unchanged)`, D),
+  },
+
+  /** Section 3 §2 and §0 row 3.2: every amount is turned into a monthly figure. */
+  frequency: {
+    perYear: row<Readonly<Record<Frequency, number>>>(
+      { weekly: 52, fortnightly: 26, semimonthly: 24, monthly: 12, yearly: 1 },
+      "rule", `${S3} §2.1: weekly ×52/12, fortnightly ×26/12, twice a month ×2, monthly ×1; §0 row 3.2: yearly ÷12`, S3D),
+    planPaysPerMonth: row<Readonly<Record<"weekly" | "fortnightly" | "semimonthly" | "monthly", number>>>(
+      { weekly: 4, fortnightly: 2, semimonthly: 2, monthly: 1 },
+      "rule", `${S3} §2.4: "Plan on 4 pays (or 2). Send the extra pay straight to savings."`, S3D),
+  },
+
+  /** Section 3 §5: the lowest insurance budget the tool plans, except at stage 0. */
+  insurance: {
+    floorMonthly: row(200, "advisor-set", "Kyron, 28 Oct 2026 (Section 3 spec §5.1): the $200 insurance floor", S3D),
+  },
+
+  /** Section 3 §6.1: common guides, share of household take-home. Shown as guides, never as a pass or fail. */
+  guides: {
+    home: row<GuideRange>({ min: 0.25, max: 0.30 }, "advisor-set", `${PENNY} (Section 3 §6.1: Home, incl. mortgage or rent)`, S3D),
+    food: row<GuideRange>({ min: 0.10, max: 0.15 }, "advisor-set", `${PENNY} (Section 3 §6.1: Food)`, S3D),
+    move: row<GuideRange>({ min: 0.10, max: 0.15 }, "advisor-set", `${PENNY} (Section 3 §6.1: Getting around)`, S3D),
+    util: row<GuideRange>({ min: 0.05, max: 0.10 }, "advisor-set", `${PENNY} (Section 3 §6.1: Utilities and bills)`, S3D),
+    health: row<GuideRange>({ min: 0.05, max: 0.10 }, "advisor-set", `${PENNY} (Section 3 §6.1: Health and personal care)`, S3D),
+    debt: row<GuideRange>({ min: null, max: 0.20 }, "advisor-set", `${PALIG}: "Loans 25%" of gross, restated on take-home (Section 3 §6.1: debt payments, not mortgage, at most 20%)`, S3D),
+    insurance: row<GuideRange>({ min: 0.05, max: 0.10 }, "advisor-set", `${PALIG}: life 5%, general 5% (Section 3 §6.1: Insurance, life and general)`, S3D),
+    saving: row<GuideRange>({ min: 0.10, max: 0.20 }, "advisor-set", `${PENNY}; ${PALIG}: "Savings + Investment 10%", "Pension 10%" (Section 3 §6.1)`, S3D),
+    fun: row<GuideRange>({ min: 0.05, max: 0.10 }, "advisor-set", `${PENNY} (Section 3 §6.1: Fun and lifestyle, 5–10% each)`, S3D),
+    giving: row<GuideRange>({ min: 0.05, max: 0.10 }, "advisor-set", `${PENNY} (Section 3 §6.1: Giving, 5–10% each)`, S3D),
+    farAboveFactor: row(1.5, "rule", `${S3} §6.2: far above the guide is more than 1.5 times its top`, S3D),
+    gapsShown: row(3, "rule", `${S3} §6.2: three lines at most under the graph`, S3D),
+  },
+
+  /** Section 3 §6.4, What you own and owe (Decision 11, Kyron, 28 Oct 2026). A common guide, never a pass or fail. */
+  netWorth: {
+    debtPaymentsGuide: row<GuideRange>({ min: null, max: 0.25 }, "advisor-set", "PALIG net worth calculator benchmark, Loans 25%", S3D,
+      { note: "Debt payments, including the mortgage, as a share of pay before deductions (the partner's pay is take-home)" }),
+  },
+
+  /** Section 3 §9: the recommended retirement income. Inflation is the assumption set's projected rate (rates block). */
+  retirementFigure: {
+    replacementRate: row(0.7, "advisor-set", `${S3} §9 rule A: 70% of today's household take-home (advisor-editable)`, S3D),
+    childCostsStopAge: row(19, "assumed", `${S3} §9: children's costs stop by retirement once the youngest is 19 (the closing brief §2.0 age)`, S3D),
   },
 
   offsets: {
@@ -205,6 +263,7 @@ export const FF = deepFreeze({
   },
 
   debts: {
+    mismatchMonths: row(3, "rule", `${S3} §7.2: the payoff date and the end date the client gave differ by more than 3 months`, S3D),
     maxMonths: row(600, "assumed", `${PROTO}: a payoff that has not finished in 50 years is stalled`, D),
     clearedBelow: row(0.005, "assumed", "Half a cent counts as cleared", D),
   },

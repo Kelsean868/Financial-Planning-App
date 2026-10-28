@@ -7,8 +7,10 @@ import {
   TATIL_PRODUCTS, TATIL_RIDERS, computeFactFinder, computeLovedOnes, assertRidersAllowed, ProvenanceBuilder,
   SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, type LifeCaseFacts, type ProductId,
 } from "../src/index.ts";
+import { setGross, setParents } from "./facts-helpers.ts";
 
 const clone = (f: LifeCaseFacts): any => JSON.parse(JSON.stringify(f));
+const withoutParents = (f: LifeCaseFacts): LifeCaseFacts => { const c = clone(f); setParents(c, []); return c; };
 
 test("§2.4: every product row carries source and asOf, with the signed figures", () => {
   const expect: Record<ProductId, { cover: [number, number | null] | null; min: number | null }> = {
@@ -40,15 +42,15 @@ test("§2.4: every product row carries source and asOf, with the signed figures"
 
 function variants(): LifeCaseFacts[] {
   const out: LifeCaseFacts[] = [];
-  const noParents = { ...clone(SAMPLE_FAMILY), parents: [] };
+  const noParents = withoutParents(SAMPLE_FAMILY);
   for (const base of [SAMPLE_FAMILY, noParents, SAMPLE_YOUNG_SINGLE]) {
     for (const age of [22, 30, 38, 47, 55, 63]) {
       for (const gross of [7000, 9500, 13000, 17000, 25000, 45000]) {
         for (const savings of [0, 20000, 150000]) {
           const f = clone(base);
           f.client.age = age;
-          f.client.grossMonthly = gross;
-          f.budget.savings = savings;
+          setGross(f, gross);
+          f.assets = [...f.assets.filter((a: { kind: string }) => a.kind !== "bank"), { kind: "bank", value: savings }];
           out.push(f);
         }
       }
@@ -65,7 +67,7 @@ test("guard 16: for every recommendation set, no funded plan is below its minimu
       for (const g of r.insuranceBudget.groups) {
         for (const p of g.funded) {
           const tableMin = TATIL_PRODUCTS[p.product].value.minPremiumMonthly ?? 0;
-          assert.ok(p.monthly + 1e-9 >= tableMin, `${p.name} funded at ${p.monthly}, below the table minimum ${tableMin} (age ${f.client.age}, gross ${f.client.grossMonthly})`);
+          assert.ok(p.monthly + 1e-9 >= tableMin, `${p.name} funded at ${p.monthly}, below the table minimum ${tableMin} (age ${f.client.age}, gross ${f.client.pay.amountPerPay})`);
           assert.ok(p.monthly + 1e-9 >= p.minimumMonthly, `${p.name} funded below its own minimum`);
           plans++;
         }

@@ -16,6 +16,7 @@ import {
   TATIL_PRODUCTS, SAMPLE_FAMILY, type FactFinderResult,
 } from "../src/index.ts";
 import { clone, eachCase, CENT } from "./ladder-cases.ts";
+import { setParents } from "./facts-helpers.ts";
 
 export function assertParity(r: FactFinderResult, label: string): void {
   const prot = r.insuranceBudget.groups[0];
@@ -81,7 +82,7 @@ test("Tier 1 default order: life, CI, parent funerals oldest first, disability i
   assert.deepEqual(fam, ["life-ruin", "critical-illness", "parent-funeral:00000000-0000-4000-8000-000000000006", "parent-funeral:00000000-0000-4000-8000-000000000005", "disability-income"]);
   const later = clone(SAMPLE_FAMILY);
   later.client = { ...later.client, age: 55 };
-  later.parents = [];
+  setParents(later, []);
   const k = computeFactFinder(later).closing.ladderSpecs.filter((s) => s.tier === 1).map((s) => s.key);
   assert.deepEqual(k, ["life-ruin", "critical-illness", "own-final-expense"], "no disability income from 50; own final expense instead");
 });

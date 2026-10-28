@@ -1,0 +1,77 @@
+### guard 28: Use ×4 for weekly (the weekly row 52 → 48)
+file src/parameters/fact-finder-2026-10.ts; ran node --test test/section3-guards.test.ts
+   ✖ guard 28: frequency maths — weekly ×52/12, fortnightly ×26/12, twice a month ×2, monthly ×1, yearly ÷12 (4.6508ms)
+   ✖ guard 28: a weekly-paid client's NIS is worked on the week's pay and equals the monthly sum (59.3299ms)
+   ✖ guard 29: budget lines add to the totals the rest of the engine uses; debts and parent care are never counted twice (27.4311ms)
+   ✖ guard 33: the retirement figure is max(A, B) × (1 + i)^n, to the dollar (6.0933ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: weekly
+   AssertionError [ERR_ASSERTION]: $500 a week: NIS 108, hand-worked 117
+   AssertionError [ERR_ASSERTION]: weekly renter: needs 6120 = lines 5996.666666666666 + debt payments 250 + care today 0
+   AssertionError [ERR_ASSERTION]: B = spending less what stops: 5470 vs 5436.666666666667
+   ℹ pass 8
+   ℹ fail 4
+
+### guard 29: Add debt payments to the budget too (toEngineFacts adds them as a cost line)
+file src/engine-facts.ts; ran node --test test/section3-guards.test.ts
+   ✖ guard 28: frequency maths — weekly ×52/12, fortnightly ×26/12, twice a month ×2, monthly ×1, yearly ÷12 (46.5997ms)
+   ✖ guard 29: budget lines add to the totals the rest of the engine uses; debts and parent care are never counted twice (13.5239ms)
+   ✖ guard 33: the retirement figure is max(A, B) × (1 + i)^n, to the dollar (2.7492ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: a weekly line of $1,200 adds $5200 a month to needs
+   AssertionError [ERR_ASSERTION]: sample family: needs 16580 = lines 9700 + debt payments 1440 + care today 4000
+   AssertionError [ERR_ASSERTION]: B = spending less what stops: 7340 vs 5900
+   ℹ pass 9
+   ℹ fail 3
+
+### guard 30: Drop the floor (insuranceRange uses 0, not the $200 row)
+file src/closing-ladder.ts; ran node --test test/section3-guards.test.ts
+   ✖ guard 30: insurance is never below $200 except at stage 0, and stage 0 still has no plan (16.5207ms)
+   ✖ §14.3: an insurance cap below $200, above max(ceiling, $200), or not finite throws (guard 27's range) (2.3182ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: gross 17000, stage 2, left 2843.37: the slider runs from $200 to max(ceiling, $200)
+   AssertionError [ERR_ASSERTION]: the floor lifts the weekly renter's cap to $200
+   ℹ pass 10
+   ℹ fail 2
+
+### guard 31: Swap steps 2 and 3 (the default split fills debt before protection)
+file src/room-plan.ts; ran node --test test/section3-guards.test.ts
+   ✖ guard 31: Make room sends freed money in the §6.3 plan order (17.5805ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: protection gets 0; in plan order it gets 9.375 (left 50)
+   ℹ pass 11
+   ℹ fail 1
+
+### guard 32: Ignore interest (payoffMonths uses a 0% rate)
+file src/debt-payoff.ts; ran node --test test/section3-guards.test.ts
+   ✖ guard 32: payoff months from balance, rate and payment; a payment that does not cover the interest never clears (1.1992ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: $18000 at 24% paying $650
+   ℹ pass 11
+   ℹ fail 1
+
+### guard 33: Use A only
+file src/retirement-figure.ts; ran node --test test/section3-guards.test.ts
+   ✖ guard 33: the retirement figure is max(A, B) × (1 + i)^n, to the dollar (6.1283ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: figure 17599.133773631274
+   ℹ pass 11
+   ℹ fail 1
+
+### guard 27: The old range: the band's floor, not $200
+file src/closing-ladder.ts; ran node --test test/f18-package-cards.test.ts
+   ✖ guard 26: each card's status and X equal a ladder run with that card chosen (6147.5066ms)
+   ✖ guard 27: an insurance budget below $200, above max(ceiling, $200), or not finite, throws ClosingInputError (43.576ms)
+   ✖ failing tests:
+   Error [ClosingInputError]: The insurance budget of 200.00 a month is outside the range 355.42 to 710.84.
+   ℹ pass 7
+   ℹ fail 2
+
+### guard 3: Let the slider run to twice max(ceiling, floor)
+file src/closing-ladder.ts; ran node --test test/closing-guards.test.ts
+   ✖ guard 3: no basket and no ladder exceeds max(the triage stage ceiling, the $200 floor) (88.179ms)
+   ✖ failing tests:
+   AssertionError [ERR_ASSERTION]: basket top 230.20588140684336 over ceiling 200 (stage 2, {"budgetMonthly":400})
+   ℹ pass 13
+   ℹ fail 1
+

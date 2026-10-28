@@ -8,6 +8,7 @@
  */
 import { ClosingInputError } from "./errors.ts";
 import { assertNoHealthKeys } from "./life-case-facts.ts";
+import type { RoomPlanRecord } from "./room-plan.ts";
 
 export type ScopeState = "acted" | "declined" | "out_of_scope";
 export type ScopeLineState = ScopeState | "not_reviewed";
@@ -99,13 +100,18 @@ export interface LifeCaseSnapshot<C> {
 /**
  * Freeze what was shown at the close. Premium figures inside are bands with their label, never prices
  * (Section 2 §2.5.4). Throws if anything carries a health answer.
+ *
+ * With a Make room plan in use, `roomPlan` (from `roomPlanRecord`) is kept inside the closing JSON as
+ * `closing.roomPlan`, so the one-page plan prints both versions from the snapshot (Section 3 fix run, Change 4).
+ * No new column: it is part of `closing`.
  */
-export function buildSnapshot<C>(input: { closing: C; scope: ScopeStatement; assumptionSetId: string; engineVersion: string }): LifeCaseSnapshot<C> {
+export function buildSnapshot<C>(input: { closing: C; scope: ScopeStatement; assumptionSetId: string; engineVersion: string; roomPlan?: RoomPlanRecord | null }): LifeCaseSnapshot<C & { roomPlan?: RoomPlanRecord }> {
   if (!input.engineVersion) throw new ClosingInputError("a snapshot needs the pinned engine version");
+  const closing = input.roomPlan ? { ...(input.closing as object), roomPlan: input.roomPlan } : input.closing;
   const snap = JSON.parse(JSON.stringify({
     kind: "life_case_snapshot", assumptionSetId: input.assumptionSetId, engineVersion: input.engineVersion,
-    closing: input.closing, scope: input.scope,
-  })) as LifeCaseSnapshot<C>;
+    closing, scope: input.scope,
+  })) as LifeCaseSnapshot<C & { roomPlan?: RoomPlanRecord }>;
   assertNoHealthKeys(snap, "snapshot");
   return snap;
 }

@@ -53,8 +53,12 @@ export interface Ladder {
   readonly budgetMonthly: number;
   /** What insurance items may take together: the slider's amount, else the band's recommended figure. */
   readonly insuranceCapMonthly: number;
-  /** The triage stage ceiling, kept as a guard (closing guard 3). */
+  /** The triage stage ceiling, kept as a guard (closing guard 3: insurance ≤ max(ceiling, floor) since Section 3). */
   readonly insuranceCeilingMonthly: number;
+  /** The $200 floor, the slider's range, and the §5.3 / §5.4 states (Section 3 §5). */
+  readonly insuranceRange: InsuranceRange;
+  /** §5.3: the cap in use is above the stage ceiling (the ceiling is under $200, money left is $200 or more). */
+  readonly aboveSafeRange: boolean;
   readonly insuranceAllocated: number;
   /** Precondition not captured by the fact-finder (compulsory motor third-party). */
   readonly preconditionsNotCaptured: readonly string[];
@@ -67,21 +71,60 @@ export function defaultOrder(specs: readonly LadderItemSpec[]): string[] {
   return TIER_ORDER.flatMap((t) => specs.filter((s) => s.tier === t).map((s) => s.key));
 }
 
+/** Section 3 §5: the insurance budget the tool will plan, and why there is none. */
+export interface InsuranceRange {
+  /** `core:ff.insurance.floorMonthly`: $200. */
+  readonly floorMonthly: number;
+  /** Stage 0: costs above income. Unchanged by Section 3: no plan, only what would change the picture (§5.5). */
+  readonly stage0: boolean;
+  /** No insurance plan yet: stage 0, or money left after costs below the floor (§5.4). */
+  readonly noPlan: boolean;
+  /** §5.4: "To start the $200 minimum you need $X more a month." 0 unless money left is under the floor (stage > 0). */
+  readonly shortByMonthly: number;
+  /** The slider's range: the floor to max(ceiling, floor) (§5.2). Both 0 at stage 0. */
+  readonly minMonthly: number;
+  readonly maxMonthly: number;
+  /** The cap with no slider: max(floor, recommended); 0 when there is no plan. */
+  readonly defaultMonthly: number;
+  readonly ceilingMonthly: number;
+  readonly recommendedMonthly: number;
+}
+
+export function insuranceRange(budget: HouseholdBudget): InsuranceRange {
+  const b = new ProvenanceBuilder();
+  const floor = b.num("core:ff.insurance.floorMonthly");
+  const stage0 = budget.stage === 0;
+  const left = budget.surplusMonthly;
+  const short = !stage0 && left < floor ? floor - left : 0;
+  const noPlan = stage0 || short > 0;
+  return {
+    floorMonthly: floor, stage0, noPlan, shortByMonthly: short,
+    minMonthly: stage0 ? 0 : floor,
+    maxMonthly: stage0 ? 0 : Math.max(budget.ceilingMonthly, floor),
+    defaultMonthly: noPlan ? 0 : Math.max(floor, budget.band.recommended),
+    ceilingMonthly: budget.ceilingMonthly,
+    recommendedMonthly: budget.band.recommended,
+  };
+}
+
 /**
- * The insurance cap in use (F-18, Change 2). The slider's amount when given, else the band's recommended figure
- * (Decision 5 = A). Guard 27: an amount that is not a finite number, or is outside the band's floor to ceiling, throws
- * `ClosingInputError`; it is never clamped.
+ * The insurance cap in use (F-18, Change 2; Section 3 §5). The slider's amount when given, else max($200, the band's
+ * recommended figure). Guard 27 (Section 3 §14.3): an amount that is not a finite number, below the $200 floor, or above
+ * max(ceiling, $200) throws `ClosingInputError`; it is never clamped. With money left under $200 there is no plan (§5.4):
+ * a valid amount is accepted and the cap is 0. Stage 0 is unchanged (§5.5): the only amount it accepts is 0.
  */
 export function insuranceCap(budget: HouseholdBudget, budgetMonthly?: number | null): number {
-  if (budgetMonthly === undefined || budgetMonthly === null) return budget.band.recommended;
+  const r = insuranceRange(budget);
+  if (budgetMonthly === undefined || budgetMonthly === null) return r.stage0 ? budget.band.recommended : r.defaultMonthly;
   if (typeof budgetMonthly !== "number" || !Number.isFinite(budgetMonthly)) {
     throw new ClosingInputError(`The insurance budget must be a finite number of dollars a month; got ${String(budgetMonthly)}.`);
   }
-  const { floor, ceiling } = budget.band;
-  if (budgetMonthly < floor - CAP_TOLERANCE || budgetMonthly > ceiling + CAP_TOLERANCE) {
-    throw new ClosingInputError(`The insurance budget of ${budgetMonthly.toFixed(2)} a month is outside the safe range ${floor.toFixed(2)} to ${ceiling.toFixed(2)}.`);
+  const lo = r.stage0 ? budget.band.floor : r.minMonthly;
+  const hi = r.stage0 ? budget.band.ceiling : r.maxMonthly;
+  if (budgetMonthly < lo - CAP_TOLERANCE || budgetMonthly > hi + CAP_TOLERANCE) {
+    throw new ClosingInputError(`The insurance budget of ${budgetMonthly.toFixed(2)} a month is outside the range ${lo.toFixed(2)} to ${hi.toFixed(2)}.`);
   }
-  return budgetMonthly;
+  return r.noPlan && !r.stage0 ? 0 : budgetMonthly;
 }
 
 /** Float noise only (a slider at its end stop returns the band figure as a decimal string). Not a clamp. */
@@ -105,19 +148,20 @@ export function completeOrder(specs: readonly LadderItemSpec[], order: readonly 
 
 export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderItemSpec[], order?: readonly string[], capMonthly?: number): Ladder {
   const b = new ProvenanceBuilder();
+  const range = insuranceRange(budget);
   if (budget.stage === 0) {
     return {
       underwater: true,
       whatWouldChange: { shortfallMonthly: budget.shortfallMonthly, hoursAtMinimumWage: budget.hoursAtMinimumWage },
-      items: [], budgetMonthly: 0, insuranceCapMonthly: 0, insuranceCeilingMonthly: 0, insuranceAllocated: 0,
-      preconditionsNotCaptured: ["Compulsory motor third-party cover"],
+      items: [], budgetMonthly: 0, insuranceCapMonthly: 0, insuranceCeilingMonthly: 0, insuranceRange: range, aboveSafeRange: false,
+      insuranceAllocated: 0, preconditionsNotCaptured: ["Compulsory motor third-party cover"],
     };
   }
   const keys = order ?? defaultOrder(specs);
   const byKey = new Map(specs.map((s) => [s.key, s]));
   const ordered = keys.map((k) => byKey.get(k)!).filter(Boolean);
   let left = Math.max(0, budget.surplusMonthly);
-  const cap = capMonthly ?? budget.band.recommended;
+  const cap = range.noPlan ? 0 : capMonthly ?? range.defaultMonthly;
   let capLeft = cap;
   const got = new Map<string, number>(ordered.map((s) => [s.key, 0]));
   const notYet = new Set<string>();
@@ -150,6 +194,8 @@ export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderIt
     budgetMonthly: Math.max(0, budget.surplusMonthly),
     insuranceCapMonthly: cap,
     insuranceCeilingMonthly: budget.ceilingMonthly,
+    insuranceRange: range,
+    aboveSafeRange: cap > budget.ceilingMonthly + CAP_TOLERANCE,
     insuranceAllocated: items.filter((i) => i.insurance).reduce((a, i) => a + i.allocated, 0),
     preconditionsNotCaptured: ["Compulsory motor third-party cover"],
   };

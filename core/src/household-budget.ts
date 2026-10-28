@@ -5,8 +5,8 @@
  */
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
-import type { LifeCaseFacts } from "./life-case-facts.ts";
 import type { DebtSummary } from "./debts.ts";
+import { parentSupported, type EngineFacts } from "./engine-facts.ts";
 
 export interface NetPay {
   readonly grossMonthly: number;
@@ -36,6 +36,13 @@ export interface HouseholdBudget {
   /** What the household lives on if the client dies: needs less a mortgage that clears, debt minimums and care. */
   readonly livingMonthly: number;
   readonly housingStopsOnDeath: boolean;
+  /** "Saving you already do", a month: not in needs (§1.1), but already spoken for, so it is not money left. */
+  readonly savingMonthly: number;
+  /**
+   * Money left each month: household take-home less needs less the saving already done (Decision 10, 28 Oct 2026).
+   * The one "left each month": the stage, the ceiling, the shortfall, the buffer build, Make room and the budget's
+   * "$Y left" all use it (guard 36).
+   */
   readonly surplusMonthly: number;
   /** Months of needs the savings cover. */
   readonly bufferMonths: number;
@@ -70,12 +77,28 @@ function payeAnnual(chargeable: number, bands: readonly PayeBand[]): number {
   return tax;
 }
 
-export function computeNetPay(facts: Pick<LifeCaseFacts, "client" | "partner">): NetPay {
+/**
+ * Employee NIS a month. 5.4% of insurable earnings up to the monthly ceiling. A weekly-paid client's NIS is worked on
+ * the week's pay against the weekly ceiling (Section 3 §2.2: weekly earnings are used directly, the monthly figure is not
+ * divided back), then turned into a month at 52/12. The engine does not use the NIS class table (run record §1 item 1).
+ */
+function nisMonthly(b: ProvenanceBuilder, c: EngineFacts["client"]): number {
+  if (!c.nisPaying) return 0;
+  const rate = b.num("core:ff.tax.nisEmployeeRate");
+  const ceilingNis = b.num("nis.insurable_earnings_ceiling");
+  if (c.pay.frequency !== "weekly") return rate * Math.min(c.grossMonthly, ceilingNis);
+  const weeks = b.get<Readonly<Record<string, number>>>("core:ff.frequency.perYear").weekly!;
+  const weekly = c.grossMonthly * MONTHS / weeks;
+  return rate * Math.min(weekly, ceilingNis * MONTHS / weeks) * weeks / MONTHS;
+}
+
+const MONTHS = 12;
+
+export function computeNetPay(facts: Pick<EngineFacts, "client" | "partner">): NetPay {
   const b = new ProvenanceBuilder();
   const c = facts.client;
   const g = c.grossMonthly;
-  const ceilingNis = b.num("nis.insurable_earnings_ceiling");
-  const nis = c.nisPaying ? b.num("core:ff.tax.nisEmployeeRate") * Math.min(g, ceilingNis) : 0;
+  const nis = nisMonthly(b, c);
 
   let surchargeWeekly = 0;
   if (c.age < b.num("core:ff.tax.surchargeExemptFromAge")) {
@@ -110,7 +133,7 @@ export function computeNetPay(facts: Pick<LifeCaseFacts, "client" | "partner">):
 }
 
 export interface BudgetInputs {
-  readonly facts: LifeCaseFacts;
+  readonly facts: EngineFacts;
   readonly netPay: NetPay;
   readonly debts: DebtSummary;
   /** Care graph `alreadyPaying`: care and study costs leaving the account now. */
@@ -128,17 +151,15 @@ export function computeHouseholdBudget(input: BudgetInputs): HouseholdBudget {
   const housingStops = bud.housing === "mortgage" && !!bud.mortgage && bud.mortgage.clearOnDeath && bud.mortgage.balance > 0;
   const living = needs - (housingStops ? bud.housingPaymentMonthly : 0) - debts.minimumsMonthly - input.carePaidMonthly;
   const hhNet = netPay.householdNetMonthly;
-  const surplus = hhNet - needs;
+  const saving = bud.savingMonthly;
+  const surplus = hhNet - needs - saving;
   const buffer = needs > 0 ? bud.savings / needs : 0;
-  const deps = facts.children.length + facts.parents.filter((p) => p.careTier > 0).length;
+  const deps = facts.children.length + facts.parents.filter(parentSupported).length;
   const ef = facts.client.selfEmployed
     ? b.num("core:ff.budget.emergencyMonthsSelfEmployed")
     : deps > 0 ? b.num("core:ff.budget.emergencyMonthsDependants") : b.num("core:ff.budget.emergencyMonthsAlone");
   const bad = debts.expensiveDebt;
-  const stage: Stage = surplus <= 0 ? 0 : buffer < 1 ? 1 : bad > 0 ? 2 : buffer < ef ? 3 : 4;
-  const pcts = b.get<readonly { stage: number; ofNet: number; ofSurplus: number }[]>("core:ff.budget.stagePercents");
-  const pct = pcts[stage]!;
-  const ceiling = stage === 0 ? 0 : Math.max(0, Math.min(pct.ofNet * hhNet, pct.ofSurplus * surplus));
+  const { stage, ceiling } = stageAndCeiling(b, { hhNet, surplus, buffer, expensiveDebt: bad, emergencyFundMonths: ef });
   const shares = b.get<{ floor: number; recommended: number; ceiling: number }>("core:ff.closing.bandShares");
   const needsRatio = needs / hhNet;
   const hardballRatio = b.num("core:ff.budget.hardballNeedsRatio");
@@ -154,6 +175,7 @@ export function computeHouseholdBudget(input: BudgetInputs): HouseholdBudget {
     needsMonthly: needs,
     livingMonthly: living,
     housingStopsOnDeath: housingStops,
+    savingMonthly: saving,
     surplusMonthly: surplus,
     bufferMonths: buffer,
     dependants: deps,
@@ -168,6 +190,21 @@ export function computeHouseholdBudget(input: BudgetInputs): HouseholdBudget {
     expensiveDebt: bad,
     provenance: b.build(),
   };
+}
+
+/**
+ * The triage stage and the safe insurance ceiling (prototype v17): stage 0 when costs exceed income; the ceiling is the
+ * smaller of a share of take-home and a share of the money left. Make room re-runs it with the freed money (§6.3).
+ */
+export function stageAndCeiling(
+  b: ProvenanceBuilder,
+  x: { readonly hhNet: number; readonly surplus: number; readonly buffer: number; readonly expensiveDebt: number; readonly emergencyFundMonths: number },
+): { readonly stage: Stage; readonly ceiling: number } {
+  const stage: Stage = x.surplus <= 0 ? 0 : x.buffer < 1 ? 1 : x.expensiveDebt > 0 ? 2 : x.buffer < x.emergencyFundMonths ? 3 : 4;
+  const pcts = b.get<readonly { stage: number; ofNet: number; ofSurplus: number }[]>("core:ff.budget.stagePercents");
+  const pct = pcts[stage]!;
+  const ceiling = stage === 0 ? 0 : Math.max(0, Math.min(pct.ofNet * x.hhNet, pct.ofSurplus * x.surplus));
+  return { stage, ceiling };
 }
 
 /* ------------------------------------------------------------------ budget builder */
@@ -187,7 +224,7 @@ export interface BudgetBuckets {
  * The prototype's pay-yourself-first builder: the saving share is split in order, the rest is spending.
  * `protectionMonthly` is the insurance cap in use (the slider; F-18, Change 2); default the band's recommended figure.
  */
-export function buildBudgetBuckets(budget: HouseholdBudget, facts: LifeCaseFacts, savePct?: number, protectionMonthly?: number): BudgetBuckets {
+export function buildBudgetBuckets(budget: HouseholdBudget, facts: EngineFacts, savePct?: number, protectionMonthly?: number): BudgetBuckets {
   const b = new ProvenanceBuilder();
   const pctUsed = savePct ?? b.num("core:ff.budget.payYourselfFirstPct");
   const s0 = Math.max(0, budget.surplusMonthly);

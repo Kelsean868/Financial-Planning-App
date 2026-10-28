@@ -5,9 +5,9 @@
 import {
   computeFactFinder, requestReorder, SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE, type LifeCaseFacts, type FactFinderResult,
 } from "../src/index.ts";
+import { clone, setGross, setParents, type Mutable } from "./facts-helpers.ts";
 
-export type Mutable<T> = { -readonly [K in keyof T]: T[K] };
-export const clone = (f: LifeCaseFacts): Mutable<LifeCaseFacts> => JSON.parse(JSON.stringify(f));
+export { clone, type Mutable };
 export const CENT = 0.005;
 
 export function variants(): LifeCaseFacts[] {
@@ -16,6 +16,7 @@ export function variants(): LifeCaseFacts[] {
     SAMPLE_FAMILY.parents,
     [],
     // Care starts at each parent's current age (careFromAge left out).
+    // Version 2 (Section 3): the father keeps his $4,000 line and no growth; the elder's care grows from now.
     [{ ...SAMPLE_FAMILY.parents[1]!, birthYear: 1947, careFromAge: undefined }, { ...SAMPLE_FAMILY.parents[0]!, birthYear: 1950, relationship: "other-elder" as const, careFromAge: undefined }],
   ];
   for (const base of [SAMPLE_FAMILY, SAMPLE_YOUNG_SINGLE]) {
@@ -23,10 +24,11 @@ export function variants(): LifeCaseFacts[] {
       for (const gross of [9000, 12000, 17000, 30000, 60000]) {
         for (const parents of parentSets) {
           const f = clone(base);
-          f.client = { ...f.client, age, grossMonthly: gross };
+          f.client = { ...f.client, age };
+          setGross(f, gross);
           // Loan goals on for the better-paid families too, so loan cover items are checked with dependants.
           if (base === SAMPLE_FAMILY && gross >= 30000) f.goals = f.goals.map((g) => ({ ...g, on: g.kind === "home" || g.kind === "vehicle" }));
-          f.parents = JSON.parse(JSON.stringify(parents));
+          setParents(f, JSON.parse(JSON.stringify(parents)), { [SAMPLE_FAMILY.parents[1]!.personId]: 4000 });
           out.push(f);
         }
       }

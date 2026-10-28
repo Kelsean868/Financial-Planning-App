@@ -7,7 +7,7 @@
  */
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
-import type { LifeCaseFacts } from "./life-case-facts.ts";
+import type { EngineFacts } from "./engine-facts.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import type { DebtSummary } from "./debts.ts";
 import type { CareGraphResult } from "./care-graph.ts";
@@ -75,13 +75,13 @@ export interface DeathNeedResult {
 }
 
 export interface DeathNeedContext {
-  readonly facts: LifeCaseFacts;
+  readonly facts: EngineFacts;
   readonly budget: HouseholdBudget;
   readonly debts: DebtSummary;
   readonly careGraph: CareGraphResult;
 }
 
-export function coverHeld(b: ProvenanceBuilder, facts: LifeCaseFacts): CoverHeld {
+export function coverHeld(b: ProvenanceBuilder, facts: EngineFacts): CoverHeld {
   const redAge = b.num("group_life.reduction_age");
   const endAge = b.num("group_life.termination_age");
   const factor = b.num("group_life.reduction_factor");
@@ -105,7 +105,7 @@ export function coverHeld(b: ProvenanceBuilder, facts: LifeCaseFacts): CoverHeld
  * survivors' benefit (layer 3), paid from `capital` growing at the survivor real return.
  */
 export function survivorCashflow(
-  b: ProvenanceBuilder, facts: LifeCaseFacts, livingMonthly: number,
+  b: ProvenanceBuilder, facts: EngineFacts, livingMonthly: number,
   usePartner: boolean, useNis: boolean, capital: number,
 ): SurvivorCashflow {
   const N = b.num("core:ff.deathNeed.survivorYears");

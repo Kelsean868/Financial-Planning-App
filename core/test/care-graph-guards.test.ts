@@ -50,7 +50,8 @@ test("guard 3: a goal starting within a year contributes nothing to monthly savi
       { personId: id(1), age: 17, route: "regional", costLevel: "typical", studyStartAge: 18, milestones: [{ key: "vehicle", on: true, atAge: 18, amountToday: 50000 }] },
       { personId: id(2), age: 8, route: "local", costLevel: "typical", studyStartAge: 18, milestones: [] },
     ],
-    parents: [{ personId: id(3), relationship: "father", birthYear: 1950, careTier: 2, receivesSCP: false, nisContributions: "no" }],
+    // Section 3: the version 1 care-from-now shape is growth with no budget line today (care graph §1.3).
+    parents: [{ personId: id(3), relationship: "father", birthYear: 1950, careTier: 2, growth: true, todayMonthly: 0, receivesSCP: false, nisContributions: "no" }],
   }), 20000);
   const current = cg.goals.filter((g) => g.start <= 1);
   assert.ok(current.length >= 3, "the fixture has current goals (degree next year, vehicle next year, care now)");
@@ -68,7 +69,7 @@ test("guard 4: non-overlapping child and parent windows report zero sandwich yea
     clientAge: 38,
     children: [{ personId: id(1), age: 4, route: "local", costLevel: "typical", studyStartAge: 18, milestones: [] }],
     // aged 86 in 2026: care runs to 88, years 0–2; the degree is years 14–16
-    parents: [{ personId: id(2), relationship: "mother", birthYear: 1940, careTier: 2, receivesSCP: false, nisContributions: "no" }],
+    parents: [{ personId: id(2), relationship: "mother", birthYear: 1940, careTier: 2, growth: true, todayMonthly: 0, receivesSCP: false, nisContributions: "no" }],
   }));
   assert.ok(cg.years.some((y) => y.eduMonthly > 0) && cg.years.some((y) => y.parentMonthly > 0), "both windows exist");
   assert.equal(cg.sandwichYears, 0, "no year has both a child and a parent commitment");
@@ -111,6 +112,6 @@ test("§8: CareGraphInputError for an impossible timeline; never clamped", () =>
   const kid = { personId: id(1), age: 20, route: "local" as const, costLevel: "typical" as const, studyStartAge: 18, milestones: [] };
   assert.throws(() => careGraph(input({ children: [kid] })), CareGraphInputError, "study start before current age");
   assert.doesNotThrow(() => careGraph(input({ children: [{ ...kid, route: "none" }] })), "no study, no check");
-  const parent = { personId: id(2), relationship: "father" as const, birthYear: 1955, careTier: 2 as const, careFromAge: 65, receivesSCP: false, nisContributions: "no" as const };
+  const parent = { personId: id(2), relationship: "father" as const, birthYear: 1955, careTier: 2 as const, careFromAge: 65, growth: true, todayMonthly: 0, receivesSCP: false, nisContributions: "no" as const };
   assert.throws(() => careGraph(input({ parents: [parent] })), CareGraphInputError, "care start before current age");
 });
