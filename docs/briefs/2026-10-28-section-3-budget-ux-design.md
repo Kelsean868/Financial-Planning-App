@@ -1,6 +1,6 @@
 # Section 3 — Budget, pay, debts, retirement figure and an easier close
 
-Date: 2026-10-28. Status: **Signed off by Kyron, 28 Oct 2026, 08:41 ("go ahead and build"), with the revisions marked in §0.** Prototype of record: `FPA/docs/prototype/section3-prototype-v6.dc.html`.
+Date: 2026-10-28. Status: **Signed off by Kyron, 28 Oct 2026, 08:41 ("go ahead and build"), with the revisions marked in §0.** Prototype of record: `FPA/docs/prototype/section3-prototype-v6.dc.html` (delivered in `docs/briefs/`).
 Source: Kyron's 13 review points after using the live fact-finder (28 Oct 2026, 07:41), his two example files
 (Vertex42 personal monthly budget; PALIG personal net worth calculator 2012), the earlier T&T budget planner work
 ("Video analysis and market research" chat: sinking funds, debt ladder), and YNAB's method.
@@ -162,7 +162,7 @@ Each row is a parameter with `source` and `asOf`. The screen calls them "common 
 
 - **Assets:** bank and fixed deposits; credit union shares; unit trusts and money market funds; shares and bonds; pension and annuity cash value; life insurance cash value; home and other property; vehicles; furniture and equipment; other.
 - **Owe:** pulled from Debts (§7) and the mortgage balance.
-- Shows **net worth**, **debts as a share of gross yearly pay**, and **months of costs covered by cash**.
+- Shows **net worth**, **debt payments, including the mortgage, as a share of pay before deductions**, and **months of costs covered by cash**. Debt payments = loan and card payments + the mortgage payment; pay before deductions = the client's gross a month + the partner's pay. The partner's pay is take-home, because gross is not asked; the screen says "Your partner's pay is counted after deductions." Common guide: at most 25% (PALIG net worth calculator benchmark, Loans 25%), shown as a guide, never a pass or fail. (Amended 28 Oct 2026, Decision 11 = A; was "debts as a share of gross yearly pay".)
 - No asset is typed twice: the emergency fund figure on the budget reads from bank, credit union and money market here.
 
 ---

@@ -54,6 +54,8 @@ record: FPA `docs/audit/RUN-2026-10-28-f18-package-cards.md` (on `feat/fact-find
   (`nisPensionAge`); `retirement-2026-10.ts` has the 2028–2036 rise.
 - **F-20 (new, record only):** parameter refresh before **4 Jan 2027**: the NIS class table (rate up about 3 points)
   and the SCP income bands for the $3,750 rate. Both unpublished today.
+  **Added 28 Oct 2026 (Section 3 fix run, Kyron's call 2):** switch PAYE NIS to the NIBTT class table when the 2027
+  table is published; this moves goldens 2 and 16, so re-baseline then.
 
 The merge and deploy order from fix run 1 (below) stands. In step 4, guard SQL now expects `ff-2026-10-28-cards1` and
 engine commit `0a332cf`; migration `20261027130000` gained the two revoke lines (still not applied).
