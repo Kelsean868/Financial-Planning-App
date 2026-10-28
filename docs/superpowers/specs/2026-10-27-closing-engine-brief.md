@@ -166,6 +166,23 @@ dearer. Tie-breaks: time to need, then leverage per dollar.
 
 Buffer splits across tiers 0 and 2. Tier 1 funds the ruin gap, not the full gap.
 
+**Dated changes to §11.2**
+
+- **27 Oct 2026, real quotes (ApplyOn leads TTRA-9WZE859, TTRA-9DWVJ3Y).** "The premium is small" does not hold.
+  Rest Assured II on $30,000 costs $262.88 a month for a father rated 72 and $178.56 for a mother rated 67. For the
+  sample family the two funerals take most of the insurance budget.
+- **27 Oct 2026, Decision 6 = A (Kyron).** Tier 1 default order: life to the ruin level, critical illness, parent
+  funerals (oldest first), disability income, own final expense ("later" profile only). The client may reorder
+  inside Tier 1.
+- **27 Oct 2026, Decision 5 = A (Kyron).** The insurance cap is the band's recommended figure. The stage ceiling
+  stays a guard.
+- **27 Oct 2026, Decision 7 = A (Kyron).** No ruin-level life cover when no one depends on the client. Life cover
+  follows each loan goal, in the goal's tier.
+- **27 Oct 2026, Decision 8 = B (Kyron).** The client may choose a life level above the ruin level (the package
+  cards) as the Tier 1 life target. The default is the ruin level. Pass one is unchanged: every Tier 1 item gets
+  its minimum first. In pass two the chosen life level fills first, in default order; a reorder inside Tier 1
+  changes that. The remainder above the Recommended level stays in Tier 3.
+
 **11.3 T&T exception:** a token annuity contribution outranks most of Tier 2 and all of Tier 3, only enough to
 capture unused relief inside the TT$60,000 aggregate (pension, NIS, approved annuity), and only where §12 permits
 registered. Void where §12.3 blocks registered.

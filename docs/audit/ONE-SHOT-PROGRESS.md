@@ -3,6 +3,56 @@
 Brief: `docs/briefs/2026-10-27-fact-finder-one-shot.md`. Rules: Section 2 §2.13.
 Orchestrator: Claude Opus 5.5 (effort high), one Claude Code session, started 27 Oct 2026.
 
+## Fix run 4, 28 Oct 2026 (F-18: the package cards become a real choice)
+
+Brief: `docs/briefs/2026-10-28-f18-package-cards.md` (committed with this file). Kyron, 27 Oct 2026 23:49:
+Decision 8 = B (the package cards are a choice inside Tier 1; the slider sets the insurance budget). One session, Claude
+Opus 5.5, effort high. Nothing merged, deployed or applied; no live database access. No care graph golden moved; no
+privacy guard failed.
+
+**Kyron's call first (gate reading).** With the default card, three dump lines outside the cards and bands moved, each
+forced by the brief's own changes: `chosen.package` (recommended → essential), `chosen.basket.partial` (true → false:
+the basket now reaches the chosen Essential card), and life-beyond-ruin's `full` (262.10 → 339.67, from the new
+Recommended cover; still $0 allocated). I read them as card lines, so hard stop 2 was not hit. If not, revert FPA
+`0a332cf` and its GRP re-vendor. Run record §1 item 1.
+
+**New hashes.**
+
+| What | Old | New |
+|---|---|---|
+| FPA `feat/fact-finder-engine` head (PR #5) | `3b0e7f4` | `13fc2fe4312d9721ee38c02236fece2286d69feb` (engine `0a332cf7d7e526981ad1643da4f50005fbbf82d7`, then the run record) |
+| `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `14b9c994…72e2a` | `e3e38f7ddc4d97ddf4a8e0731053ba728f907c5e4476d2198e2f55fc8146b100` |
+| Assumption set id | `ff-2026-10-27-ladder2` | `ff-2026-10-28-cards1` |
+| GRP `feat/fact-finder` head (PR #160) | `2bfb622` | `87b0c818efdea144acb491135f3657a257e15031` (re-vendor pinned to FPA `0a332cf`, cards and slider on the page, migration grants, smoke walk evidence) |
+
+**What changed.** The cards are the death-need tiers (floored, capped by the underwriting limit); the budget no longer
+caps the Recommended card. The chosen card is the Tier 1 life target (life-ruin's full); the default is Essential, the
+ruin level. `budgetMonthly` (the slider) is the insurance cap, floor to ceiling; outside that, or not finite, it throws.
+Each card shows its cover, premium, covers / does not cover, and "In your plan" or "Needs $X more a month" from a ladder
+run with that card chosen. The bands report the life cover funded. The addendum's §11.2 has its dated changes block.
+Migration `20261027130000` also revokes EXECUTE on the two earlier trigger functions.
+
+**New goldens (the four expected results).** Family, Essential, $533.13: term $238.83, CI $294.30. Family,
+Recommended, $533.13: term $383.13, CI $150; the card "Needs $195 more a month". Family, Recommended, $710.84: term
+$297.96, CI $150, father's funeral $262.88; life cover $1,027,453 (less than at $533: run record §1 item 2); "Child B's
+degree stops in month 1." Young single: no life item; every card "No life plan: no one depends on you, so no life cover
+is planned."
+
+**Goldens.** 0 of 37 moved. New guards 26 (card truth) and 27 (slider range), sabotage-tested; guard 23 is now "≤ the
+cap in use"; 13, 15 and 21 to 25 re-run and pass. FPA 161/161; GRP 3,090 tests, 0 fail, 30 skipped; smoke walk 12/12 at 390. Full
+record: FPA `docs/audit/RUN-2026-10-28-f18-package-cards.md` (on `feat/fact-finder-engine`).
+
+**Follow-ups.**
+- F-13 to F-17 stay open (see fix run 3 below).
+- **F-18: closed** by this run, apart from Kyron's two calls (run record §1 items 1 and 2).
+- **F-19 (new, record only):** two NIS pension-age rows disagree. `fact-finder-2026-10.ts` has a flat 65
+  (`nisPensionAge`); `retirement-2026-10.ts` has the 2028–2036 rise.
+- **F-20 (new, record only):** parameter refresh before **4 Jan 2027**: the NIS class table (rate up about 3 points)
+  and the SCP income bands for the $3,750 rate. Both unpublished today.
+
+The merge and deploy order from fix run 1 (below) stands. In step 4, guard SQL now expects `ff-2026-10-28-cards1` and
+engine commit `0a332cf`; migration `20261027130000` gained the two revoke lines (still not applied).
+
 ## Fix run 3, 27 Oct 2026 (cap, Tier 1 order, cover that follows the loan)
 
 Brief: `docs/briefs/2026-10-27-fix-ladder-advice.md`. Kyron, 27 Oct 2026 21:39: Decision 1 (ruin-level life all term),
