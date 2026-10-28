@@ -36,6 +36,13 @@ export interface HouseholdBudget {
   /** What the household lives on if the client dies: needs less a mortgage that clears, debt minimums and care. */
   readonly livingMonthly: number;
   readonly housingStopsOnDeath: boolean;
+  /** "Saving you already do", a month: not in needs (§1.1), but already spoken for, so it is not money left. */
+  readonly savingMonthly: number;
+  /**
+   * Money left each month: household take-home less needs less the saving already done (Decision 10, 28 Oct 2026).
+   * The one "left each month": the stage, the ceiling, the shortfall, the buffer build, Make room and the budget's
+   * "$Y left" all use it (guard 36).
+   */
   readonly surplusMonthly: number;
   /** Months of needs the savings cover. */
   readonly bufferMonths: number;
@@ -144,7 +151,8 @@ export function computeHouseholdBudget(input: BudgetInputs): HouseholdBudget {
   const housingStops = bud.housing === "mortgage" && !!bud.mortgage && bud.mortgage.clearOnDeath && bud.mortgage.balance > 0;
   const living = needs - (housingStops ? bud.housingPaymentMonthly : 0) - debts.minimumsMonthly - input.carePaidMonthly;
   const hhNet = netPay.householdNetMonthly;
-  const surplus = hhNet - needs;
+  const saving = bud.savingMonthly;
+  const surplus = hhNet - needs - saving;
   const buffer = needs > 0 ? bud.savings / needs : 0;
   const deps = facts.children.length + facts.parents.filter(parentSupported).length;
   const ef = facts.client.selfEmployed
@@ -167,6 +175,7 @@ export function computeHouseholdBudget(input: BudgetInputs): HouseholdBudget {
     needsMonthly: needs,
     livingMonthly: living,
     housingStopsOnDeath: housingStops,
+    savingMonthly: saving,
     surplusMonthly: surplus,
     bufferMonths: buffer,
     dependants: deps,

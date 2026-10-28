@@ -34,8 +34,8 @@ export { computeDebtPayoff, payoffMonths, addMonths, monthIndex, monthLabel } fr
 export type { DebtPayoff, DebtPayoffLine, DebtFreeDate } from "./debt-payoff.ts";
 export { computeRetirementFigure } from "./retirement-figure.ts";
 export type { RetirementFigure, RetirementFigureInputs, RetirementStop, RetirementStopKind } from "./retirement-figure.ts";
-export { computeRoomPlan, applyRoomPlan, ROOM_ORDER } from "./room-plan.ts";
-export type { RoomPlanInput, RoomPlanResult, RoomGroupRow, RoomDestinationRow, RoomPlanEffects, RoomStep } from "./room-plan.ts";
+export { computeRoomPlan, applyRoomPlan, roomPlanRecord, ROOM_ORDER } from "./room-plan.ts";
+export type { RoomPlanInput, RoomPlanResult, RoomGroupRow, RoomDestinationRow, RoomPlanEffects, RoomStep, RoomPlanRecord, RoomPlanTotals } from "./room-plan.ts";
 export { computeNetWorth, cashFromFacts, CASH_KINDS, ASSET_KIND_LABELS } from "./net-worth.ts";
 export type { NetWorth, NetWorthAsset, NetWorthOwed, NetWorthInputs } from "./net-worth.ts";
 
@@ -83,10 +83,10 @@ export {
   vehicleFigures, stressAgainstFloor, ADVENTURER_WORDING,
 } from "./annuity-routing.ts";
 export type { AnnuityRouting, AnnuityMode, VehicleFigures, FloorStress, RegisteredClient, RegisteredGoal } from "./annuity-routing.ts";
-export { computeClosing, money, LAYER_NAMES, UNKNOWN_SENTENCE } from "./closing.ts";
+export { computeClosing, money, savingsStep, LAYER_NAMES, UNKNOWN_SENTENCE } from "./closing.ts";
 export type {
   ClosingComparison, ClosingContext, ClosingOptions, ScenarioOutcome, ScenarioPair, DeathLayer, ObligationLine,
-  LifeBasket, BasketItem, CloseBand, PackageCard, ParentFuneralCover, Package, RevealLayer,
+  LifeBasket, BasketItem, CloseBand, PackageCard, ParentFuneralCover, Package, RevealLayer, SavingsStep,
 } from "./closing.ts";
 export { allocateLadder, requestReorder, defaultOrder, insuranceCap, insuranceRange, completeOrder } from "./closing-ladder.ts";
 export type { Ladder, LadderItem, LadderItemSpec, LadderTier, ReorderResult, InsuranceRange } from "./closing-ladder.ts";

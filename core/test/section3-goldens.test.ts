@@ -1,7 +1,8 @@
 /**
  * Section 3 Build A goldens (28 Oct 2026; docs/audit/RUN-2026-10-28-section3-a.md §7). One per new function, as the brief
  * asks: the retirement working, a weekly-paid case, a rent case, a payoff-date mismatch, a Make room default split.
- * Assumption set `ff-2026-10-28-s3`. Each moves only with a recorded re-baseline.
+ * Assumption set `ff-2026-10-28-s3fix`. Each moves only with a recorded re-baseline. Fix run (28 Oct 2026, Decision 10):
+ * the weekly renter's $300 saving is no longer money left, so its save-per-payday and ceiling moved (fix run record).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -26,11 +27,12 @@ test("golden: a weekly-paid case, pay changes and two groups skipped (§2, §1.2
   const p = r.pay;
   assert.deepEqual([p.client.paysPerYear, c(p.client.usualMonthly), c(p.client.planMonthly)], [52, "8666.67", "7500.00"], "$2,000 a week; the plan uses the $7,500 lowest month");
   assert.deepEqual([c(r.budget.netPay.nisMonthly), c(r.budget.netPay.netMonthly), c(p.goodMonthNetMonthly!)], ["405.00", "7059.25", "7953.15"], "take-home on the lowest month, and in a good month");
-  assert.deepEqual([c(p.takeHomePerPay), c(p.savePerPay), p.planPaysPerMonth, p.extraPaysPerYear], ["1629.06", "187.52", 4, 4], "save $188 every payday; plan on 4 pays");
+  assert.deepEqual([c(p.takeHomePerPay), c(p.savePerPay), p.planPaysPerMonth, p.extraPaysPerYear], ["1629.06", "118.29", 4, 4], "save $118 every payday (money left after the $300 already saved, Decision 10); plan on 4 pays");
   assert.deepEqual(r.budgetAnalysis.estimatedGroups, ["fun", "other"], "two groups skipped, marked estimated");
   assert.deepEqual([c(r.budget.needsMonthly), c(r.budgetAnalysis.savingMonthly), c(r.budgetAnalysis.leftMonthly)], ["6246.67", "300.00", "512.58"]);
-  assert.deepEqual([r.budget.stage, c(r.budget.ceilingMonthly), c(r.budget.band.recommended)], [2, "203.15", "152.36"]);
-  assert.deepEqual([c(r.closing.ladder.insuranceCapMonthly), r.closing.ladder.aboveSafeRange], ["200.00", false], "the floor lifts the $152 recommended figure to $200, inside the $203 ceiling");
+  assert.deepEqual([c(r.budget.savingMonthly), c(r.budget.surplusMonthly)], ["300.00", "512.58"], "one left each month: the stage and the ceiling use the $512.58 the budget shows (Decision 10)");
+  assert.deepEqual([r.budget.stage, c(r.budget.ceilingMonthly), c(r.budget.band.recommended)], [2, "128.15", "96.11"]);
+  assert.deepEqual([c(r.closing.ladder.insuranceCapMonthly), r.closing.ladder.aboveSafeRange], ["200.00", true], "the floor lifts the $96 recommended figure to $200, above the $128 safe ceiling (§5.3 note)");
 });
 
 test("golden: a rent case, the young single (§6.1, §9: rent never stops)", () => {

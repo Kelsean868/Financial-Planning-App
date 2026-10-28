@@ -956,7 +956,7 @@ var S3 = "Section 3 spec (signed by Kyron 28 Oct 2026)";
 var S3D = "2026-10-28";
 var PENNY = "The Penny Hoarder budget percentages (take-home basis)";
 var PALIG = "PALIG personal net worth calculator 2012 benchmarks";
-var ASSUMPTION_SET_ID = "ff-2026-10-28-s3";
+var ASSUMPTION_SET_ID = "ff-2026-10-28-s3fix";
 var FF = deepFreeze2({
   assumptionSetId: row(ASSUMPTION_SET_ID, "rule", "Section 1 §1.2: the assumption set is a versioned constant in the engine", D),
   rates: {
@@ -1047,6 +1047,16 @@ var FF = deepFreeze2({
     giving: row({ min: 0.05, max: 0.1 }, "advisor-set", `${PENNY} (Section 3 §6.1: Giving, 5–10% each)`, S3D),
     farAboveFactor: row(1.5, "rule", `${S3} §6.2: far above the guide is more than 1.5 times its top`, S3D),
     gapsShown: row(3, "rule", `${S3} §6.2: three lines at most under the graph`, S3D)
+  },
+  /** Section 3 §6.4, What you own and owe (Decision 11, Kyron, 28 Oct 2026). A common guide, never a pass or fail. */
+  netWorth: {
+    debtPaymentsGuide: row(
+      { min: null, max: 0.25 },
+      "advisor-set",
+      "PALIG net worth calculator benchmark, Loans 25%",
+      S3D,
+      { note: "Debt payments, including the mortgage, as a share of pay before deductions (the partner's pay is take-home)" }
+    )
   },
   /** Section 3 §9: the recommended retirement income. Inflation is the assumption set's projected rate (rates block). */
   retirementFigure: {
@@ -2536,7 +2546,8 @@ function computeHouseholdBudget(input) {
   const housingStops = bud.housing === "mortgage" && !!bud.mortgage && bud.mortgage.clearOnDeath && bud.mortgage.balance > 0;
   const living = needs - (housingStops ? bud.housingPaymentMonthly : 0) - debts.minimumsMonthly - input.carePaidMonthly;
   const hhNet = netPay.householdNetMonthly;
-  const surplus = hhNet - needs;
+  const saving = bud.savingMonthly;
+  const surplus = hhNet - needs - saving;
   const buffer = needs > 0 ? bud.savings / needs : 0;
   const deps = facts.children.length + facts.parents.filter(parentSupported).length;
   const ef = facts.client.selfEmployed ? b.num("core:ff.budget.emergencyMonthsSelfEmployed") : deps > 0 ? b.num("core:ff.budget.emergencyMonthsDependants") : b.num("core:ff.budget.emergencyMonthsAlone");
@@ -2557,6 +2568,7 @@ function computeHouseholdBudget(input) {
     needsMonthly: needs,
     livingMonthly: living,
     housingStopsOnDeath: housingStops,
+    savingMonthly: saving,
     surplusMonthly: surplus,
     bufferMonths: buffer,
     dependants: deps,
@@ -3703,11 +3715,12 @@ function buildScopeStatement(gaps, rows) {
 }
 function buildSnapshot(input) {
   if (!input.engineVersion) throw new ClosingInputError("a snapshot needs the pinned engine version");
+  const closing = input.roomPlan ? { ...input.closing, roomPlan: input.roomPlan } : input.closing;
   const snap = JSON.parse(JSON.stringify({
     kind: "life_case_snapshot",
     assumptionSetId: input.assumptionSetId,
     engineVersion: input.engineVersion,
-    closing: input.closing,
+    closing,
     scope: input.scope
   }));
   assertNoHealthKeys(snap, "snapshot");
@@ -3846,6 +3859,13 @@ var LAYER_NAMES = {
   5: "Your plan"
 };
 var UNKNOWN_SENTENCE = "We did not capture this. It is not counted either way.";
+var RUNG_MONTHS = { one: 1, three: 3, six: 6 };
+function savingsStep(budget) {
+  if (budget.stage === 0) return 0;
+  const reached = [budget.bufferMonths >= RUNG_MONTHS.one, budget.expensiveDebt <= 0, budget.bufferMonths >= RUNG_MONTHS.three, budget.bufferMonths >= RUNG_MONTHS.six];
+  const i = reached.findIndex((x) => !x);
+  return i < 0 ? 5 : i + 1;
+}
 var DEBT_WORDS = {
   "credit-card": "credit card",
   "car-loan": "car loan",
@@ -4269,6 +4289,7 @@ function computeClosing(ctxIn, options = {}) {
   return {
     assumptionSetId: ASSUMPTION_SET_ID,
     stage: budget.stage,
+    savingsStep: savingsStep(budget),
     underwater: budget.stage === 0,
     packages,
     cards,
@@ -4768,7 +4789,6 @@ function computeRetirementFigure(input) {
 }
 
 // src/net-worth.ts
-var MONTHS_A_YEAR3 = 12;
 var ASSET_KIND_LABELS = {
   "bank": "Bank and fixed deposits",
   "credit-union": "Credit union shares",
@@ -4798,10 +4818,14 @@ function computeNetWorth({ facts, engine, budget }) {
   ];
   const owedTotal = owed.reduce((s, o) => s + o.balance, 0);
   const partnerPay = facts.partner ? payMonthly(b, facts.partner.pay).usual : 0;
-  const grossYearlyPay = (engine.client.usualGrossMonthly + partnerPay) * MONTHS_A_YEAR3;
+  const payBeforeDeductions = engine.client.usualGrossMonthly + partnerPay;
+  const loanAndCard = budget.debtMinimumsMonthly;
+  const mortgagePayment = engine.budget.housing === "mortgage" ? engine.budget.housingPaymentMonthly : 0;
+  const debtPayments = loanAndCard + mortgagePayment;
+  const guideNode = b.useNode("core:ff.netWorth.debtPaymentsGuide").node;
   const cashTotal = cashFromFacts(facts);
   const costsMonthly = budget.needsMonthly;
-  b.rule("net worth = assets - (debts + mortgage); debts share = owed / household gross yearly pay; months covered = cash / monthly costs");
+  b.rule("net worth = assets - (debts + mortgage); debt payments share = (loan and card payments + mortgage payment) / pay before deductions; months covered = cash / monthly costs");
   b.rule("cash = bank + credit union + unit trusts and money market funds; the version 1 savings field counts only when there are no cash rows");
   return {
     assets,
@@ -4809,8 +4833,12 @@ function computeNetWorth({ facts, engine, budget }) {
     owed,
     owedTotal,
     netWorth: assetsTotal - owedTotal,
-    grossYearlyPay,
-    debtsShareOfGrossPay: grossYearlyPay > 0 ? owedTotal / grossYearlyPay : null,
+    loanAndCardPaymentsMonthly: loanAndCard,
+    mortgagePaymentMonthly: mortgagePayment,
+    debtPaymentsMonthly: debtPayments,
+    payBeforeDeductionsMonthly: payBeforeDeductions,
+    debtPaymentsShareOfPay: payBeforeDeductions > 0 ? debtPayments / payBeforeDeductions : null,
+    debtPaymentsGuide: { max: guideNode.value.max, source: guideNode.source, asOf: guideNode.asOf },
     cashTotal,
     costsMonthly,
     monthsCovered: costsMonthly > 0 ? cashTotal / costsMonthly : null,
@@ -4878,10 +4906,10 @@ function unfilled(r, keys) {
     return a + (spec ? Math.max(0, spec.full - got) : 0);
   }, 0);
 }
-function rangeAfter(b, r, deltaNeeds) {
+function rangeAfter(b, r, deltaNeeds, deltaSaving) {
   const bud = r.budget;
   const needs = bud.needsMonthly + deltaNeeds;
-  const surplus = bud.netPay.householdNetMonthly - needs;
+  const surplus = bud.netPay.householdNetMonthly - needs - (bud.savingMonthly + deltaSaving);
   const { stage, ceiling } = stageAndCeiling(b, {
     hhNet: bud.netPay.householdNetMonthly,
     surplus,
@@ -4922,6 +4950,7 @@ function computeRoomPlan(r, input) {
   }
   const freed = groups.reduce((a, g) => a + g.freedMonthly, 0);
   const freedNeeds = groups.filter((g) => g.kind !== "saving").reduce((a, g) => a + g.freedMonthly, 0);
+  const freedSaving = freed - freedNeeds;
   const surplus = r.budget.surplusMonthly;
   const capNow = r.closing.ladder.insuranceCapMonthly;
   const near = b.num("core:ff.closing.nearDatedYears");
@@ -4931,7 +4960,7 @@ function computeRoomPlan(r, input) {
   const needed = {
     shortfall: Math.max(0, -surplus),
     buffer: unfilled(r, ["buffer-one-month"]),
-    protection: Math.max(0, rangeAfter(b, r, -freedNeeds).defaultCap - capNow),
+    protection: Math.max(0, rangeAfter(b, r, -freedNeeds, -freedSaving).defaultCap - capNow),
     debt: expensive.length ? Math.max(0, clearPay - expMins - allocatedTo(r, "expensive-debt")) : 0,
     emergency: unfilled(r, ["buffer-three-months"]),
     retirement: unfilled(r, ["retirement"]),
@@ -4981,7 +5010,7 @@ function computeRoomPlan(r, input) {
     if (!groupsAfter.some((g) => g.key === k)) groupsAfter.push({ key: k, todayMonthly: 0, afterMonthly: d.monthly });
   }
   const spendMoreNeeds = split.filter((d) => d.key.startsWith("group:")).reduce((a, d) => a + d.monthly, 0);
-  const after = rangeAfter(b, r, -freedNeeds + spendMoreNeeds);
+  const after = rangeAfter(b, r, -freedNeeds + spendMoreNeeds, -freedSaving);
   const insAfter = after.noPlan ? 0 : Math.min(after.max, Math.max(after.min, capNow + get("protection")));
   const target = [...expensive].sort((x, y) => y.ratePct - x.ratePct)[0];
   const extraBefore = r.facts.debts.extraMonthly;
@@ -5066,6 +5095,32 @@ function applyRoomPlan(facts, plan) {
 function lineMonthly(b, g) {
   if (g.skip) return toMonthly(b, g.total ?? 0, g.totalFrequency ?? "monthly");
   return g.lines.reduce((a, l) => a + toMonthly(b, l.amount, l.frequency), 0);
+}
+function totals(r, insuranceBudgetMonthly, debtExtraMonthly) {
+  const ba = r.budgetAnalysis;
+  return {
+    takeHomeMonthly: ba.takeHomeMonthly,
+    needsMonthly: ba.needsMonthly,
+    savingMonthly: ba.savingMonthly,
+    outgoingMonthly: ba.outgoingMonthly,
+    leftMonthly: ba.leftMonthly,
+    insuranceBudgetMonthly,
+    debtExtraMonthly
+  };
+}
+function roomPlanRecord(input) {
+  const { plan, real, withPlan } = input;
+  const e = plan.effects;
+  return JSON.parse(JSON.stringify({
+    applied: true,
+    groupTargets: plan.groups.filter((g) => g.freedMonthly > MONEY_TOLERANCE2).map((g) => ({ key: g.key, label: g.label, todayMonthly: g.todayMonthly, targetMonthly: g.targetMonthly })),
+    split: plan.split.map((d) => ({ key: d.key, label: d.label, step: d.step, monthly: d.monthly })),
+    custom: plan.custom,
+    freedMonthly: plan.freedMonthly,
+    notGivenAJobMonthly: plan.notGivenAJobMonthly,
+    real: totals(real, e.insuranceBudgetBeforeMonthly, e.debtExtraBeforeMonthly),
+    withPlan: totals(withPlan, e.insuranceBudgetMonthly, e.debtExtraMonthly)
+  }));
 }
 
 // src/samples/index.ts
@@ -5457,8 +5512,10 @@ export {
   restAssuredPer1000,
   restAssuredPremium,
   restAssuredRatedAge,
+  roomPlanRecord,
   roughBand,
   routeAnnuity,
+  savingsStep,
   scopeRow,
   splitBudget,
   stageAndCeiling,

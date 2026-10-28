@@ -181,6 +181,8 @@ export interface ScenarioPair { readonly today: ScenarioOutcome; readonly plan: 
 export interface ClosingComparison {
   readonly assumptionSetId: string;
   readonly stage: HouseholdBudget["stage"];
+  /** The savings ladder step the client is on (`savingsStep`): the header chip and the one-page plan read it. */
+  readonly savingsStep: SavingsStep;
   readonly underwater: boolean;
   readonly packages: Readonly<Record<Package, number>>;
   /** Essential, Recommended, Full: each card's cover, premium, what it covers and its status at the cap in use. */
@@ -205,6 +207,25 @@ export interface ClosingComparison {
     readonly notes: readonly string[];
   };
   readonly provenance: Provenance;
+}
+
+/** 0: before step 1 (costs above income); 1 to 5: the step of today's savings ladder the client is on. */
+export type SavingsStep = 0 | 1 | 2 | 3 | 4 | 5;
+
+/** The ladder's rungs in months of costs saved: "save one month", "save three months", "save six months" (§13). */
+const RUNG_MONTHS = { one: 1, three: 3, six: 6 } as const;
+
+/**
+ * The step of today's savings ladder (Section 3 §10.2, §13; Build B D6): 1 save one month of costs, 2 clear expensive
+ * debt, 3 save three months, 4 save six months, 5 save for goals and retirement. The step is the first rung not yet
+ * reached. Stage 0 is step 0, "before step 1: close the monthly gap". The page words it; the engine only counts it, so the
+ * header chip and the one-page plan (built from the snapshot) say the same step.
+ */
+export function savingsStep(budget: Pick<HouseholdBudget, "stage" | "bufferMonths" | "expensiveDebt">): SavingsStep {
+  if (budget.stage === 0) return 0;
+  const reached = [budget.bufferMonths >= RUNG_MONTHS.one, budget.expensiveDebt <= 0, budget.bufferMonths >= RUNG_MONTHS.three, budget.bufferMonths >= RUNG_MONTHS.six];
+  const i = reached.findIndex((x) => !x);
+  return (i < 0 ? 5 : i + 1) as SavingsStep;
 }
 
 const DEBT_WORDS: Readonly<Record<EngineFacts["debts"]["items"][number]["type"], string>> = {
@@ -624,6 +645,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   return {
     assumptionSetId: ASSUMPTION_SET_ID,
     stage: budget.stage,
+    savingsStep: savingsStep(budget),
     underwater: budget.stage === 0,
     packages,
     cards,

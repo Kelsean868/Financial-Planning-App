@@ -112,11 +112,15 @@ function unfilled(r: FactFinderResult, keys: readonly string[]): number {
   }, 0);
 }
 
-/** The insurance range the budget would have with needs changed by `deltaNeeds` (Make room re-runs the stage table). */
-function rangeAfter(b: ProvenanceBuilder, r: FactFinderResult, deltaNeeds: number): { noPlan: boolean; min: number; max: number; defaultCap: number } {
+/**
+ * The insurance range the budget would have with needs changed by `deltaNeeds` and the saving already done changed by
+ * `deltaSaving` (Make room re-runs the stage table). Money left is the budget's one figure: take-home less needs less
+ * saving (Decision 10).
+ */
+function rangeAfter(b: ProvenanceBuilder, r: FactFinderResult, deltaNeeds: number, deltaSaving: number): { noPlan: boolean; min: number; max: number; defaultCap: number } {
   const bud = r.budget;
   const needs = bud.needsMonthly + deltaNeeds;
-  const surplus = bud.netPay.householdNetMonthly - needs;
+  const surplus = bud.netPay.householdNetMonthly - needs - (bud.savingMonthly + deltaSaving);
   const { stage, ceiling } = stageAndCeiling(b, {
     hhNet: bud.netPay.householdNetMonthly, surplus, buffer: needs > 0 ? cashFromFacts(r.facts) / needs : 0,
     expensiveDebt: bud.expensiveDebt, emergencyFundMonths: bud.emergencyFundMonths,
@@ -150,6 +154,7 @@ export function computeRoomPlan(r: FactFinderResult, input: RoomPlanInput): Room
   }
   const freed = groups.reduce((a, g) => a + g.freedMonthly, 0);
   const freedNeeds = groups.filter((g) => g.kind !== "saving").reduce((a, g) => a + g.freedMonthly, 0);
+  const freedSaving = freed - freedNeeds;
 
   // ---- what each step can still use
   const surplus = r.budget.surplusMonthly;
@@ -161,7 +166,7 @@ export function computeRoomPlan(r: FactFinderResult, input: RoomPlanInput): Room
   const needed: Record<(typeof ROOM_ORDER)[number], number> = {
     shortfall: Math.max(0, -surplus),
     buffer: unfilled(r, ["buffer-one-month"]),
-    protection: Math.max(0, rangeAfter(b, r, -freedNeeds).defaultCap - capNow),
+    protection: Math.max(0, rangeAfter(b, r, -freedNeeds, -freedSaving).defaultCap - capNow),
     debt: expensive.length ? Math.max(0, clearPay - expMins - allocatedTo(r, "expensive-debt")) : 0,
     emergency: unfilled(r, ["buffer-three-months"]),
     retirement: unfilled(r, ["retirement"]),
@@ -215,7 +220,7 @@ export function computeRoomPlan(r: FactFinderResult, input: RoomPlanInput): Room
     if (!groupsAfter.some((g) => g.key === k)) groupsAfter.push({ key: k, todayMonthly: 0, afterMonthly: d.monthly });
   }
   const spendMoreNeeds = split.filter((d) => d.key.startsWith("group:")).reduce((a, d) => a + d.monthly, 0);
-  const after = rangeAfter(b, r, -freedNeeds + spendMoreNeeds);
+  const after = rangeAfter(b, r, -freedNeeds + spendMoreNeeds, -freedSaving);
   const insAfter = after.noPlan ? 0 : Math.min(after.max, Math.max(after.min, capNow + get("protection")));
   const target = [...expensive].sort((x, y) => y.ratePct - x.ratePct)[0];
   const extraBefore = r.facts.debts.extraMonthly;
@@ -313,4 +318,67 @@ export function applyRoomPlan(facts: LifeCaseFacts, plan: RoomPlanResult): { rea
 function lineMonthly(b: ProvenanceBuilder, g: BudgetGroupFacts): number {
   if (g.skip) return toMonthly(b, g.total ?? 0, g.totalFrequency ?? "monthly");
   return g.lines.reduce((a, l) => a + toMonthly(b, l.amount, l.frequency), 0);
+}
+
+/* ------------------------------------------------------------------ the plan kept in the snapshot */
+
+/** The money totals one version of the case shows (Section 3 fix run, Change 4). */
+export interface RoomPlanTotals {
+  readonly takeHomeMonthly: number;
+  readonly needsMonthly: number;
+  readonly savingMonthly: number;
+  /** "Going out": needs plus saving (§1.4). */
+  readonly outgoingMonthly: number;
+  /** "Left each month" (Decision 10: the one figure). */
+  readonly leftMonthly: number;
+  readonly insuranceBudgetMonthly: number;
+  readonly debtExtraMonthly: number;
+}
+
+/**
+ * The Make room plan in use, as the snapshot keeps it inside `closing` (Section 3 fix run, Change 4; §6.3.4 "both
+ * versions print"). Plain numbers only, so the one-page plan prints both versions from the snapshot and never from page
+ * state. No new column: it rides inside the `closing` JSON.
+ */
+export interface RoomPlanRecord {
+  readonly applied: true;
+  /** Each group the plan changes: today's amount and the target. */
+  readonly groupTargets: readonly { readonly key: BudgetGroupKey; readonly label: string; readonly todayMonthly: number; readonly targetMonthly: number }[];
+  /** The split in use, in plan order ("Spend more on" groups last). */
+  readonly split: readonly { readonly key: RoomDestination; readonly label: string; readonly step: RoomStep | null; readonly monthly: number }[];
+  readonly custom: boolean;
+  readonly freedMonthly: number;
+  readonly notGivenAJobMonthly: number;
+  /** The real numbers. */
+  readonly real: RoomPlanTotals;
+  /** With the plan. */
+  readonly withPlan: RoomPlanTotals;
+}
+
+function totals(r: FactFinderResult, insuranceBudgetMonthly: number, debtExtraMonthly: number): RoomPlanTotals {
+  const ba = r.budgetAnalysis;
+  return {
+    takeHomeMonthly: ba.takeHomeMonthly, needsMonthly: ba.needsMonthly, savingMonthly: ba.savingMonthly,
+    outgoingMonthly: ba.outgoingMonthly, leftMonthly: ba.leftMonthly, insuranceBudgetMonthly, debtExtraMonthly,
+  };
+}
+
+/**
+ * The record of a plan in use: `real` is `computeFactFinder` on the real facts, `withPlan` on `applyRoomPlan`'s facts and
+ * options, `plan` is `computeRoomPlan` on the real result. The insurance budget and the debt extra are the plan's own
+ * before and after figures (`effects`), the ones Make room shows.
+ */
+export function roomPlanRecord(input: { readonly plan: RoomPlanResult; readonly real: FactFinderResult; readonly withPlan: FactFinderResult }): RoomPlanRecord {
+  const { plan, real, withPlan } = input;
+  const e = plan.effects;
+  return JSON.parse(JSON.stringify({
+    applied: true,
+    groupTargets: plan.groups.filter((g) => g.freedMonthly > MONEY_TOLERANCE).map((g) => ({ key: g.key, label: g.label, todayMonthly: g.todayMonthly, targetMonthly: g.targetMonthly })),
+    split: plan.split.map((d) => ({ key: d.key, label: d.label, step: d.step, monthly: d.monthly })),
+    custom: plan.custom,
+    freedMonthly: plan.freedMonthly,
+    notGivenAJobMonthly: plan.notGivenAJobMonthly,
+    real: totals(real, e.insuranceBudgetBeforeMonthly, e.debtExtraBeforeMonthly),
+    withPlan: totals(withPlan, e.insuranceBudgetMonthly, e.debtExtraMonthly),
+  })) as RoomPlanRecord;
 }

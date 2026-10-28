@@ -1,0 +1,187 @@
+[
+ [
+  "§2.8 family: stage",
+  2,
+  2
+ ],
+ [
+  "§2.8 family: ceiling",
+  711,
+  710.8425000000007
+ ],
+ [
+  "§2.8 family: care save a month",
+  3837,
+  3836.832922361326
+ ],
+ [
+  "§2.8 family: already paying",
+  4000,
+  4000
+ ],
+ [
+  "§2.8 family: care present value",
+  1263107,
+  1263107.2588376082
+ ],
+ [
+  "§2.8 family: peak a month",
+  17391,
+  17391.466126908694
+ ],
+ [
+  "§2.8 family: peak at age",
+  54,
+  54
+ ],
+ [
+  "§2.8 family: sandwich years",
+  8,
+  8
+ ],
+ [
+  "§2.8 family: finish age",
+  55,
+  55
+ ],
+ [
+  "§2.8 family: cover essential",
+  823567,
+  823566.766256042
+ ],
+ [
+  "§2.8 family: cover recommended",
+  1994846,
+  1994846.1357406415
+ ],
+ [
+  "§2.8 family: cover full",
+  2236674,
+  2236674.0250936504
+ ],
+ [
+  "§2.8 family: needs",
+  15140,
+  15140
+ ],
+ [
+  "§2.8 family: living",
+  6700,
+  6700
+ ],
+ [
+  "§2.8 young single: stage",
+  1,
+  1
+ ],
+ [
+  "§2.8 young single: ceiling",
+  374,
+  374.14250000000004
+ ],
+ [
+  "§2.8 young single: care goals (no care)",
+  0,
+  0
+ ],
+ [
+  "§2.8 young single: cover essential",
+  149000,
+  149000
+ ],
+ [
+  "§2.8 young single: cover recommended",
+  149000,
+  149000
+ ],
+ [
+  "§2.8 young single: cover full",
+  149000,
+  149000
+ ],
+ [
+  "§2.8 young single: needs",
+  5450,
+  5450
+ ],
+ [
+  "§2.8 young single: living",
+  5300,
+  5300
+ ],
+ [
+  "care graph §3: peak a month",
+  17391,
+  17391.466126908694
+ ],
+ [
+  "care graph §3: peak at age",
+  54,
+  54
+ ],
+ [
+  "care graph §3: sandwich years",
+  8,
+  8
+ ],
+ [
+  "care graph §3: finish age",
+  55,
+  55
+ ],
+ [
+  "care graph §3: nominal total (to the thousand)",
+  2078000,
+  2078167.5911021903
+ ],
+ [
+  "care graph §3: save from today",
+  3837,
+  3836.832922361326
+ ],
+ [
+  "care graph §3: already paying",
+  4000,
+  4000
+ ],
+ [
+  "care graph §3: present value (to the thousand)",
+  1263000,
+  1263107.2588376082
+ ],
+ [
+  "care graph §3 UK: peak a month",
+  50753,
+  50753.23539136213
+ ],
+ [
+  "care graph §3 UK: sandwich years",
+  8,
+  8
+ ],
+ [
+  "care graph §3 UK: nominal total (to the thousand)",
+  3406000,
+  3406011.777531116
+ ],
+ [
+  "care graph §3 UK: save from today",
+  16487,
+  16486.681790825456
+ ],
+ [
+  "care graph §3 UK: present value (to the thousand)",
+  2161000,
+  2161420.0355303474
+ ],
+ [
+  "care graph §3 UK: top lever",
+  "Send Child B locally",
+  null
+ ],
+ [
+  "care graph §3 UK: top lever worth a month",
+  12650,
+  12649.84886846413
+ ]
+]

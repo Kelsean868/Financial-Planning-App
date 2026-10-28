@@ -29,8 +29,9 @@ export type Frequency = "weekly" | "fortnightly" | "semimonthly" | "monthly" | "
 // "ff-2026-10-27-nis70" until the one-allocator fix (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-one-allocator.md), then
 // "ff-2026-10-27-ladder1" until fix run 3 (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-ladder-advice.md), then
 // "ff-2026-10-27-ladder2" until fix run 4, the package cards (28 Oct 2026, docs/audit/RUN-2026-10-28-f18-package-cards.md), then
-// "ff-2026-10-28-cards1" until Section 3 Build A (28 Oct 2026, docs/audit/RUN-2026-10-28-section3-a.md).
-export const ASSUMPTION_SET_ID = "ff-2026-10-28-s3";
+// "ff-2026-10-28-cards1" until Section 3 Build A (28 Oct 2026, docs/audit/RUN-2026-10-28-section3-a.md), then
+// "ff-2026-10-28-s3" until the Section 3 fix run, the debt payments guide row (28 Oct 2026, docs/audit/RUN-2026-10-28-section3-fix.md).
+export const ASSUMPTION_SET_ID = "ff-2026-10-28-s3fix";
 
 export type EducationRoute = "local" | "regional" | "uk" | "canada" | "usa" | "none";
 export type CostLevel = "lean" | "typical" | "full";
@@ -133,6 +134,12 @@ export const FF = deepFreeze({
     giving: row<GuideRange>({ min: 0.05, max: 0.10 }, "advisor-set", `${PENNY} (Section 3 §6.1: Giving, 5–10% each)`, S3D),
     farAboveFactor: row(1.5, "rule", `${S3} §6.2: far above the guide is more than 1.5 times its top`, S3D),
     gapsShown: row(3, "rule", `${S3} §6.2: three lines at most under the graph`, S3D),
+  },
+
+  /** Section 3 §6.4, What you own and owe (Decision 11, Kyron, 28 Oct 2026). A common guide, never a pass or fail. */
+  netWorth: {
+    debtPaymentsGuide: row<GuideRange>({ min: null, max: 0.25 }, "advisor-set", "PALIG net worth calculator benchmark, Loans 25%", S3D,
+      { note: "Debt payments, including the mortgage, as a share of pay before deductions (the partner's pay is take-home)" }),
   },
 
   /** Section 3 §9: the recommended retirement income. Inflation is the assumption set's projected rate (rates block). */

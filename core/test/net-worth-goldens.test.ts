@@ -1,7 +1,11 @@
 /**
  * Section 3 Build C (28 Oct 2026; docs/audit/RUN-2026-10-28-section3-c.md): the net worth goldens for the samples, the
  * single cash source (the emergency fund reads the assets; no asset is typed twice), the version 1 upgrade, and the
- * catalogue labels against the facts validator. Assumption set `ff-2026-10-28-s3`.
+ * catalogue labels against the facts validator. Assumption set `ff-2026-10-28-s3fix`.
+ *
+ * Section 3 fix run (28 Oct 2026; docs/audit/RUN-2026-10-28-section3-fix.md, Decision 11): "debts as a share of gross
+ * yearly pay" (family 192%) is replaced by debt payments, including the mortgage, as a share of pay before deductions
+ * (family 21.1%, against a common guide of at most 25%).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -20,7 +24,10 @@ test("golden: net worth, sample family (§6.4)", () => {
   assert.equal(n.assets.length, 10, "every kind is listed, in the §6.4 order");
   assert.deepEqual(n.owed.map((o) => [o.label, o.balance]), [["Mortgage", 420000], ["Credit card", 18000], ["Personal loan", 45000]]);
   assert.deepEqual([n.assetsTotal, n.owedTotal, n.netWorth], [1155000, 483000, 672000], "$1,155,000 owned, $483,000 owed");
-  assert.deepEqual([n.grossYearlyPay, c2(n.debtsShareOfGrossPay!)], [252000, "1.92"], "(client $17,000 gross + partner $4,000 take-home) × 12; $483,000 is 192% of it");
+  // Decision 11 (28 Oct 2026): debt payments, including the mortgage, as a share of pay before deductions.
+  assert.deepEqual([n.loanAndCardPaymentsMonthly, n.mortgagePaymentMonthly, n.debtPaymentsMonthly], [1440, 3000, 4440], "loan and card payments $1,440 + the mortgage payment $3,000");
+  assert.deepEqual([n.payBeforeDeductionsMonthly, n.debtPaymentsShareOfPay!.toFixed(4)], [21000, "0.2114"], "client $17,000 gross + partner $4,000 take-home; $4,440 is 21.1% of it");
+  assert.deepEqual(n.debtPaymentsGuide, { max: 0.25, source: "PALIG net worth calculator benchmark, Loans 25%", asOf: "2026-10-28" }, "a common guide: at most 25%");
   assert.deepEqual([n.cashTotal, n.costsMonthly, c2(n.monthsCovered!)], [20000, 15140, "1.32"], "$20,000 of cash covers 1.32 months of $15,140 costs");
   assert.equal(n.partnerPayIsTakeHome, true);
 });
@@ -29,14 +36,15 @@ test("golden: net worth, sample young single (§6.4)", () => {
   const n = computeFactFinder(SAMPLE_YOUNG_SINGLE).netWorth;
   assert.deepEqual(values(n), { bank: 4000, vehicle: 35000, furniture: 8000 });
   assert.deepEqual([n.assetsTotal, n.owedTotal, n.netWorth], [47000, 3000, 44000]);
-  assert.deepEqual([n.grossYearlyPay, c2(n.debtsShareOfGrossPay!)], [96000, "0.03"], "$8,000 gross a month; $3,000 is 3.1% of the year's pay");
+  assert.deepEqual([n.debtPaymentsMonthly, n.payBeforeDeductionsMonthly, n.debtPaymentsShareOfPay!.toFixed(5)], [150, 8000, "0.01875"], "$150 card payment, no mortgage (she rents), $8,000 gross: 1.9%");
   assert.deepEqual([n.cashTotal, n.costsMonthly, c2(n.monthsCovered!)], [4000, 5450, "0.73"]);
   assert.equal(n.partnerPayIsTakeHome, false);
 });
 
 test("golden: net worth, weekly renter (no partner, one card)", () => {
   const n = computeFactFinder(SAMPLE_WEEKLY_RENTER).netWorth;
-  assert.deepEqual([n.assetsTotal, n.owedTotal, n.netWorth, n.grossYearlyPay], [7000, 6000, 1000, 104000], "$2,000 a week × 52 is the usual year, not the lowest month");
+  assert.deepEqual([n.assetsTotal, n.owedTotal, n.netWorth, c2(n.payBeforeDeductionsMonthly)], [7000, 6000, 1000, "8666.67"], "$2,000 a week × 52 ÷ 12 is the usual month, not the lowest month");
+  assert.equal(n.debtPaymentsShareOfPay!.toFixed(4), "0.0288", "$250 card payment over $8,666.67");
   assert.equal(c2(n.monthsCovered!), "1.12");
 });
 
