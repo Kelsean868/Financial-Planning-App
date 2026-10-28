@@ -70,7 +70,7 @@ export const SAMPLE_FAMILY: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
     ],
     housing: "mortgage",
     mortgage: { balance: 420000, yearsLeft: 18, clearOnDeath: true },
-    savings: 20000,
+    savings: 0,
     roomPlan: null,
   },
   debts: {
@@ -90,7 +90,15 @@ export const SAMPLE_FAMILY: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
   wishes: { funeral: 50000, finalMedical: 0, legacy: 150000, retireAge: 65, retireIncomeMonthly: 8000 },
   workPension: { kind: "none" },
   opener: NO_OPENER,
-  assets: [],
+  // Build C: the version 1 cash ($20,000) is one bank row, so the emergency fund sees the same cash; the rest is what the
+  // family owns (none of it is cash, so no golden moves).
+  assets: [
+    { kind: "bank", value: 20000 },
+    { kind: "pension-cash", value: 60000 },
+    { kind: "property", value: 950000 },
+    { kind: "vehicle", value: 85000 },
+    { kind: "furniture", value: 40000 },
+  ],
 });
 
 export const SAMPLE_YOUNG_SINGLE: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
@@ -112,7 +120,7 @@ export const SAMPLE_YOUNG_SINGLE: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
     ],
     housing: "rent",
     mortgage: null,
-    savings: 4000,
+    savings: 0,
     roomPlan: null,
   },
   debts: { items: [{ label: "Credit card", type: "credit-card", lender: null, balance: 3000, ratePct: 24, minimumMonthly: 150, endDate: null, cosigned: false, cosignerName: null }], extraMonthly: 200 },
@@ -126,7 +134,12 @@ export const SAMPLE_YOUNG_SINGLE: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
   wishes: { funeral: 50000, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 6000 },
   workPension: { kind: "none" },
   opener: NO_OPENER,
-  assets: [],
+  // Build C: the version 1 cash ($4,000) is one bank row; she also owns a small vehicle and some furniture.
+  assets: [
+    { kind: "bank", value: 4000 },
+    { kind: "vehicle", value: 35000 },
+    { kind: "furniture", value: 8000 },
+  ],
 });
 
 /**
@@ -158,7 +171,7 @@ export const SAMPLE_WEEKLY_RENTER: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
     ],
     housing: "rent",
     mortgage: null,
-    savings: 7000,
+    savings: 0,
     roomPlan: null,
   },
   debts: {
@@ -170,7 +183,10 @@ export const SAMPLE_WEEKLY_RENTER: LifeCaseFacts = deepFreeze<LifeCaseFacts>({
   wishes: { funeral: 50000, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 5000 },
   workPension: { kind: "none" },
   opener: NO_OPENER,
-  assets: [],
+  // Build C: the version 1 cash ($7,000) is one bank row, and her credit union shares ($300 a month) count as cash.
+  assets: [
+    { kind: "bank", value: 7000 },
+  ],
 });
 
 /** Version 1 of the sample family, as signed (the upgrade test reads it). */

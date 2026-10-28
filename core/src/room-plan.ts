@@ -15,7 +15,7 @@ import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
 import { LifeCaseFactsError } from "./errors.ts";
 import { isRoomDestination, catalogueGroup, type BudgetGroupKey, type RoomDestination, type LifeCaseFacts, type BudgetGroupFacts, type BudgetLineFacts } from "./life-case-facts.ts";
-import { toMonthly } from "./engine-facts.ts";
+import { toMonthly, cashFromFacts } from "./engine-facts.ts";
 import { stageAndCeiling } from "./household-budget.ts";
 import { amortisedPayment } from "./debts.ts";
 import { payoffMonths, addMonths } from "./debt-payoff.ts";
@@ -118,7 +118,7 @@ function rangeAfter(b: ProvenanceBuilder, r: FactFinderResult, deltaNeeds: numbe
   const needs = bud.needsMonthly + deltaNeeds;
   const surplus = bud.netPay.householdNetMonthly - needs;
   const { stage, ceiling } = stageAndCeiling(b, {
-    hhNet: bud.netPay.householdNetMonthly, surplus, buffer: needs > 0 ? r.facts.budget.savings / needs : 0,
+    hhNet: bud.netPay.householdNetMonthly, surplus, buffer: needs > 0 ? cashFromFacts(r.facts) / needs : 0,
     expensiveDebt: bud.expensiveDebt, emergencyFundMonths: bud.emergencyFundMonths,
   });
   const floor = b.num("core:ff.insurance.floorMonthly");

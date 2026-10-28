@@ -145,7 +145,10 @@ export interface BudgetFacts {
   groups: BudgetGroupFacts[];
   housing: HousingKind;
   mortgage: { balance: number; yearsLeft: number; clearOnDeath: boolean } | null;
-  /** Cash saved today. */
+  /**
+   * Version 1 cash. Since Section 3 Build C the cash is the bank, credit union and unit trust rows of `assets`; this field
+   * counts only when there are none (a case saved before assets existed), and the upgrade and the page leave it at 0.
+   */
   savings: number;
   roomPlan: RoomPlanFacts | null;
 }
@@ -681,7 +684,8 @@ function upgradeChecked(v1: LifeCaseFactsV1): LifeCaseFacts {
     children: v1.children,
     // careTier / careFromAge are kept as the future level; growth when a level was set.
     parents: v1.parents.map((p) => ({ ...p, growth: p.careTier > 0 })),
-    budget: { groups, housing: bud.housing, mortgage: bud.mortgage, savings: bud.savings, roomPlan: null },
+    // Build C: version 1 cash becomes one bank asset row; `budget.savings` is then 0 (assets are the one source).
+    budget: { groups, housing: bud.housing, mortgage: bud.mortgage, savings: 0, roomPlan: null },
     debts: {
       items: v1.debts.items.map((d) => ({ ...d, type: debtTypeFromLabel(d.label), lender: null, endDate: null, cosigned: false, cosignerName: null })),
       extraMonthly: v1.debts.extraMonthly,
@@ -691,7 +695,7 @@ function upgradeChecked(v1: LifeCaseFactsV1): LifeCaseFacts {
     wishes: v1.wishes,
     workPension: v1.workPension,
     opener: { worries: [], dreams: [], ownWorries: [], ownDreams: [] },
-    assets: [],
+    assets: bud.savings > 0 ? [{ kind: "bank" as const, value: bud.savings }] : [],
     ...(v1.lovedOnes ? { lovedOnes: v1.lovedOnes } : {}),
     ...(v1.business ? { business: v1.business } : {}),
   };

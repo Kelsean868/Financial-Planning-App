@@ -1790,7 +1790,7 @@ var BUDGET_CATALOGUE = deepFreeze2([
       L("repairs", "Repairs and maintenance"),
       L("security", "Security"),
       L("domestic-help", "Domestic help and yard work"),
-      L("furniture", "Furniture and appliances (cash only; hire purchase goes in Debts)")
+      L("furniture", "Furniture and appliances (cash; hire purchase in Debts)")
     ]
   },
   {
@@ -2346,7 +2346,8 @@ function upgradeChecked(v1) {
     children: v1.children,
     // careTier / careFromAge are kept as the future level; growth when a level was set.
     parents: v1.parents.map((p) => ({ ...p, growth: p.careTier > 0 })),
-    budget: { groups, housing: bud.housing, mortgage: bud.mortgage, savings: bud.savings, roomPlan: null },
+    // Build C: version 1 cash becomes one bank asset row; `budget.savings` is then 0 (assets are the one source).
+    budget: { groups, housing: bud.housing, mortgage: bud.mortgage, savings: 0, roomPlan: null },
     debts: {
       items: v1.debts.items.map((d) => ({ ...d, type: debtTypeFromLabel(d.label), lender: null, endDate: null, cosigned: false, cosignerName: null })),
       extraMonthly: v1.debts.extraMonthly
@@ -2356,7 +2357,7 @@ function upgradeChecked(v1) {
     wishes: v1.wishes,
     workPension: v1.workPension,
     opener: { worries: [], dreams: [], ownWorries: [], ownDreams: [] },
-    assets: [],
+    assets: bud.savings > 0 ? [{ kind: "bank", value: bud.savings }] : [],
     ...v1.lovedOnes ? { lovedOnes: v1.lovedOnes } : {},
     ...v1.business ? { business: v1.business } : {}
   };
@@ -2379,6 +2380,11 @@ function catalogueGroup(key) {
 
 // src/engine-facts.ts
 var MONTHS_A_YEAR = 12;
+var CASH_KINDS = ["bank", "credit-union", "unit-trust"];
+function cashFromFacts(facts) {
+  const rows = facts.assets.filter((a) => CASH_KINDS.includes(a.kind));
+  return rows.length > 0 ? rows.reduce((s, a) => s + a.value, 0) : facts.budget.savings;
+}
 function toMonthly(b, amount, frequency) {
   if (frequency === "monthly") return amount;
   const perYear = b.get("core:ff.frequency.perYear")[frequency];
@@ -2451,7 +2457,7 @@ function toEngineFacts(facts) {
       housing: facts.budget.housing,
       housingPaymentMonthly: split.mortgagePaymentMonthly,
       mortgage: facts.budget.mortgage,
-      savings: facts.budget.savings
+      savings: cashFromFacts(facts)
     },
     debts: facts.debts,
     goals: facts.goals,
@@ -4761,6 +4767,58 @@ function computeRetirementFigure(input) {
   };
 }
 
+// src/net-worth.ts
+var MONTHS_A_YEAR3 = 12;
+var ASSET_KIND_LABELS = {
+  "bank": "Bank and fixed deposits",
+  "credit-union": "Credit union shares",
+  "unit-trust": "Unit trusts and money market funds",
+  "shares-bonds": "Shares and bonds",
+  "pension-cash": "Pension and annuity cash value",
+  "life-cash": "Life insurance cash value",
+  "property": "Home and other property",
+  "vehicle": "Vehicles",
+  "furniture": "Furniture and equipment",
+  "other": "Other"
+};
+var isCash = (kind) => CASH_KINDS.includes(kind);
+function computeNetWorth({ facts, engine, budget }) {
+  const b = new ProvenanceBuilder();
+  const assets = Object.keys(ASSET_KIND_LABELS).map((kind) => ({
+    kind,
+    label: ASSET_KIND_LABELS[kind],
+    cash: isCash(kind),
+    value: facts.assets.filter((a) => a.kind === kind).reduce((s, a) => s + a.value, 0)
+  }));
+  const assetsTotal = assets.reduce((s, a) => s + a.value, 0);
+  const mortgage = facts.budget.mortgage;
+  const owed = [
+    ...mortgage && mortgage.balance > 0 ? [{ label: "Mortgage", balance: mortgage.balance, kind: "mortgage" }] : [],
+    ...facts.debts.items.map((d) => ({ label: d.label, balance: d.balance, kind: "debt" }))
+  ];
+  const owedTotal = owed.reduce((s, o) => s + o.balance, 0);
+  const partnerPay = facts.partner ? payMonthly(b, facts.partner.pay).usual : 0;
+  const grossYearlyPay = (engine.client.usualGrossMonthly + partnerPay) * MONTHS_A_YEAR3;
+  const cashTotal = cashFromFacts(facts);
+  const costsMonthly = budget.needsMonthly;
+  b.rule("net worth = assets - (debts + mortgage); debts share = owed / household gross yearly pay; months covered = cash / monthly costs");
+  b.rule("cash = bank + credit union + unit trusts and money market funds; the version 1 savings field counts only when there are no cash rows");
+  return {
+    assets,
+    assetsTotal,
+    owed,
+    owedTotal,
+    netWorth: assetsTotal - owedTotal,
+    grossYearlyPay,
+    debtsShareOfGrossPay: grossYearlyPay > 0 ? owedTotal / grossYearlyPay : null,
+    cashTotal,
+    costsMonthly,
+    monthsCovered: costsMonthly > 0 ? cashTotal / costsMonthly : null,
+    partnerPayIsTakeHome: facts.partner !== null,
+    provenance: b.build()
+  };
+}
+
 // src/fact-finder.ts
 function computeFactFinder(input, options = {}) {
   const v2 = validateLifeCaseFacts(input);
@@ -4795,7 +4853,8 @@ function computeFactFinder(input, options = {}) {
     budgetAnalysis: computeBudgetAnalysis({ facts: v2, budget, debts: debts.summary, careGraph: cg }),
     debtPayoff: computeDebtPayoff(facts.debts.items, debts.payoff, facts.debts.extraMonthly, facts.asOfYear, options.asOfMonth),
     retirementFigure: computeRetirementFigure({ facts, budget, careGraph: cg, retirement }),
-    insuranceRange: insuranceRange(budget)
+    insuranceRange: insuranceRange(budget),
+    netWorth: computeNetWorth({ facts: v2, engine: facts, budget })
   };
 }
 
@@ -4826,7 +4885,7 @@ function rangeAfter(b, r, deltaNeeds) {
   const { stage, ceiling } = stageAndCeiling(b, {
     hhNet: bud.netPay.householdNetMonthly,
     surplus,
-    buffer: needs > 0 ? r.facts.budget.savings / needs : 0,
+    buffer: needs > 0 ? cashFromFacts(r.facts) / needs : 0,
     expensiveDebt: bud.expensiveDebt,
     emergencyFundMonths: bud.emergencyFundMonths
   });
@@ -5060,7 +5119,7 @@ var SAMPLE_FAMILY = deepFreeze2({
     ],
     housing: "mortgage",
     mortgage: { balance: 42e4, yearsLeft: 18, clearOnDeath: true },
-    savings: 2e4,
+    savings: 0,
     roomPlan: null
   },
   debts: {
@@ -5080,7 +5139,15 @@ var SAMPLE_FAMILY = deepFreeze2({
   wishes: { funeral: 5e4, finalMedical: 0, legacy: 15e4, retireAge: 65, retireIncomeMonthly: 8e3 },
   workPension: { kind: "none" },
   opener: NO_OPENER,
-  assets: []
+  // Build C: the version 1 cash ($20,000) is one bank row, so the emergency fund sees the same cash; the rest is what the
+  // family owns (none of it is cash, so no golden moves).
+  assets: [
+    { kind: "bank", value: 2e4 },
+    { kind: "pension-cash", value: 6e4 },
+    { kind: "property", value: 95e4 },
+    { kind: "vehicle", value: 85e3 },
+    { kind: "furniture", value: 4e4 }
+  ]
 });
 var SAMPLE_YOUNG_SINGLE = deepFreeze2({
   schemaVersion: 2,
@@ -5101,7 +5168,7 @@ var SAMPLE_YOUNG_SINGLE = deepFreeze2({
     ],
     housing: "rent",
     mortgage: null,
-    savings: 4e3,
+    savings: 0,
     roomPlan: null
   },
   debts: { items: [{ label: "Credit card", type: "credit-card", lender: null, balance: 3e3, ratePct: 24, minimumMonthly: 150, endDate: null, cosigned: false, cosignerName: null }], extraMonthly: 200 },
@@ -5115,7 +5182,12 @@ var SAMPLE_YOUNG_SINGLE = deepFreeze2({
   wishes: { funeral: 5e4, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 6e3 },
   workPension: { kind: "none" },
   opener: NO_OPENER,
-  assets: []
+  // Build C: the version 1 cash ($4,000) is one bank row; she also owns a small vehicle and some furniture.
+  assets: [
+    { kind: "bank", value: 4e3 },
+    { kind: "vehicle", value: 35e3 },
+    { kind: "furniture", value: 8e3 }
+  ]
 });
 var SAMPLE_WEEKLY_RENTER = deepFreeze2({
   schemaVersion: 2,
@@ -5146,7 +5218,7 @@ var SAMPLE_WEEKLY_RENTER = deepFreeze2({
     ],
     housing: "rent",
     mortgage: null,
-    savings: 7e3,
+    savings: 0,
     roomPlan: null
   },
   debts: {
@@ -5158,7 +5230,10 @@ var SAMPLE_WEEKLY_RENTER = deepFreeze2({
   wishes: { funeral: 5e4, finalMedical: 0, legacy: 0, retireAge: 65, retireIncomeMonthly: 5e3 },
   workPension: { kind: "none" },
   opener: NO_OPENER,
-  assets: []
+  // Build C: the version 1 cash ($7,000) is one bank row, and her credit union shares ($300 a month) count as cash.
+  assets: [
+    { kind: "bank", value: 7e3 }
+  ]
 });
 var SAMPLE_FAMILY_V1 = deepFreeze2({
   schemaVersion: 1,
@@ -5264,9 +5339,11 @@ var SAMPLE_BUSINESS = deepFreeze2({
 });
 export {
   ADVENTURER_WORDING,
+  ASSET_KIND_LABELS,
   ASSUMPTION_SET_ID,
   BUDGET_CATALOGUE,
   CARE_GRAPH_FIXTURE_NET_MONTHLY,
+  CASH_KINDS,
   CORE_TABLES,
   CareGraphInputError,
   ClosingInputError,
@@ -5312,6 +5389,7 @@ export {
   carLoan,
   careGraph,
   careGraphInputFromFacts,
+  cashFromFacts,
   catalogueGroup,
   childLabel,
   completeOrder,
@@ -5330,6 +5408,7 @@ export {
   computeInsuranceBudget,
   computeLovedOnes,
   computeNetPay,
+  computeNetWorth,
   computePayPlan,
   computeRetirementFigure,
   computeRetirementIncome,

@@ -36,8 +36,8 @@ export { computeRetirementFigure } from "./retirement-figure.ts";
 export type { RetirementFigure, RetirementFigureInputs, RetirementStop, RetirementStopKind } from "./retirement-figure.ts";
 export { computeRoomPlan, applyRoomPlan, ROOM_ORDER } from "./room-plan.ts";
 export type { RoomPlanInput, RoomPlanResult, RoomGroupRow, RoomDestinationRow, RoomPlanEffects, RoomStep } from "./room-plan.ts";
-/** Reserved for Build C (§6.4, "What you own and owe"); not built in Build A. */
-export type NetWorth = never;
+export { computeNetWorth, cashFromFacts, CASH_KINDS, ASSET_KIND_LABELS } from "./net-worth.ts";
+export type { NetWorth, NetWorthAsset, NetWorthOwed, NetWorthInputs } from "./net-worth.ts";
 
 export {
   validateLifeCaseFacts, upgradeLifeCaseFacts, assertNoHealthKeys, findHealthKeys, parentAge, parentSex, isRoomDestination,

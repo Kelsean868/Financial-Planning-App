@@ -12,10 +12,20 @@ import type {
   LifeCaseFacts, ClientFacts, PartnerFacts, ParentFacts, PayFacts, BudgetGroupFacts, ChildFacts, GoalFacts, CoverFacts,
   WishFacts, WorkPensionFacts, LovedOnesFacts, BusinessFacts, DebtFacts, HousingKind, CostLineV1, StopTag,
 } from "./life-case-facts.ts";
-import { catalogueGroup } from "./life-case-facts.ts";
+import { catalogueGroup, type AssetKind } from "./life-case-facts.ts";
 import type { Frequency } from "./parameters/fact-finder-2026-10.ts";
 
 const MONTHS_A_YEAR = 12;
+
+/** The kinds that count as cash: "unit trusts and money market funds" are one kind (§6.4), so unit-trust is cash. */
+export const CASH_KINDS: readonly AssetKind[] = ["bank", "credit-union", "unit-trust"];
+
+/** Cash today: the cash asset rows when there are any, else the version 1 `budget.savings`. */
+export function cashFromFacts(facts: Pick<LifeCaseFacts, "assets" | "budget">): number {
+  const rows = facts.assets.filter((a) => CASH_KINDS.includes(a.kind));
+  return rows.length > 0 ? rows.reduce((s, a) => s + a.value, 0) : facts.budget.savings;
+}
+
 
 /** Turn an amount at a frequency into a monthly figure (guard 28). Exact for monthly; yearly is ÷12. */
 export function toMonthly(b: ProvenanceBuilder, amount: number, frequency: Frequency): number {
@@ -123,6 +133,7 @@ export interface EngineFacts {
     /** The mortgage payment a month (only used while there is a mortgage). */
     readonly housingPaymentMonthly: number;
     readonly mortgage: { readonly balance: number; readonly yearsLeft: number; readonly clearOnDeath: boolean } | null;
+    /** Cash today: the cash asset rows, or the version 1 `savings` when there are none (`cashFromFacts`). */
     readonly savings: number;
   };
   readonly debts: { readonly items: readonly DebtFacts[]; readonly extraMonthly: number };
@@ -153,7 +164,7 @@ export function toEngineFacts(facts: LifeCaseFacts): EngineFacts {
       housing: facts.budget.housing,
       housingPaymentMonthly: split.mortgagePaymentMonthly,
       mortgage: facts.budget.mortgage,
-      savings: facts.budget.savings,
+      savings: cashFromFacts(facts),
     },
     debts: facts.debts,
     goals: facts.goals,

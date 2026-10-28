@@ -30,6 +30,7 @@ import { computeBudgetAnalysis, type BudgetAnalysis } from "./budget-analysis.ts
 import { computeDebtPayoff, type DebtPayoff } from "./debt-payoff.ts";
 import { computeRetirementFigure, type RetirementFigure } from "./retirement-figure.ts";
 import { insuranceRange, type InsuranceRange } from "./closing-ladder.ts";
+import { computeNetWorth, type NetWorth } from "./net-worth.ts";
 
 export interface FactFinderOptions extends ClosingOptions {
   /** Pay-yourself-first share of take-home, percent. Default from the assumption set (15). */
@@ -64,6 +65,9 @@ export interface FactFinderResult {
   readonly retirementFigure: RetirementFigure;
   /** The $200 floor, the slider's range, and the §5.3 / §5.4 states. */
   readonly insuranceRange: InsuranceRange;
+  /* Section 3 (Build C) */
+  /** What you own and owe (�6.4): net worth and its two ratios; cash comes from the assets. */
+  readonly netWorth: NetWorth;
 }
 
 export function computeFactFinder(input: unknown, options: FactFinderOptions = {}): FactFinderResult {
@@ -92,5 +96,6 @@ export function computeFactFinder(input: unknown, options: FactFinderOptions = {
     debtPayoff: computeDebtPayoff(facts.debts.items, debts.payoff, facts.debts.extraMonthly, facts.asOfYear, options.asOfMonth),
     retirementFigure: computeRetirementFigure({ facts, budget, careGraph: cg, retirement }),
     insuranceRange: insuranceRange(budget),
+    netWorth: computeNetWorth({ facts: v2, engine: facts, budget }),
   };
 }

@@ -69,7 +69,7 @@ export const BUDGET_CATALOGUE: readonly CatalogueGroup[] = deepFreeze<CatalogueG
       L("repairs", "Repairs and maintenance"),
       L("security", "Security"),
       L("domestic-help", "Domestic help and yard work"),
-      L("furniture", "Furniture and appliances (cash only; hire purchase goes in Debts)"),
+      L("furniture", "Furniture and appliances (cash; hire purchase in Debts)"),
     ],
   },
   {

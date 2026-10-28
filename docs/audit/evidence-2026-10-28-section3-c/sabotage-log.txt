@@ -1,0 +1,16 @@
+== sabotage 1: furniture label back to 65 characters
+✖ every budget catalogue label passes the facts validator (LABEL_MAX_CHARS) (1.7602ms)
+ℹ pass 7
+ℹ fail 1
+✖ failing tests:
+✖ every budget catalogue label passes the facts validator (LABEL_MAX_CHARS) (1.7602ms)
+  AssertionError [ERR_ASSERTION]: Got unwanted exception: group home: every label must validate
+== sabotage 2: engine reads budget.savings again (second place to type cash)
+✖ one cash source: the emergency fund reads the assets, and the old savings field is ignored beside them (7.1519ms)
+ℹ pass 7
+ℹ fail 1
+✖ failing tests:
+✖ one cash source: the emergency fund reads the assets, and the old savings field is ignored beside them (7.1519ms)
+  AssertionError [ERR_ASSERTION]: the emergency fund months are the card's months covered
+  - 1.321003963011889
+    expected: 1.321003963011889,

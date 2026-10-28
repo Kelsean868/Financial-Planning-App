@@ -50,7 +50,7 @@ function variants(): LifeCaseFacts[] {
           const f = clone(base);
           f.client.age = age;
           setGross(f, gross);
-          f.budget.savings = savings;
+          f.assets = [...f.assets.filter((a: { kind: string }) => a.kind !== "bank"), { kind: "bank", value: savings }];
           out.push(f);
         }
       }
