@@ -38,6 +38,46 @@ The [product vision](../research/) is that **clients reach their own conclusions
    - **Prefer the maintained page over the linked PDF.**
 4. **Never silently use an unsafe value.** `assertSafe()` throws on `BLOCKING_UNRESOLVED`, `PROVISIONAL`, `UNVERIFIED_1995_SOURCE`, `STALE_DO_NOT_USE`. Surface the uncertainty to the user instead of guessing.
 5. **OCR and derived values are leads, not truth.** Verify against the source before encoding.
+6. **Never multiply by a rate. Ask the engine.** Any figure a user sees must come from the same function that produces the real answer — never from `amount × rate`. See below.
+
+---
+
+## Rule 6 has already been broken once, and it broke the way the others do
+
+The engine was right; the *display* took a shortcut.
+
+Income tax is banded: 25% on chargeable income to TT$1,000,000, 30% above. `incomeTax()` has always
+walked the bands correctly — exact at 999,999 / 1,000,000 / 1,000,001 / 2,000,000. But several
+displayed figures computed relief as `premium × marginalRate`, which is wrong for anyone whose
+deduction **crosses** the threshold, because part of it is relieved at 30% and the rest at 25%.
+
+| Gross 1,120,000, premium 53,830 | |
+|---|---|
+| Chargeable before → after | 1,023,830 → 970,000 |
+| True saving | **14,649** (27.21% effective) |
+| `premium × 0.30` said | 16,149 |
+| Overstated by | **1,500** |
+
+**Note the direction.** It overstated the tax saving, which makes the product look better. That is the
+same direction as the 2008 NIS benefit table (understated the pension → overstated the retirement gap)
+and the same direction as advising a client to fill the TT$60,000 cap when their tax ran out first.
+Three separate defects, all flattering the sale. None were deliberate. That is exactly why the rule is
+mechanical rather than a matter of care: **if a number on screen was not produced by the engine, it is
+not verified, however obvious the arithmetic looks.**
+
+The fix is always the same shape — replace the multiplication with a call:
+
+```js
+// wrong: assumes one rate applies to the whole deduction
+const saving = premium * marginalRate;
+
+// right: ask what the tax actually is, with and without
+const saveAt = x => before.tax - incomeTax({ ...inputs, approvedContributionsAnnual: x }).tax;
+```
+
+A marginal rate is still fine as a *label* ("your top rate is 30%"). It is never fine as a *multiplier*.
+`verify.mjs` asserts a straddling premium relieves below the flat-30% figure, so a reintroduced
+shortcut fails the suite.
 
 ## Status vocabulary
 
