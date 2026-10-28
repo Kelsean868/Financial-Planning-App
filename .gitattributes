@@ -10,3 +10,6 @@ calculators/build.mjs    text eol=lf
 parameters/*.js          text eol=lf
 parameters/*.mjs         text eol=lf
 parameters/*.json        text eol=lf
+
+# The vendored engine must hash the same on every checkout (Section 1 guard 13): no line-ending conversion.
+core/dist/fpa-core.js -text
