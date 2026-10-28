@@ -214,43 +214,43 @@ SHA-256 `b6976268…308e`. Both read from the built file by `docs/audit/evidence
 
 | # | Golden | Old (shown) | New (shown) | Old full | New full | Moved |
 |---|---|---|---|---|---|---|
-| 1 | Â§2.8 family: stage | 2 | 2 | 2 | 2 | no |
-| 2 | Â§2.8 family: ceiling | 711 | 711 | 710.8425 | 710.8425 | no |
-| 3 | Â§2.8 family: care save a month | 3837 | 3837 | 3836.8329 | 3836.8329 | no |
-| 4 | Â§2.8 family: already paying | 4000 | 4000 | 4000 | 4000 | no |
-| 5 | Â§2.8 family: care present value | 1263107 | 1263107 | 1263107.2588 | 1263107.2588 | no |
-| 6 | Â§2.8 family: peak a month | 17391 | 17391 | 17391.4661 | 17391.4661 | no |
-| 7 | Â§2.8 family: peak at age | 54 | 54 | 54 | 54 | no |
-| 8 | Â§2.8 family: sandwich years | 8 | 8 | 8 | 8 | no |
-| 9 | Â§2.8 family: finish age | 55 | 55 | 55 | 55 | no |
-| 10 | Â§2.8 family: cover essential | 823567 | 823567 | 823566.7663 | 823566.7663 | no |
-| 11 | Â§2.8 family: cover recommended | 1994846 | 1994846 | 1994846.1357 | 1994846.1357 | no |
-| 12 | Â§2.8 family: cover full | 2236674 | 2236674 | 2236674.0251 | 2236674.0251 | no |
-| 13 | Â§2.8 family: needs | 15140 | 15140 | 15140 | 15140 | no |
-| 14 | Â§2.8 family: living | 6700 | 6700 | 6700 | 6700 | no |
-| 15 | Â§2.8 young single: stage | 1 | 1 | 1 | 1 | no |
-| 16 | Â§2.8 young single: ceiling | 374 | 374 | 374.1425 | 374.1425 | no |
-| 17 | Â§2.8 young single: care goals (no care) | 0 | 0 | 0 | 0 | no |
-| 18 | Â§2.8 young single: cover essential | 149000 | 149000 | 149000 | 149000 | no |
-| 19 | Â§2.8 young single: cover recommended | 149000 | 149000 | 149000 | 149000 | no |
-| 20 | Â§2.8 young single: cover full | 149000 | 149000 | 149000 | 149000 | no |
-| 21 | Â§2.8 young single: needs | 5450 | 5450 | 5450 | 5450 | no |
-| 22 | Â§2.8 young single: living | 5300 | 5300 | 5300 | 5300 | no |
-| 23 | care graph Â§3: peak a month | 17391 | 17391 | 17391.4661 | 17391.4661 | no |
-| 24 | care graph Â§3: peak at age | 54 | 54 | 54 | 54 | no |
-| 25 | care graph Â§3: sandwich years | 8 | 8 | 8 | 8 | no |
-| 26 | care graph Â§3: finish age | 55 | 55 | 55 | 55 | no |
-| 27 | care graph Â§3: nominal total (to the thousand) | 2078000 | 2078000 | 2078167.5911 | 2078167.5911 | no |
-| 28 | care graph Â§3: save from today | 3837 | 3837 | 3836.8329 | 3836.8329 | no |
-| 29 | care graph Â§3: already paying | 4000 | 4000 | 4000 | 4000 | no |
-| 30 | care graph Â§3: present value (to the thousand) | 1263000 | 1263000 | 1263107.2588 | 1263107.2588 | no |
-| 31 | care graph Â§3 UK: peak a month | 50753 | 50753 | 50753.2354 | 50753.2354 | no |
-| 32 | care graph Â§3 UK: sandwich years | 8 | 8 | 8 | 8 | no |
-| 33 | care graph Â§3 UK: nominal total (to the thousand) | 3406000 | 3406000 | 3406011.7775 | 3406011.7775 | no |
-| 34 | care graph Â§3 UK: save from today | 16487 | 16487 | 16486.6818 | 16486.6818 | no |
-| 35 | care graph Â§3 UK: present value (to the thousand) | 2161000 | 2161000 | 2161420.0355 | 2161420.0355 | no |
-| 36 | care graph Â§3 UK: top lever | Send Child B locally | Send Child B locally | — | — | no |
-| 37 | care graph Â§3 UK: top lever worth a month | 12650 | 12650 | 12649.8489 | 12649.8489 | no |
+| 1 | §2.8 family: stage | 2 | 2 | 2 | 2 | no |
+| 2 | §2.8 family: ceiling | 711 | 711 | 710.8425 | 710.8425 | no |
+| 3 | §2.8 family: care save a month | 3837 | 3837 | 3836.8329 | 3836.8329 | no |
+| 4 | §2.8 family: already paying | 4000 | 4000 | 4000 | 4000 | no |
+| 5 | §2.8 family: care present value | 1263107 | 1263107 | 1263107.2588 | 1263107.2588 | no |
+| 6 | §2.8 family: peak a month | 17391 | 17391 | 17391.4661 | 17391.4661 | no |
+| 7 | §2.8 family: peak at age | 54 | 54 | 54 | 54 | no |
+| 8 | §2.8 family: sandwich years | 8 | 8 | 8 | 8 | no |
+| 9 | §2.8 family: finish age | 55 | 55 | 55 | 55 | no |
+| 10 | §2.8 family: cover essential | 823567 | 823567 | 823566.7663 | 823566.7663 | no |
+| 11 | §2.8 family: cover recommended | 1994846 | 1994846 | 1994846.1357 | 1994846.1357 | no |
+| 12 | §2.8 family: cover full | 2236674 | 2236674 | 2236674.0251 | 2236674.0251 | no |
+| 13 | §2.8 family: needs | 15140 | 15140 | 15140 | 15140 | no |
+| 14 | §2.8 family: living | 6700 | 6700 | 6700 | 6700 | no |
+| 15 | §2.8 young single: stage | 1 | 1 | 1 | 1 | no |
+| 16 | §2.8 young single: ceiling | 374 | 374 | 374.1425 | 374.1425 | no |
+| 17 | §2.8 young single: care goals (no care) | 0 | 0 | 0 | 0 | no |
+| 18 | §2.8 young single: cover essential | 149000 | 149000 | 149000 | 149000 | no |
+| 19 | §2.8 young single: cover recommended | 149000 | 149000 | 149000 | 149000 | no |
+| 20 | §2.8 young single: cover full | 149000 | 149000 | 149000 | 149000 | no |
+| 21 | §2.8 young single: needs | 5450 | 5450 | 5450 | 5450 | no |
+| 22 | §2.8 young single: living | 5300 | 5300 | 5300 | 5300 | no |
+| 23 | care graph §3: peak a month | 17391 | 17391 | 17391.4661 | 17391.4661 | no |
+| 24 | care graph §3: peak at age | 54 | 54 | 54 | 54 | no |
+| 25 | care graph §3: sandwich years | 8 | 8 | 8 | 8 | no |
+| 26 | care graph §3: finish age | 55 | 55 | 55 | 55 | no |
+| 27 | care graph §3: nominal total (to the thousand) | 2078000 | 2078000 | 2078167.5911 | 2078167.5911 | no |
+| 28 | care graph §3: save from today | 3837 | 3837 | 3836.8329 | 3836.8329 | no |
+| 29 | care graph §3: already paying | 4000 | 4000 | 4000 | 4000 | no |
+| 30 | care graph §3: present value (to the thousand) | 1263000 | 1263000 | 1263107.2588 | 1263107.2588 | no |
+| 31 | care graph §3 UK: peak a month | 50753 | 50753 | 50753.2354 | 50753.2354 | no |
+| 32 | care graph §3 UK: sandwich years | 8 | 8 | 8 | 8 | no |
+| 33 | care graph §3 UK: nominal total (to the thousand) | 3406000 | 3406000 | 3406011.7775 | 3406011.7775 | no |
+| 34 | care graph §3 UK: save from today | 16487 | 16487 | 16486.6818 | 16486.6818 | no |
+| 35 | care graph §3 UK: present value (to the thousand) | 2161000 | 2161000 | 2161420.0355 | 2161420.0355 | no |
+| 36 | care graph §3 UK: top lever | Send Child B locally | Send Child B locally | — | — | no |
+| 37 | care graph §3 UK: top lever worth a month | 12650 | 12650 | 12649.8489 | 12649.8489 | no |
 
 **What else moved** (flat dump of `computeFactFinder` for both samples plus the two care graph runs, provenance and facts
 left out; `evidence-2026-10-28-section3-a/dump-diff.json`): 5 changed, 549 added, 0 dropped. Changed: the assumption
