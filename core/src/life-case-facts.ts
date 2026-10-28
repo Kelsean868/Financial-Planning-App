@@ -327,3 +327,10 @@ export function validateLifeCaseFacts(input: unknown): LifeCaseFacts {
 export function parentAge(p: Pick<ParentFacts, "birthYear">, asOfYear: number): number {
   return asOfYear - p.birthYear;
 }
+
+/** A parent's sex as told by the relationship; null when it cannot be told ("other-elder"). */
+export function parentSex(p: Pick<ParentFacts, "relationship">): Sex | null {
+  if (p.relationship === "mother" || p.relationship === "grandmother" || p.relationship === "mother-in-law") return "female";
+  if (p.relationship === "father" || p.relationship === "grandfather" || p.relationship === "father-in-law") return "male";
+  return null;
+}

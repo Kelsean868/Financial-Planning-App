@@ -24,27 +24,29 @@ test("health score: family 33 'Needs work', young single 51 'Getting there' (pro
   assert.deepEqual(young.parts.map((p) => R(p.points)), [11, 2, 19, 18, 1]);
 });
 
-test("insurance budget, young single: as the prototype; Cashbuilder II with the rider waits as 'not yet'", () => {
+// One-allocator fix (Kyron, Decision 3 = A, 27 Oct 2026; docs/audit/RUN-2026-10-27-fix-one-allocator.md): the
+// Protection group is the closing ladder's insurance items, capped at the stage ceiling, not a weighted split of
+// the recommended figure. The prototype no longer applies to Protection. Savings plans are unchanged (fence F-13).
+test("insurance budget, young single: the ladder at the $374 ceiling; Cashbuilder II with the rider waits as 'not yet'", () => {
   const [prot, sav] = computeFactFinder(SAMPLE_YOUNG_SINGLE).insuranceBudget.groups;
-  // NIS 70% re-baseline (docs/audit/RUN-2026-10-27-fix-nis70.md): net pay is $32.40 lower, so protection
-  // 282 -> 281 and savings 364/388 -> 361/387. Same plans, same order.
-  assert.equal(R(prot.totalMonthly), 281);
-  assert.deepEqual(prot.funded.map((p) => [p.key, R(p.monthly)]), [["ci", 281]]);
+  // Was CI 281 of the $281 recommended. Now: term life to the ruin level ($150 minimum), then CI ($150 minimum,
+  // topped up to $224.14 in pass two); Cashbuilder II ($300) does not fit and waits.
+  assert.equal(prot.totalMonthly.toFixed(2), "374.14");
+  assert.deepEqual(prot.funded.map((p) => [p.key, p.monthly.toFixed(2)]), [["life-ruin", "150.00"], ["critical-illness", "224.14"]]);
   assert.deepEqual(prot.notYet.map((p) => [p.product, R(p.needsMonthly)]), [["cashbuilder-ii", 300]]);
   assert.equal(prot.notYet[0]!.riders[0]!.underwriting, "Medical at any amount");
   assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 361], ["endowment", 387]]);
 });
 
-test("insurance budget, family: Rest Assured II is priced on the parent's age (run record D7)", () => {
+test("insurance budget, family: the ladder at the $711 ceiling; Rest Assured II at the real quotes", () => {
   const [prot, sav] = computeFactFinder(SAMPLE_FAMILY).insuranceBudget.groups;
-  // Prototype: term 260, CI 211, Rest Assured 72 — it priced the parents' cover at the client's age (38).
-  // The engine prices it at the father's age (71), so its minimum is $240 and less is left to share.
-  // NIS 70% re-baseline (docs/audit/RUN-2026-10-27-fix-nis70.md): protection 543 -> 533. The three minimums
-  // add to $540.15 (150 + 150 + 240.15), so Rest Assured II no longer fits and waits as "not yet"; term and
-  // CI share the $533. Before: term 152, CI 151, Rest Assured 241. Savings 875/929 -> 872/926.
-  assert.equal(R(prot.totalMonthly), 533);
-  assert.deepEqual(prot.funded.map((p) => [p.key, R(p.monthly)]), [["term", 300], ["ci", 233]]);
-  assert.deepEqual(prot.notYet.map((p) => [p.product, R(p.needsMonthly)]), [["cashbuilder-ii", 300], ["rest-assured-ii", 240]]);
+  // Was term 300, CI 233 of the $533 recommended, Rest Assured II "not yet" at $240.15 (the estimate rate).
+  // Now, in the Tier 1 order: term life to the ruin level $238.83 (823,567 of term cover); the father's funeral
+  // (oldest parent first) at its $262.88 minimum, topped up in pass two; the mother's funeral at its $178.56
+  // minimum. CI ($150) and Cashbuilder II ($300) do not fit what is left ($30.73) and wait.
+  assert.equal(prot.totalMonthly.toFixed(2), "710.84");
+  assert.deepEqual(prot.funded.map((p) => [p.product, p.monthly.toFixed(2)]), [["term", "238.83"], ["rest-assured-ii", "293.45"], ["rest-assured-ii", "178.56"]]);
+  assert.deepEqual(prot.notYet.map((p) => [p.product, p.needsMonthly.toFixed(2)]), [["life-span-gold", "150.00"], ["cashbuilder-ii", "300.00"]]);
   assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 872], ["endowment", 926]]);
 });
 

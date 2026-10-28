@@ -24,7 +24,7 @@ export { computeGap } from "./gap.ts";
 export { computeFactFinder } from "./fact-finder.ts";
 export type { FactFinderResult, FactFinderOptions } from "./fact-finder.ts";
 
-export { validateLifeCaseFacts, assertNoHealthKeys, findHealthKeys, parentAge } from "./life-case-facts.ts";
+export { validateLifeCaseFacts, assertNoHealthKeys, findHealthKeys, parentAge, parentSex } from "./life-case-facts.ts";
 export type {
   LifeCaseFacts, ClientFacts, PartnerFacts, ChildFacts, MilestoneFacts, ParentFacts, BudgetFacts, CostLine,
   DebtFacts, GoalFacts, CoverFacts, WishFacts, WorkPensionFacts, LovedOnesFacts, LovedOneFacts, BusinessFacts,
@@ -39,7 +39,7 @@ export type { DebtsResult, DebtSummary, DebtPayoff, PayoffRun, CarLoanInput, Car
 export { computeGoals } from "./goals.ts";
 export type { GoalsResult, GoalPlan, HomePlan } from "./goals.ts";
 export { computeInsuranceBudget, profileFor, minimumFor, assertRidersAllowed } from "./insurance-budget.ts";
-export type { InsuranceBudgetResult, InsuranceBudgetGroup, FundedPlan, NotYetPlan, Profile } from "./insurance-budget.ts";
+export type { InsuranceBudgetResult, InsuranceBudgetGroup, FundedPlan, NotYetPlan, Profile, ProtectionLadder } from "./insurance-budget.ts";
 export { computeHealthScore } from "./health-score.ts";
 export type { HealthScore, ScorePart } from "./health-score.ts";
 export { computeStartEarly, futureValueMonthly } from "./start-early.ts";
@@ -70,8 +70,11 @@ export { computeLovedOnes } from "./loved-ones.ts";
 export type { LovedOnesResult, LovedOneResult, LovedOnePlan } from "./loved-ones.ts";
 export { computeBusiness } from "./business.ts";
 export type { BusinessResult, BusinessNeed, BusinessNeedTag } from "./business.ts";
-export { roughBand, fitToMinimums, ratePer1000, premiumFor, coverForPremium } from "./premiums.ts";
-export type { PremiumBand, FitRow, FitResult, RateKind } from "./premiums.ts";
+export {
+  roughBand, fitToMinimums, ratePer1000, premiumFor, coverForPremium,
+  restAssuredPremium, restAssuredPer1000, restAssuredCoverFor, restAssuredRatedAge, restAssuredEligible,
+} from "./premiums.ts";
+export type { PremiumBand, FitRow, FitResult, RateKind, RestAssuredInsured } from "./premiums.ts";
 
 export { CORE_TABLES, coreRowPaths, resolveCoreRow, ASSUMPTION_SET_ID } from "./parameters/index.ts";
 export type { Row, RowStatus } from "./parameters/index.ts";

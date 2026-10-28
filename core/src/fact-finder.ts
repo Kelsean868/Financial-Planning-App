@@ -3,8 +3,8 @@
  * return all results. Pure: the same facts and options give the same result (no clock, no I/O).
  *
  * Order: net pay → debts → care graph (needs household net for its verdict) → budget (needs the
- * care already paid) → death need → retirement → goals → budget builder → insurance budget →
- * health score → closing.
+ * care already paid) → death need → retirement → goals → budget builder → health score → closing →
+ * insurance budget (its Protection group is the closing ladder's insurance items, guard 21).
  */
 import { validateLifeCaseFacts, type LifeCaseFacts } from "./life-case-facts.ts";
 import { computeNetPay, computeHouseholdBudget, buildBudgetBuckets, type HouseholdBudget, type BudgetBuckets } from "./household-budget.ts";
@@ -52,9 +52,9 @@ export function computeFactFinder(input: unknown, options: FactFinderOptions = {
   const retirement = computeRetirementIncome(facts, netPay);
   const goals = computeGoals(facts, budget);
   const buckets = buildBudgetBuckets(budget, facts, options.savePct);
-  const insuranceBudget = computeInsuranceBudget(facts, budget, buckets);
   const healthScore = computeHealthScore({ budget, deathNeed, retirement, savings: facts.budget.savings });
   const closing = computeClosing({ facts, budget, debts, careGraph: cg, deathNeed, retirement, goals }, options);
+  const insuranceBudget = computeInsuranceBudget(facts, budget, buckets, closing);
   return {
     assumptionSetId: ASSUMPTION_SET_ID,
     facts, debts, careGraph: cg, budget, buckets, deathNeed, retirement, goals, insuranceBudget, healthScore, closing,

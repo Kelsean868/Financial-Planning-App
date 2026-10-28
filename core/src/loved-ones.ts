@@ -1,13 +1,13 @@
 /**
  * Module 9 — loved ones (Section 2 §2.3): plans bought for a child, grandchild, adult relative or
- * parent; eligibility by age (Goldspoon 1–12, Rest Assured II to 80, from the product table); the
+ * parent; eligibility by age (Goldspoon 1–12, Rest Assured II to rated age 80, from the product table); the
  * budget fitted to minimums (guard 16: no funded plan below its minimum).
  */
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
 import type { LovedOnesFacts, LovedOneFacts } from "./life-case-facts.ts";
 import type { ProductId, ProductSpec } from "./parameters/tatil-products-2026-10.ts";
-import { fitToMinimums, ratePer1000 } from "./premiums.ts";
+import { fitToMinimums, restAssuredEligible, restAssuredPremium } from "./premiums.ts";
 import { futureValueMonthly } from "./start-early.ts";
 
 export interface LovedOnePlan {
@@ -67,7 +67,7 @@ function candidates(b: ProvenanceBuilder, lv: LovedOnesFacts, o: LovedOneFacts):
     if (lv.aims.retire) out.push({ name: "Retirement annuity (Destiny, unregistered)", product: "destiny", why: "A head start on their retirement that you fund now.", years: Math.max(b.num("core:ff.lovedOnes.minimumAnnuityYears"), retireAt - o.age) });
   } else {
     if (lv.aims.funeral || lv.aims.life) {
-      out.push(eligibleAt(ra, o.age)
+      out.push(restAssuredEligible(b, o.age)
         ? { name: "Funeral cover (Rest Assured II)", product: "rest-assured-ii", why: `No medical questions, up to age ${ra.issueAge.max} at the start. Pays the funeral home directly, with no probate wait. Full cover from year three; accidents from day one.`, years: 0 }
         : { name: "Savings for the funeral", product: null, why: `Most funeral plans start only up to age ${ra.issueAge.max}. A savings fund for the funeral may be the better route.`, years: 0 });
     }
@@ -76,10 +76,11 @@ function candidates(b: ProvenanceBuilder, lv: LovedOnesFacts, o: LovedOneFacts):
   return out;
 }
 
-function minimumOf(b: ProvenanceBuilder, c: Candidate, age: number): number {
+function minimumOf(b: ProvenanceBuilder, c: Candidate, o: LovedOneFacts): number {
   if (c.product === null) return 0;
   const spec = b.get<ProductSpec>(`core:products.${c.product}`);
-  if (c.product === "rest-assured-ii") return spec.cover!.min * ratePer1000(b, "rest-assured", age) / 1000;
+  // Loved-one facts hold no sex, so Rest Assured II is priced on the male rate, with a caveat.
+  if (c.product === "rest-assured-ii") return restAssuredPremium(b, { age: o.age, sex: null, who: o.firstName?.trim() || "Your parent or elder" }, spec.cover!.min);
   return spec.minPremiumMonthly ?? 0;
 }
 
@@ -88,7 +89,7 @@ export function computeLovedOnes(lv: LovedOnesFacts): LovedOnesResult {
   const growth = b.num("core:ff.lovedOnes.illustrativeGrowth");
   const per = lv.ones.map((o) => candidates(b, lv, o));
   const all: { oi: number; pi: number; min: number }[] = [];
-  per.forEach((cs, oi) => cs.forEach((c, pi) => all.push({ oi, pi, min: minimumOf(b, c, lv.ones[oi]!.age) })));
+  per.forEach((cs, oi) => cs.forEach((c, pi) => all.push({ oi, pi, min: minimumOf(b, c, lv.ones[oi]!) })));
   all.sort((a, c) => a.pi - c.pi || a.oi - c.oi);
   const fit = fitToMinimums(all.map((x) => ({ key: x, min: x.min, weight: 1 })), lv.budgetMonthly);
   const slot = new Map<string, { monthly: number; status: "funded" | "not-yet"; min: number }>();

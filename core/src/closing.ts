@@ -12,15 +12,16 @@ import { ProvenanceBuilder } from "./provenance.ts";
 import type { Provenance } from "./types.ts";
 import { ClosingInputError } from "./errors.ts";
 import type { LifeCaseFacts, ParentFacts } from "./life-case-facts.ts";
-import { parentAge } from "./life-case-facts.ts";
+import { parentAge, parentSex } from "./life-case-facts.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import type { DebtsResult } from "./debts.ts";
 import { parentLabel, type CareGraphResult } from "./care-graph.ts";
 import { survivorCashflow, type DeathNeedResult, type Obligation, type SurvivorCashflow } from "./death-need.ts";
 import type { RetirementIncome } from "./retirement-income.ts";
 import type { GoalsResult } from "./goals.ts";
-import { ratePer1000, roughBand, type PremiumBand } from "./premiums.ts";
+import { ratePer1000, roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, type PremiumBand } from "./premiums.ts";
 import { allocateLadder, defaultOrder, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
+import { minimumFor, profileFor } from "./insurance-budget.ts";
 import type { ScopeGap } from "./scope.ts";
 import type { ProductSpec } from "./parameters/tatil-products-2026-10.ts";
 import { ASSUMPTION_SET_ID } from "./parameters/fact-finder-2026-10.ts";
@@ -120,6 +121,8 @@ export interface ParentFuneralCover {
   readonly personId: string;
   readonly who: string;
   readonly age: number;
+  /** Rest Assured II's rated age: age next birthday. Eligibility and price use it. */
+  readonly ratedAge: number;
   readonly costToday: number;
   /** Cost at the end of the parent's care stream, inflated at the care basket rate. */
   readonly costAtEnd: number;
@@ -130,6 +133,12 @@ export interface ParentFuneralCover {
   readonly cover: number;
   readonly product: "rest-assured-ii" | null;
   readonly premium: PremiumBand | null;
+  /** Premium a month on the product minimum cover ($30,000): the ladder item's minimum. 0 when not eligible. */
+  readonly minimumMonthly: number;
+  /** Premium a month on `cover`: the ladder item's full amount. 0 when not eligible. */
+  readonly fullMonthly: number;
+  /** Set when the parent's sex cannot be told from the relationship (priced on the male rate). */
+  readonly sexFlag: string | null;
   /** Rest Assured II grading, printed wherever it is recommended (guard 6). */
   readonly disclosure: string | null;
   readonly alternative: { readonly product: "platinum-edge"; readonly deposit: { readonly min: number; readonly max: number }; readonly disclosure: string | null };
@@ -442,12 +451,17 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const costAtEnd = costToday * Math.pow(1 + f, yearsToEnd);
     const g = p.nisContributions === "yes" ? grant : 0;
     const flag = p.nisContributions === "unknown" ? `${parentLabel(p)}'s NIS record is not known, so no funeral grant is counted. Ask whether they paid 25 or more contributions.` : null;
-    const eligible = ra.issueAge.max === null || pa <= ra.issueAge.max;
+    const eligible = restAssuredEligible(b, pa);
+    const sex = parentSex(p);
+    const insured = { age: pa, sex, who: parentLabel(p) };
     const cover = eligible ? Math.min(ra.cover!.max ?? Infinity, Math.max(ra.cover!.min, costAtEnd - g)) : 0;
-    const est = eligible ? cover * ratePer1000(b, "rest-assured", pa) / 1000 : 0;
+    const est = eligible ? restAssuredPremium(b, insured, cover) : 0;
     return {
-      personId: p.personId, who: parentLabel(p), age: pa, costToday, costAtEnd, yearsToEnd, nisGrant: g, nisGrantFlag: flag,
+      personId: p.personId, who: parentLabel(p), age: pa, ratedAge: restAssuredRatedAge(pa), costToday, costAtEnd, yearsToEnd, nisGrant: g, nisGrantFlag: flag,
       cover, product: eligible ? "rest-assured-ii" : null, premium: eligible ? roughBand(b, est, ra.minPremiumMonthly) : null,
+      minimumMonthly: eligible ? restAssuredPremium(b, insured, ra.cover!.min) : 0,
+      fullMonthly: est,
+      sexFlag: eligible && sex === null ? `${parentLabel(p)}: the relationship does not tell us their sex, so Rest Assured II is priced on the male rate (the higher one).` : null,
       disclosure: eligible ? ra.disclosure : null,
       alternative: { product: "platinum-edge", deposit: { min: pe.singleDeposit!.min, max: pe.singleDeposit!.max }, disclosure: pe.disclosure },
       sentence: `${parentLabel(p)}'s funeral is covered. The funeral home can be paid directly, without waiting on probate.`,
@@ -456,9 +470,11 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   });
 
   /* -------------------------------------------------------------- ladder (§11) */
-  const lifePremium = (cover: number): number => split(cover, false).reduce((a, x) => a + x.premiumMonthly, 0);
-  const essPrem = lifePremium(packages.essential);
-  const recPrem = lifePremium(packages.recommended);
+  // Life to the ruin level is a term plan (addendum §11, product mapping: life-ruin → Term life); cover beyond
+  // the ruin level adds to the same term plan. Each cover is at least the $150,000 plan minimum (floorCover).
+  const termPremium = (cover: number): number => (cover > 0 ? Math.max(term.minPremiumMonthly ?? 0, cover * TR / 1000) : 0);
+  const essPrem = termPremium(packages.essential);
+  const recPrem = termPremium(packages.recommended);
   const ciRate = ratePer1000(b, "ci", age);
   const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, lsg.cover!.min * ciRate / 1000);
   const ciFull = Math.max(ciMin, ciCover * ciRate / 1000);
@@ -469,18 +485,28 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const futureGoals = careGraph.goals.filter((g) => !g.current);
   const sum = (xs: readonly number[]): number => xs.reduce((a, x) => a + x, 0);
   const token = ri.routing.mode === "registered" && ri.gapMonthly > 0 ? b.get<ProductSpec>("core:products.destiny").minPremiumMonthly ?? 0 : 0;
+  const profile = profileFor(facts);
+  // Tier 1 default order (addendum §11.1, time to need): life, parent funerals oldest first, CI, disability income, own final expense.
+  const funerals = parentFuneral.filter((x) => x.product).sort((x, y) => y.age - x.age);
+  const di = profile !== "later" ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
+  const own = { age, sex: facts.client.sex, who: "You" };
+  const ownCover = Math.min(ra.cover!.max ?? Infinity, Math.max(ra.cover!.min, w.funeral));
+  const ownFinal = profile === "later" && restAssuredEligible(b, age) ? { min: restAssuredPremium(b, own, ra.cover!.min), full: restAssuredPremium(b, own, ownCover) } : null;
   const specs: LadderItemSpec[] = [
     { key: "buffer-one-month", tier: 0, label: "One month of buffer cash", min: oneMonth, full: oneMonth, insurance: false },
     { key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true },
-    { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciNeed > 0 ? ciMin : 0, full: ciNeed > 0 ? ciFull : 0, insurance: true },
-    ...parentFuneral.filter((x) => x.premium).map((x) => ({
-      key: `parent-funeral:${x.personId}`, tier: 1 as const, label: `${x.who}'s funeral cover`, min: x.premium!.high, full: x.premium!.high, insurance: true,
+    ...funerals.map((x) => ({
+      key: `parent-funeral:${x.personId}`, tier: 1 as const, label: `${x.who}'s funeral cover`, min: x.minimumMonthly, full: Math.max(x.minimumMonthly, x.fullMonthly), insurance: true,
     })),
+    { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciNeed > 0 ? ciMin : 0, full: ciNeed > 0 ? ciFull : 0, insurance: true },
+    // The engine sizes no disability income need yet, so the item is funded at its minimum.
+    { key: "disability-income", tier: 1, label: "Disability income (Cashbuilder II with the Disability Income Rider)", min: di, full: di, insurance: true },
+    ...(ownFinal ? [{ key: "own-final-expense", tier: 1 as const, label: "Your own final expense (Rest Assured II)", min: ownFinal.min, full: ownFinal.full, insurance: true }] : []),
     ...(token > 0 ? [{ key: "token-annuity", tier: 1.5 as const, label: "Token registered annuity (unused tax relief)", min: token, full: token, insurance: false }] : []),
     { key: "buffer-three-months", tier: 2, label: "Buffer out to three months", min: 0, full: Math.max(0, threeMonths - oneMonth), insurance: false },
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
-    { key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true },
+    { key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin" },
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
     { key: "milestones", tier: 3, label: "Milestones and your own goals", min: 0, full: sum(futureGoals.filter((g) => g.kind === "milestone" && g.start > near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years > near).map((p) => p.monthlySaving)), insurance: false },

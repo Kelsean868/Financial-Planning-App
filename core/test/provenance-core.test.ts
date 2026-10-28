@@ -51,9 +51,18 @@ test("assumed figures are marked assumed (Section 2 risk 4)", () => {
   assert.equal(CORE_TABLES.ff.carLoan.defaultTermYears.status, "assumed");
   assert.equal(CORE_TABLES.ff.carLoan.maxTermYears.status, "assumed");
   assert.equal(CORE_TABLES.ff.carLoan.newMaxFinancing.status, "verified");
-  for (const p of coreRowPaths().filter((x) => x.startsWith("core:ff.premiumRates.") && !x.endsWith("bandSpread"))) {
+  // The two Rest Assured II rates are real ApplyOn quotes (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-one-allocator.md);
+  // every other premium rate, the Rest Assured II age factor included, is still an estimate.
+  const quoted = ["core:ff.premiumRates.restAssuredMale", "core:ff.premiumRates.restAssuredFemale"];
+  for (const p of coreRowPaths().filter((x) => x.startsWith("core:ff.premiumRates.") && !x.endsWith("bandSpread") && !quoted.includes(x))) {
     assert.equal(resolveCoreRow(p).status, "estimate", `${p}: premium rates are estimates, never a quote`);
   }
+  for (const p of quoted) {
+    assert.equal(resolveCoreRow(p).status, "verified", `${p} is a quote`);
+    assert.match(resolveCoreRow(p).source, /^ApplyOn quote, lead TTRA-/, `${p} names its quote`);
+    assert.equal(resolveCoreRow(p).asOf, "2026-10-27");
+  }
+  assert.match(resolveCoreRow("core:ff.premiumRates.restAssuredAgeGrowth").caveat ?? "", /not yet checked against a quote/);
 });
 
 test("every core row has a source and an ISO asOf", () => {

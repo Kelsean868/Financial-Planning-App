@@ -1,5 +1,5 @@
 /**
- * Fact-finder assumption set `ff-2026-10-27-nis70`: every number the fact-finder modules
+ * Fact-finder assumption set `ff-2026-10-27-ladder1`: every number the fact-finder modules
  * compute with that is not a Tatil product rule (those are in tatil-products-2026-10.ts)
  * and not already in the root `parameters/tt-parameters.json` (read from there).
  *
@@ -12,11 +12,18 @@ const PROTO = "Fact-Finder Prototype v17 (docs/prototype/fact-finder-prototype-v
 const CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 const CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
 
-// Was "ff-2026-10-27" until the NIS 70% re-baseline (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-nis70.md).
-export const ASSUMPTION_SET_ID = "ff-2026-10-27-nis70";
+// Was "ff-2026-10-27" until the NIS 70% re-baseline (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-nis70.md), then
+// "ff-2026-10-27-nis70" until the one-allocator fix (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-one-allocator.md).
+export const ASSUMPTION_SET_ID = "ff-2026-10-27-ladder1";
 
 export type EducationRoute = "local" | "regional" | "uk" | "canada" | "usa" | "none";
 export type CostLevel = "lean" | "typical" | "full";
+
+/** A quoted Rest Assured II rate: monthly premium per $1,000 of cover at a rated age (age next birthday). */
+export interface RestAssuredAnchor {
+  readonly per1000: number;
+  readonly ratedAge: number;
+}
 
 export interface RouteSpec {
   readonly label: string;
@@ -159,8 +166,13 @@ export const FF = deepFreeze({
     wholeLifeAgeGrowth: row(1.07, "estimate", PROTO, D),
     ciPer1000: row(0.85, "estimate", `${PROTO}: SAMPLE critical illness rate per $1,000 a month`, D),
     ciAgeGrowth: row(1.07, "estimate", PROTO, D),
-    restAssuredPer1000: row(1.6, "estimate", `${PROTO}: SAMPLE Rest Assured II rate per $1,000 a month`, D),
-    restAssuredAgeGrowth: row(1.05, "estimate", PROTO, D),
+    // Was one row, restAssuredPer1000 1.6 (estimate, the prototype's), until 27 Oct 2026 (docs/audit/RUN-2026-10-27-fix-one-allocator.md).
+    restAssuredMale: row<RestAssuredAnchor>({ per1000: 8.7627, ratedAge: 72 }, "verified",
+      "ApplyOn quote, lead TTRA-9WZE859: Rest Assured II, male, rated age 72 (next birthday), Pay to Age 100, monthly, taxes and stamp duty included: $262.88 on $30,000, $438.14 on $50,000", D),
+    restAssuredFemale: row<RestAssuredAnchor>({ per1000: 5.952, ratedAge: 67 }, "verified",
+      "ApplyOn quote, lead TTRA-9DWVJ3Y: Rest Assured II, female, rated age 67 (next birthday), Pay to Age 100, monthly, taxes and stamp duty included: $297.60 on $50,000 ($178.56 on $30,000 by proportion)", D),
+    restAssuredAgeGrowth: row(1.05, "estimate", `${PROTO}: Rest Assured II rate grows 5% a year of age away from each quoted anchor`, D,
+      { caveat: "The Rest Assured II rate at an age other than the two quoted ages (male 72, female 67) uses a 5% a year age factor that is not yet checked against a quote." }),
     cashbuilderCoverShare: row(0.7, "estimate", `${PROTO}: Cashbuilder II buys cover with 70% of its premium at the whole life rate`, D),
     endowmentCoverYears: row(20, "estimate", `${PROTO}: endowment cover is about 20 years of premium`, D),
     endowmentCoverShare: row(0.9, "estimate", PROTO, D),

@@ -1,7 +1,7 @@
 /**
  * Section 2 guard 14 (goldens), care graph guard 2 (golden numbers, inverted gate) and closing
  * guard 1 (upstream immutability). Numbers from the prototype v17, 27 Oct 2026; each moves only with
- * a recorded re-baseline (closing addendum §14.1). Assumption set `ff-2026-10-27-nis70`.
+ * a recorded re-baseline (closing addendum §14.1). Assumption set `ff-2026-10-27-ladder1`.
  *
  * Two checks per figure: the signed rounded golden exactly, and the prototype's full-precision value
  * (traced in the run record §6) to 1e-6, so a drift too small to move the rounding is still caught.
@@ -9,6 +9,10 @@
  * Re-baseline 27 Oct 2026 (Kyron, Decision 1 = A; docs/audit/RUN-2026-10-27-fix-nis70.md): PAYE deducts
  * 70% of the employee's NIS (IRD TD1 2023, line 4(b)), not the prototype's 100%. Only the two ceilings
  * moved: family 725 -> 711 (724.6125 -> 710.8425), young single 376 -> 374 (375.7625 -> 374.1425).
+ *
+ * One-allocator fix 27 Oct 2026 (Kyron, Decisions 3 = A and 4 = A; docs/audit/RUN-2026-10-27-fix-one-allocator.md):
+ * no golden here moved; the assumption set id did (was `ff-2026-10-27-nis70`). The death scenario sentences are
+ * pinned from this run (they were unpinned before it; the same lines before and after the fix).
  */
 import { test } from "node:test";
 import assert from "node:assert/strict";
@@ -23,8 +27,32 @@ const near = (name: string, produced: number, prototype: number): void =>
   assert.ok(Math.abs(produced - prototype) < 1e-6, `${name}: produced ${produced}, prototype ${prototype}`);
 const thousands = (x: number): number => Math.round(x / 1000) * 1000;
 
-test("goldens are pinned to assumption set ff-2026-10-27-nis70", () => {
-  assert.equal(ASSUMPTION_SET_ID, "ff-2026-10-27-nis70");
+test("goldens are pinned to assumption set ff-2026-10-27-ladder1", () => {
+  assert.equal(ASSUMPTION_SET_ID, "ff-2026-10-27-ladder1");
+});
+
+test("death scenario sentences, both samples (pinned 27 Oct 2026, one-allocator fix)", () => {
+  const fam = computeFactFinder(SAMPLE_FAMILY).closing.scenarios.death;
+  const careAndEdu = (xs: readonly string[]): string[] => xs.filter((s) => /'s (care|degree) /.test(s));
+  assert.deepEqual(careAndEdu(fam.today.sentences), [
+    "Your mother's care continues.", "Your father's care stops in month 1.", "Child B's degree stops in month 1.", "Child A's degree stops in month 1.",
+  ]);
+  assert.deepEqual(careAndEdu(fam.plan.sentences), [
+    "Your mother's care continues.", "Your father's care continues.", "Child B's degree stops in month 2.", "Child A's degree stops in month 1.",
+  ]);
+  assert.equal(fam.plan.sentences[0], "Your family receives $1,747,351.");
+  const young = computeFactFinder(SAMPLE_YOUNG_SINGLE).closing.scenarios.death;
+  assert.deepEqual(young.today.sentences, [
+    "Your family receives $4,000.", "Your funeral falls on the family.", "Final medical bills fall on the family.",
+    "The $3,000 of expensive debt stays with the family.", "The household has enough to live on until the youngest is 19.",
+    "We did not capture this. It is not counted either way.",
+  ]);
+  assert.deepEqual(young.plan.sentences, [
+    "Your family receives $154,000.", "Your funeral is paid for. The funeral home can be paid directly, without waiting on probate.",
+    "Final medical bills are paid.", "The expensive debt is cleared.", "The household has enough to live on until the youngest is 19.",
+    "We did not capture this. It is not counted either way.",
+  ]);
+  assert.ok(!young.plan.sentences.some((s) => /degree/.test(s)), "the young single has no degree lines");
 });
 
 test("§2.8 sample family", () => {
