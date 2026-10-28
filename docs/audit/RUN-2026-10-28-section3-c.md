@@ -125,7 +125,7 @@ matched). Output: `evidence-2026-10-28-section3-c/sabotage-log.txt`.
 | Guard | Sabotage | Failure (first message) | Restored |
 |---|---|---|---|
 | Catalogue labels fit the validator | the furniture label back to its 65-character text | `Got unwanted exception: group home: every label must validate` | yes |
-| One cash source | `toEngineFacts` reads `budget.savings` again | `the emergency fund months are the card's months covered` (1.321… vs 1.321… with a stale 999,999 savings: the two numbers differ) | yes |
+| One cash source | `toEngineFacts` reads `budget.savings` again | `the emergency fund months are the card's months covered` (the stale `budget.savings` of 999,999 was read, so the budget's months differed from the card's) | yes |
 
 ## 7. Tests, build and hashes
 
