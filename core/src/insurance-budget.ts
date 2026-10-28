@@ -166,9 +166,10 @@ function protectionPlanFor(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: 
   const at = (basis: CoverBasis, product: ProductId) => (monthly: number): number => capped(product, monthly * coverPerDollar(b, basis, age));
   const ra = (insured: RestAssuredInsured) => (monthly: number): number => capped("rest-assured-ii", restAssuredCoverFor(b, insured, monthly));
   if (key === "life-ruin") {
-    return profile === "later"
-      ? { name: "Term life to clear debts", product: "term", riders: [], why: "Clears what you still owe so it does not pass to the family.", cover: at("term", "term") }
-      : { name: "Term life", product: "term", riders: [], why: "Replaces your income for the people who depend on you. The most cover for each dollar.", cover: at("term", "term") };
+    const why = profile === "later" ? "Clears what you still owe so it does not pass to the family."
+      : profile === "single" ? "Clears what you owe and pays your funeral, so nothing falls on your family. The most cover for each dollar."
+      : "Replaces your income for the people who depend on you. The most cover for each dollar.";
+    return { name: profile === "later" ? "Term life to clear debts" : "Term life", product: "term", riders: [], why, cover: at("term", "term") };
   }
   if (key === "critical-illness") {
     const why = profile === "single" ? "At your age a serious illness or injury is far more likely than death. This pays a lump sum to live on while you recover."
