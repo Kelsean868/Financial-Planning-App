@@ -10,20 +10,25 @@ Decision 8 = B (the package cards are a choice inside Tier 1; the slider sets th
 Opus 5.5, effort high. Nothing merged, deployed or applied; no live database access. No care graph golden moved; no
 privacy guard failed.
 
-**Kyron's call first (gate reading).** With the default card, three dump lines outside the cards and bands moved, each
-forced by the brief's own changes: `chosen.package` (recommended → essential), `chosen.basket.partial` (true → false:
-the basket now reaches the chosen Essential card), and life-beyond-ruin's `full` (262.10 → 339.67, from the new
-Recommended cover; still $0 allocated). I read them as card lines, so hard stop 2 was not hit. If not, revert FPA
-`0a332cf` and its GRP re-vendor. Run record §1 item 1.
+**Kyron's decisions, 28 Oct 2026.**
+- **Decision 1: accept.** With the default card, three dump lines outside the cards and bands moved, each forced by
+  the brief's own changes: `chosen.package` (recommended → essential), `chosen.basket.partial` (true → false), and
+  life-beyond-ruin's `full` (262.10 → 339.67; still $0 allocated). They are card lines. Hard stop 2 not hit.
+- **Decision 9: keep the rule** (raising the budget can lower life cover). A card that "Needs $X more a month", with
+  other Tier 1 plans funded at this budget, now says under the status: "Other plans get their minimum first: {plan
+  names}. To keep the {card} life cover as well, you need $X more a month." GRP only, engine figures only
+  (`cardNeedsLine`). Family, Recommended at $711: "… critical illness cover, your father's funeral cover. … you need
+  $281 more a month." One test (`fact-finder-close.test.mjs`), sabotage-tested; fact-finder tests 55/55; smoke walk
+  re-run at 390: 13/13. GRP commit `7dbe512c78c0256c0ab03014771fdcacf03d7140`; FPA run record §10 at `79e6bc0`.
 
 **New hashes.**
 
 | What | Old | New |
 |---|---|---|
-| FPA `feat/fact-finder-engine` head (PR #5) | `3b0e7f4` | `13fc2fe4312d9721ee38c02236fece2286d69feb` (engine `0a332cf7d7e526981ad1643da4f50005fbbf82d7`, then the run record) |
+| FPA `feat/fact-finder-engine` head (PR #5) | `3b0e7f4` | `79e6bc0a5f996a332e2694af7fc0a3297743910c` (engine `0a332cf7d7e526981ad1643da4f50005fbbf82d7`, then the run record `13fc2fe` and its §10) |
 | `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `14b9c994…72e2a` | `e3e38f7ddc4d97ddf4a8e0731053ba728f907c5e4476d2198e2f55fc8146b100` |
 | Assumption set id | `ff-2026-10-27-ladder2` | `ff-2026-10-28-cards1` |
-| GRP `feat/fact-finder` head (PR #160) | `2bfb622` | `87b0c818efdea144acb491135f3657a257e15031` (re-vendor pinned to FPA `0a332cf`, cards and slider on the page, migration grants, smoke walk evidence) |
+| GRP `feat/fact-finder` head (PR #160) | `2bfb622` | `7dbe512c78c0256c0ab03014771fdcacf03d7140` (`87b0c81`: re-vendor pinned to FPA `0a332cf`, cards and slider, migration grants; then the Decision 9 card line) |
 
 **What changed.** The cards are the death-need tiers (floored, capped by the underwriting limit); the budget no longer
 caps the Recommended card. The chosen card is the Tier 1 life target (life-ruin's full); the default is Essential, the
@@ -44,7 +49,7 @@ record: FPA `docs/audit/RUN-2026-10-28-f18-package-cards.md` (on `feat/fact-find
 
 **Follow-ups.**
 - F-13 to F-17 stay open (see fix run 3 below).
-- **F-18: closed** by this run, apart from Kyron's two calls (run record §1 items 1 and 2).
+- **F-18: closed** by this run; Kyron's two calls are decided (Decisions 1 and 9, above).
 - **F-19 (new, record only):** two NIS pension-age rows disagree. `fact-finder-2026-10.ts` has a flat 65
   (`nisPensionAge`); `retirement-2026-10.ts` has the 2028–2036 rise.
 - **F-20 (new, record only):** parameter refresh before **4 Jan 2027**: the NIS class table (rate up about 3 points)
