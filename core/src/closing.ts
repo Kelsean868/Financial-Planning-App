@@ -19,11 +19,11 @@ import { parentLabel, type CareGraphResult } from "./care-graph.ts";
 import { survivorCashflow, type DeathNeedResult, type Obligation, type SurvivorCashflow } from "./death-need.ts";
 import type { RetirementIncome } from "./retirement-income.ts";
 import type { GoalsResult } from "./goals.ts";
-import { ratePer1000, roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, type PremiumBand } from "./premiums.ts";
+import { ratePer1000, roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, canIssue, ratedAge, premiumFor, type PremiumBand } from "./premiums.ts";
 import { allocateLadder, defaultOrder, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
 import { minimumFor, profileFor } from "./insurance-budget.ts";
 import type { ScopeGap } from "./scope.ts";
-import type { ProductSpec } from "./parameters/tatil-products-2026-10.ts";
+import type { ProductId, ProductSpec } from "./parameters/tatil-products-2026-10.ts";
 import { ASSUMPTION_SET_ID } from "./parameters/fact-finder-2026-10.ts";
 
 export type Package = "essential" | "recommended" | "full";
@@ -305,51 +305,8 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   };
   const usingBudget = options.budgetMonthly !== undefined && options.budgetMonthly !== null;
   const pkg: Package = options.package ?? "recommended";
-  const isFull = !usingBudget && pkg === "full";
   const wanted = usingBudget ? floorCover(Math.min(uw, coverFor(options.budgetMonthly as number, false))) : packages[pkg];
-
-  const item = (product: "term" | "whole-life", cover: number): BasketItem => {
-    const spec = product === "term" ? term : whole;
-    const est = cover * (product === "term" ? TR : WL) / 1000;
-    const band = roughBand(b, est, spec.minPremiumMonthly);
-    return { product, cover, premiumMonthly: Math.max(spec.minPremiumMonthly ?? 0, est), band };
-  };
-  const split = (cover: number, allTerm: boolean): BasketItem[] => {
-    if (cover <= 0) return [];
-    if (allTerm) return [item("term", cover)];
-    const pm = permOf(isFull);
-    let perm = pm > 0 ? Math.min(cover, Math.max(pm, whole.cover!.min)) : 0;
-    let termPart = cover - perm;
-    if (termPart > 0 && termPart < term.cover!.min) { perm = cover; termPart = 0; }
-    return [...(termPart > 0 ? [item("term", termPart)] : []), ...(perm > 0 ? [item("whole-life", perm)] : [])];
-  };
-  const high = (xs: readonly BasketItem[]): number => xs.reduce((a, x) => a + x.band.high, 0);
   const notCoveredAt = (cover: number): string[] => layerAt(5, cover).lines.filter((l) => !l.met).map((l) => l.label);
-  const buildBasket = (cover: number): LifeBasket => {
-    const empty = (notYet: boolean): LifeBasket => ({ cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: cover > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet });
-    if (budget.stage === 0 || cover <= 0) return empty(budget.stage !== 0 && cover > 0);
-    const ceiling = budget.ceilingMonthly;
-    let items = split(cover, false);
-    let permanentDropped = false;
-    let c = cover;
-    if (high(items) > ceiling) { items = split(cover, true); permanentDropped = true; }
-    if (high(items) > ceiling) {
-      const spread = b.num("core:ff.premiumRates.bandSpread");
-      c = Math.min(cover, TR > 0 ? ceiling / (1 + spread) / TR * 1000 : 0);
-      items = c >= term.cover!.min ? split(c, true) : [];
-      if (!items.length || high(items) > ceiling) return empty(true);
-    }
-    return {
-      cover: c, items, totalMonthly: items.reduce((a, x) => a + x.premiumMonthly, 0), totalHighMonthly: high(items),
-      partial: c < cover, permanentDropped, notCovered: notCoveredAt(c), notYet: false,
-    };
-  };
-  const basket = buildBasket(wanted);
-  b.rule("the life basket is bounded by the stage ceiling: if the need costs more, partial cover is shown and what is not covered is named");
-
-  const layers = ([1, 2, 3, 4, 5] as const).map((L) => layerAt(L, basket.cover));
-  const today = layers[3]!.outcome;
-  const plan = layers[4]!.outcome;
 
   /* -------------------------------------------------------------- bands */
   const bands: CloseBand[] = (["floor", "recommended", "ceiling"] as const).map((k) => {
@@ -417,24 +374,6 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     unknowns: [],
   };
 
-  /* -------------------------------------------------------------- legacy */
-  const legLine = layers[4]!.lines.find((l) => l.key === "legacy");
-  const legacy: ScenarioPair = {
-    today: {
-      lumpAvailable: 0, monthlyAvailable: 0, monthsUntilShortfall: null, obligationsMet: [],
-      obligationsFailed: w.legacy > 0 ? ["What you leave behind"] : [],
-      sentences: [w.legacy > 0 ? "Money in your own name is frozen until probate, which in T&T can take years." : "No legacy goal was set."], unknowns: [],
-    },
-    plan: {
-      lumpAvailable: legLine?.paid ?? 0, monthlyAvailable: 0, monthsUntilShortfall: null,
-      obligationsMet: legLine?.met ? ["What you leave behind"] : [], obligationsFailed: legLine && !legLine.met ? ["What you leave behind"] : [],
-      sentences: [w.legacy <= 0 ? "No legacy goal was set."
-        : legLine?.met ? `${money(w.legacy)} goes straight to the person you name. It does not form part of your estate, and creditors cannot reach it (Insurance Act s.187).`
-        : "The plan does not yet reach what you want to leave behind."],
-      unknowns: [],
-    },
-  };
-
   /* -------------------------------------------------------------- parent funeral cover (§5) */
   const ra = b.get<ProductSpec>("core:products.rest-assured-ii");
   const pe = b.get<ProductSpec>("core:products.platinum-edge");
@@ -452,6 +391,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const g = p.nisContributions === "yes" ? grant : 0;
     const flag = p.nisContributions === "unknown" ? `${parentLabel(p)}'s NIS record is not known, so no funeral grant is counted. Ask whether they paid 25 or more contributions.` : null;
     const eligible = restAssuredEligible(b, pa);
+    if (!eligible) b.rule(`${parentLabel(p)}: rated age ${restAssuredRatedAge(pa)} is past Rest Assured II's issue ages, so there is no funeral cover item`);
     const sex = parentSex(p);
     const insured = { age: pa, sex, who: parentLabel(p) };
     const cover = eligible ? Math.min(ra.cover!.max ?? Infinity, Math.max(ra.cover!.min, costAtEnd - g)) : 0;
@@ -470,11 +410,23 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   });
 
   /* -------------------------------------------------------------- ladder (§11) */
-  // Life to the ruin level is a term plan (addendum §11, product mapping: life-ruin → Term life); cover beyond
-  // the ruin level adds to the same term plan. Each cover is at least the $150,000 plan minimum (floorCover).
-  const termPremium = (cover: number): number => (cover > 0 ? Math.max(term.minPremiumMonthly ?? 0, cover * TR / 1000) : 0);
-  const essPrem = termPremium(packages.essential);
-  const recPrem = termPremium(packages.recommended);
+  // Change 3 (Kyron, Decision 7 = A, 27 Oct 2026): ruin-level life cover only when someone depends on the client.
+  const dependants = facts.partner !== null || facts.children.length > 0 || careGraph.goals.some((g) => g.kind === "care" && g.presentValue > 0);
+  if (!dependants) b.rule("no partner, no children, no parent care paid: no ruin-level life cover");
+  // Change 5: every plan is issued on rated age. Term stops at rated age 65; past it the ruin-level plan is whole life.
+  // Life to the ruin level is one plan; cover beyond the ruin level adds to it. Each cover is at least $150,000 (floorCover).
+  const lifeProduct: "term" | "whole-life" = canIssue(b, "term", age) ? "term" : "whole-life";
+  if (dependants && lifeProduct === "whole-life") b.rule(`term life cannot be issued at rated age ${ratedAge(age)}, so the ruin-level life plan is whole life`);
+  const lifeSpec = lifeProduct === "term" ? term : whole;
+  const lifeRate = lifeProduct === "term" ? TR : WL;
+  const lifePremium = (cover: number): number => (cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, cover * lifeRate / 1000) : 0);
+  const essPrem = lifePremium(packages.essential);
+  const recPrem = lifePremium(packages.recommended);
+  const issuable = (id: ProductId, insuredAge: number, what: string): boolean => {
+    const ok = canIssue(b, id, insuredAge);
+    if (!ok) b.rule(`${what}: ${id} cannot be issued at rated age ${ratedAge(insuredAge)}, so there is no ladder item`);
+    return ok;
+  };
   const ciRate = ratePer1000(b, "ci", age);
   const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, lsg.cover!.min * ciRate / 1000);
   const ciFull = Math.max(ciMin, ciCover * ciRate / 1000);
@@ -486,33 +438,89 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const sum = (xs: readonly number[]): number => xs.reduce((a, x) => a + x, 0);
   const token = ri.routing.mode === "registered" && ri.gapMonthly > 0 ? b.get<ProductSpec>("core:products.destiny").minPremiumMonthly ?? 0 : 0;
   const profile = profileFor(facts);
-  // Tier 1 default order (addendum §11.1, time to need): life, parent funerals oldest first, CI, disability income, own final expense.
+  // Tier 1 default order (Kyron, Decision 6 = A, 27 Oct 2026): life, CI, parent funerals oldest first, disability income, own final expense.
   const funerals = parentFuneral.filter((x) => x.product).sort((x, y) => y.age - x.age);
-  const di = profile !== "later" ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
+  const ciOn = ciNeed > 0 && issuable("life-span-gold", age, "Critical illness cover");
+  const di = profile !== "later" && issuable("cashbuilder-ii", age, "Disability income") ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
   const own = { age, sex: facts.client.sex, who: "You" };
   const ownCover = Math.min(ra.cover!.max ?? Infinity, Math.max(ra.cover!.min, w.funeral));
-  const ownFinal = profile === "later" && restAssuredEligible(b, age) ? { min: restAssuredPremium(b, own, ra.cover!.min), full: restAssuredPremium(b, own, ownCover) } : null;
+  const ownFinal = profile === "later" && issuable("rest-assured-ii", age, "Your own final expense") ? { min: restAssuredPremium(b, own, ra.cover!.min), full: restAssuredPremium(b, own, ownCover) } : null;
+  // Change 4 (Decision 7 = A): life cover follows each loan goal not yet taken (home on a mortgage, a car on a loan).
+  // A family's existing mortgage stays inside life-ruin. Term if it can still be issued at the goal date, else whole life;
+  // priced today, at today's rated age. Business loans stay in the business section.
+  const loanCover = goals.plans.flatMap((p): LadderItemSpec[] => {
+    const loan = p.home?.loan ?? p.car?.loan ?? 0;
+    if (loan <= 0) return [];
+    const id: "term" | "whole-life" = canIssue(b, "term", age + p.years) ? "term" : "whole-life";
+    const spec = id === "term" ? term : whole;
+    const cover = Math.min(spec.cover!.max ?? Infinity, Math.max(spec.cover!.min, loan));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, ratedAge(age)));
+    return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id }];
+  });
   const specs: LadderItemSpec[] = [
     { key: "buffer-one-month", tier: 0, label: "One month of buffer cash", min: oneMonth, full: oneMonth, insurance: false },
-    { key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true },
+    ...(dependants ? [{ key: "life-ruin", tier: 1 as const, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true, product: lifeProduct }] : []),
+    { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciOn ? ciMin : 0, full: ciOn ? ciFull : 0, insurance: true, product: "life-span-gold" },
     ...funerals.map((x) => ({
-      key: `parent-funeral:${x.personId}`, tier: 1 as const, label: `${x.who}'s funeral cover`, min: x.minimumMonthly, full: Math.max(x.minimumMonthly, x.fullMonthly), insurance: true,
+      key: `parent-funeral:${x.personId}`, tier: 1 as const, label: `${x.who}'s funeral cover`, min: x.minimumMonthly, full: Math.max(x.minimumMonthly, x.fullMonthly), insurance: true, product: "rest-assured-ii" as const,
     })),
-    { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciNeed > 0 ? ciMin : 0, full: ciNeed > 0 ? ciFull : 0, insurance: true },
-    // The engine sizes no disability income need yet, so the item is funded at its minimum.
-    { key: "disability-income", tier: 1, label: "Disability income (Cashbuilder II with the Disability Income Rider)", min: di, full: di, insurance: true },
-    ...(ownFinal ? [{ key: "own-final-expense", tier: 1 as const, label: "Your own final expense (Rest Assured II)", min: ownFinal.min, full: ownFinal.full, insurance: true }] : []),
+    // The engine sizes no disability income need yet, so the item is funded at its minimum (F-17).
+    { key: "disability-income", tier: 1, label: "Disability income (Cashbuilder II with the Disability Income Rider)", min: di, full: di, insurance: true, product: "cashbuilder-ii" },
+    ...(ownFinal ? [{ key: "own-final-expense", tier: 1 as const, label: "Your own final expense (Rest Assured II)", min: ownFinal.min, full: ownFinal.full, insurance: true, product: "rest-assured-ii" as const }] : []),
     ...(token > 0 ? [{ key: "token-annuity", tier: 1.5 as const, label: "Token registered annuity (unused tax relief)", min: token, full: token, insurance: false }] : []),
     { key: "buffer-three-months", tier: 2, label: "Buffer out to three months", min: 0, full: Math.max(0, threeMonths - oneMonth), insurance: false },
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
-    { key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin" },
+    ...loanCover,
+    ...(dependants ? [{ key: "life-beyond-ruin", tier: 3 as const, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : []),
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
     { key: "milestones", tier: 3, label: "Milestones and your own goals", min: 0, full: sum(futureGoals.filter((g) => g.kind === "milestone" && g.start > near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years > near).map((p) => p.monthlySaving)), insurance: false },
   ];
   const ladderSpecs = specs.filter((s) => s.full > 0 || s.min > 0);
   const ladder = allocateLadder(budget, ladderSpecs, options.ladderOrder ?? defaultOrder(ladderSpecs));
+
+  /* -------------------------------------------------------------- the life basket (Change 6) */
+  // The life package on the close is the ladder's life allocation (life-ruin plus life-beyond-ruin); it does not split term
+  // and whole life on its own (guard 25). Its cover is what each item was sized to buy: the ruin level, plus the funded
+  // share of the step from the ruin level to the recommended cover.
+  const buildBasket = (lad: Ladder): LifeBasket => {
+    const ruin = lad.items.find((i) => i.key === "life-ruin");
+    const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
+    const prem = (ruin?.allocated ?? 0) + (beyond?.allocated ?? 0);
+    if (budget.stage === 0 || !ruin || prem <= 0) {
+      return { cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: !!ruin && wanted > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet: ruin?.notYet ?? false };
+    }
+    const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
+    const cover = packages.essential + share * Math.max(0, packages.recommended - packages.essential);
+    const band = roughBand(b, cover * lifeRate / 1000, lifeSpec.minPremiumMonthly);
+    const items: BasketItem[] = [{ product: lifeProduct, cover, premiumMonthly: prem, band }];
+    return { cover, items, totalMonthly: prem, totalHighMonthly: band.high, partial: cover < wanted - 0.5, permanentDropped: false, notCovered: notCoveredAt(cover), notYet: false };
+  };
+  const basket = buildBasket(ladder);
+  b.rule("the life basket is the ladder's life allocation; when the need costs more than the cap, partial cover is shown and what is not covered is named");
+
+  const layers = ([1, 2, 3, 4, 5] as const).map((L) => layerAt(L, basket.cover));
+  const today = layers[3]!.outcome;
+  const plan = layers[4]!.outcome;
+
+  /* -------------------------------------------------------------- legacy */
+  const legLine = layers[4]!.lines.find((l) => l.key === "legacy");
+  const legacy: ScenarioPair = {
+    today: {
+      lumpAvailable: 0, monthlyAvailable: 0, monthsUntilShortfall: null, obligationsMet: [],
+      obligationsFailed: w.legacy > 0 ? ["What you leave behind"] : [],
+      sentences: [w.legacy > 0 ? "Money in your own name is frozen until probate, which in T&T can take years." : "No legacy goal was set."], unknowns: [],
+    },
+    plan: {
+      lumpAvailable: legLine?.paid ?? 0, monthlyAvailable: 0, monthsUntilShortfall: null,
+      obligationsMet: legLine?.met ? ["What you leave behind"] : [], obligationsFailed: legLine && !legLine.met ? ["What you leave behind"] : [],
+      sentences: [w.legacy <= 0 ? "No legacy goal was set."
+        : legLine?.met ? `${money(w.legacy)} goes straight to the person you name. It does not form part of your estate, and creditors cannot reach it (Insurance Act s.187).`
+        : "The plan does not yet reach what you want to leave behind."],
+      unknowns: [],
+    },
+  };
 
   /* -------------------------------------------------------------- gaps for the scope statement */
   const gaps: ScopeGap[] = [

@@ -3,8 +3,9 @@
  *
  * Protection: the priority ladder (closing-ladder.ts, addendum §11) is the only allocator. The
  * Protection group is the ladder's insurance items, in ladder order, each mapped to its plan
- * (guard 21: item for item and to the cent). An item whose minimum did not fit is "not yet" with
- * the amount it needs. No funded plan is ever below its minimum (guards 16 and 22).
+ * (guard 21: item for item and to the cent), capped at the band's recommended figure (guard 23).
+ * An item whose minimum did not fit is "not yet" with the amount it needs. No funded plan is ever
+ * below its minimum (guards 16 and 22) or outside its product's issue ages (guard 24).
  *
  * Savings plans: split the savings budget across recommended plans, fit each to its minimum, and
  * move plans that do not fit to "not yet" (`fitToMinimums`; unchanged this run, follow-up F-13).
@@ -64,6 +65,7 @@ export interface NotYetPlan {
   readonly riders: readonly { readonly id: RiderId; readonly name: string; readonly underwriting: string }[];
   /** The minimum a month this plan needs. */
   readonly needsMonthly: number;
+  readonly why: string;
   /** Protection only: the ladder item that waits. Empty for savings plans. */
   readonly ladderKeys: readonly string[];
 }
@@ -160,16 +162,28 @@ interface ProtectionPlan {
   readonly cover: (monthly: number) => number;
 }
 
-function protectionPlanFor(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: Profile, key: string): ProtectionPlan {
+const fmt = (n: number): string => `$${Math.round(n).toLocaleString("en-US")}`;
+
+function protectionPlanFor(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: Profile, item: LadderItemSpec): ProtectionPlan {
+  const { key } = item;
   const age = facts.client.age;
   const capped = (product: ProductId, cover: number): number => Math.min(b.get<ProductSpec>(`core:products.${product}`).cover?.max ?? Infinity, cover);
   const at = (basis: CoverBasis, product: ProductId) => (monthly: number): number => capped(product, monthly * coverPerDollar(b, basis, age));
   const ra = (insured: RestAssuredInsured) => (monthly: number): number => capped("rest-assured-ii", restAssuredCoverFor(b, insured, monthly));
+  // Life to the ruin level is term, or whole life once term cannot be issued at the client's rated age (guard 24).
+  const life = item.product === "whole-life" ? { product: "whole-life" as const, name: "Whole life" } : { product: "term" as const, name: "Term life" };
   if (key === "life-ruin") {
     const why = profile === "later" ? "Clears what you still owe so it does not pass to the family."
       : profile === "single" ? "Clears what you owe and pays your funeral, so nothing falls on your family. The most cover for each dollar."
       : "Replaces your income for the people who depend on you. The most cover for each dollar.";
-    return { name: profile === "later" ? "Term life to clear debts" : "Term life", product: "term", riders: [], why, cover: at("term", "term") };
+    return { name: profile === "later" ? `${life.name} to clear debts` : life.name, product: life.product, riders: [], why, cover: at(life.product, life.product) };
+  }
+  const goalId = key.startsWith("loan-cover:") ? key.slice("loan-cover:".length) : null;
+  const goal = facts.goals.find((g) => g.goalId === goalId);
+  if (goal) {
+    const loan = item.product === "whole-life" ? { product: "whole-life" as const, name: "Whole life" } : { product: "term" as const, name: "Term life" };
+    return { name: `${loan.name} for your ${goal.kind === "home" ? "home" : "car"} loan`, product: loan.product, riders: [],
+      why: `Your lender will want this from year ${goal.years}. It costs about ${fmt(item.min)} a month if you start now.`, cover: at(loan.product, loan.product) };
   }
   if (key === "critical-illness") {
     const why = profile === "single" ? "At your age a serious illness or injury is far more likely than death. This pays a lump sum to live on while you recover."
@@ -207,13 +221,13 @@ function protectionGroup(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: Pr
   type Draft = { plan: ProtectionPlan; key: string; monthly: number; min: number; keys: string[] };
   const drafts: Draft[] = [];
   const notYet: NotYetPlan[] = [];
-  const wait = (key: string, needs: number): void => {
-    const plan = protectionPlanFor(b, facts, profile, key);
+  const wait = (s: LadderItemSpec): void => {
+    const plan = protectionPlanFor(b, facts, profile, s);
     assertRidersAllowed(b, plan.product, plan.riders);
-    notYet.push({ key, name: plan.name, product: plan.product, riders: ridersOf(b, plan.riders), needsMonthly: needs, ladderKeys: [key] });
+    notYet.push({ key: s.key, name: plan.name, product: plan.product, riders: ridersOf(b, plan.riders), needsMonthly: s.min, why: plan.why, ladderKeys: [s.key] });
   };
   if (from.ladder.underwater) {
-    for (const s of from.ladderSpecs) if (s.insurance && s.min > 0) wait(s.key, s.min);
+    for (const s of from.ladderSpecs) if (s.insurance && s.min > 0) wait(s);
   }
   for (const it of from.ladder.items) {
     if (!it.insurance) continue;
@@ -226,11 +240,11 @@ function protectionGroup(b: ProvenanceBuilder, facts: LifeCaseFacts, profile: Pr
       continue;
     }
     if (it.allocated > 0) {
-      const plan = protectionPlanFor(b, facts, profile, it.key);
+      const plan = protectionPlanFor(b, facts, profile, it);
       assertRidersAllowed(b, plan.product, plan.riders);
       drafts.push({ plan, key: it.key, monthly: it.allocated, min: it.min, keys: [it.key] });
     } else if (it.notYet) {
-      wait(it.key, it.min);
+      wait(it);
     }
   }
   const funded: FundedPlan[] = drafts.map(({ plan, key, monthly, min, keys }) => {
@@ -265,7 +279,7 @@ function fitGroup(b: ProvenanceBuilder, title: InsuranceBudgetGroup["title"], to
       ladderKeys: [],
     };
   });
-  const notYet: NotYetPlan[] = fit.notYet.map(({ key: r0, needs }) => ({ key: r0.key, name: r0.name, product: r0.product, riders: ridersOf(b, r0.riders), needsMonthly: needs, ladderKeys: [] }));
+  const notYet: NotYetPlan[] = fit.notYet.map(({ key: r0, needs }) => ({ key: r0.key, name: r0.name, product: r0.product, riders: ridersOf(b, r0.riders), needsMonthly: needs, why: r0.why, ladderKeys: [] }));
   return { title, totalMonthly: Math.max(0, total), funded, notYet, note: note + notYetNote(notYet) };
 }
 
@@ -274,12 +288,11 @@ export function computeInsuranceBudget(facts: LifeCaseFacts, budget: HouseholdBu
   const profile = profileFor(facts);
   const fromBuilder = buckets.retirement + buckets.goals;
   const savTotal = fromBuilder > 1 ? fromBuilder : Math.round(budget.netPay.householdNetMonthly * b.num("core:ff.budget.savingsDefaultShareOfNet"));
-  const fmt = (n: number): string => `$${Math.round(n).toLocaleString("en-US")}`;
   const protNote = budget.stage === 0
     ? "Costs are bigger than income, so we hold new protection until the gap is closed."
-    : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}, with ${fmt(budget.band.recommended)} recommended. The plans are funded in priority order, inside the ${fmt(budget.band.ceiling)} ceiling.`;
+    : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(budget.band.recommended)}, the recommended amount, and fund plans in priority order.`;
   const savNote = fromBuilder > 1 ? "From your pay-yourself-first plan." : "About 10% of take-home, once your emergency fund is full.";
-  b.rule("protection follows the priority ladder: each insurance plan gets its minimum or waits as 'not yet', inside the stage ceiling");
+  b.rule("protection follows the priority ladder: each insurance plan gets its minimum or waits as 'not yet', inside the recommended figure");
   b.rule("each savings plan gets its minimum first; plans that cannot reach their minimum wait as 'not yet'");
   return {
     profile,

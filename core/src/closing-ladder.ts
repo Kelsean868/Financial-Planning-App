@@ -1,11 +1,12 @@
 /**
  * The priority ladder (closing addendum §11, Option B): tier boundaries hard, order inside a tier soft.
  *
- * Tier 0 preconditions; tier 1 irreversible and losable (life to the ruin level, parent funerals,
- * CI, disability income, own final expense); the §11.3 token annuity; tier 2 reversible and
+ * Tier 0 preconditions; tier 1 irreversible and losable (life to the ruin level, CI, parent funerals,
+ * disability income, own final expense); the §11.3 token annuity; tier 2 reversible and
  * near-dated; tier 3 reversible and far-dated.
- * Two passes: minimums top down, then fulls top down. Insurance items together never exceed the
- * triage stage ceiling (closing guard 3). An insurance item gets its minimum or nothing: when its
+ * Two passes: minimums top down, then fulls top down. Insurance items together are capped at the
+ * band's recommended figure (Kyron, Decision 5 = A, 27 Oct 2026; guard 23), so they never exceed the
+ * triage stage ceiling either (closing guard 3). An insurance item gets its minimum or nothing: when its
  * minimum does not fit, it is "not yet" and the ladder moves on to the next item (guard 22: no
  * unbuyable plan). Non-insurance items take what is left, in part if need be.
  * At stage 0 there is no basket, only what would change it.
@@ -17,6 +18,7 @@
 import { ProvenanceBuilder } from "./provenance.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import { scopeRow, type ScopeRow } from "./scope.ts";
+import type { ProductId } from "./parameters/tatil-products-2026-10.ts";
 
 export type LadderTier = 0 | 1 | 1.5 | 2 | 3;
 
@@ -30,6 +32,8 @@ export interface LadderItemSpec {
   readonly insurance: boolean;
   /** Insurance only: the item whose plan this one adds to; it gets nothing unless that item is funded. */
   readonly addsTo?: string;
+  /** Insurance only: the product the plan is written on, chosen on the insured's rated age (guard 24). */
+  readonly product?: ProductId;
 }
 
 export interface LadderItem extends LadderItemSpec {
@@ -45,6 +49,9 @@ export interface Ladder {
   readonly whatWouldChange: { readonly shortfallMonthly: number; readonly hoursAtMinimumWage: number } | null;
   readonly items: readonly LadderItem[];
   readonly budgetMonthly: number;
+  /** What insurance items may take together: the band's recommended figure. */
+  readonly insuranceCapMonthly: number;
+  /** The triage stage ceiling, kept as a guard (closing guard 3). */
   readonly insuranceCeilingMonthly: number;
   readonly insuranceAllocated: number;
   /** Precondition not captured by the fact-finder (compulsory motor third-party). */
@@ -64,7 +71,7 @@ export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderIt
     return {
       underwater: true,
       whatWouldChange: { shortfallMonthly: budget.shortfallMonthly, hoursAtMinimumWage: budget.hoursAtMinimumWage },
-      items: [], budgetMonthly: 0, insuranceCeilingMonthly: 0, insuranceAllocated: 0,
+      items: [], budgetMonthly: 0, insuranceCapMonthly: 0, insuranceCeilingMonthly: 0, insuranceAllocated: 0,
       preconditionsNotCaptured: ["Compulsory motor third-party cover"],
     };
   }
@@ -72,7 +79,7 @@ export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderIt
   const byKey = new Map(specs.map((s) => [s.key, s]));
   const ordered = keys.map((k) => byKey.get(k)!).filter(Boolean);
   let left = Math.max(0, budget.surplusMonthly);
-  let capLeft = budget.ceilingMonthly;
+  let capLeft = budget.band.recommended;
   const got = new Map<string, number>(ordered.map((s) => [s.key, 0]));
   const notYet = new Set<string>();
   const roomFor = (s: LadderItemSpec): number => (s.insurance ? Math.min(left, capLeft) : left);
@@ -102,6 +109,7 @@ export function allocateLadder(budget: HouseholdBudget, specs: readonly LadderIt
     whatWouldChange: null,
     items,
     budgetMonthly: Math.max(0, budget.surplusMonthly),
+    insuranceCapMonthly: budget.band.recommended,
     insuranceCeilingMonthly: budget.ceilingMonthly,
     insuranceAllocated: items.filter((i) => i.insurance).reduce((a, i) => a + i.allocated, 0),
     preconditionsNotCaptured: ["Compulsory motor third-party cover"],

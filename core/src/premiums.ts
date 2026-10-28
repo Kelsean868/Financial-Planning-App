@@ -73,16 +73,26 @@ export interface RestAssuredInsured {
   readonly who: string;
 }
 
+/** Every plan is rated, and issued, on age next birthday (fix run 3, Change 5). */
+export function ratedAge(age: number): number {
+  return age + 1;
+}
+
+/** A product can be issued when the insured's rated age is within its issue ages. */
+export function canIssue(b: ProvenanceBuilder, id: ProductId, age: number): boolean {
+  const { min, max } = b.get<ProductSpec>(`core:products.${id}`).issueAge;
+  const rated = ratedAge(age);
+  return (min === null || rated >= min) && (max === null || rated <= max);
+}
+
 /** Rest Assured II is rated on age next birthday. */
 export function restAssuredRatedAge(age: number): number {
-  return age + 1;
+  return ratedAge(age);
 }
 
 /** Issue only when the rated age is within the product's issue ages. */
 export function restAssuredEligible(b: ProvenanceBuilder, age: number): boolean {
-  const { min, max } = b.get<ProductSpec>("core:products.rest-assured-ii").issueAge;
-  const rated = restAssuredRatedAge(age);
-  return (min === null || rated >= min) && (max === null || rated <= max);
+  return canIssue(b, "rest-assured-ii", age);
 }
 
 /** Monthly premium per $1,000 of cover: the quoted rate for the sex, moved by the age factor away from the quoted age. */

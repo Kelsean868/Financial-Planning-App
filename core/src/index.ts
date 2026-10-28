@@ -72,7 +72,7 @@ export { computeBusiness } from "./business.ts";
 export type { BusinessResult, BusinessNeed, BusinessNeedTag } from "./business.ts";
 export {
   roughBand, fitToMinimums, ratePer1000, premiumFor, coverForPremium,
-  restAssuredPremium, restAssuredPer1000, restAssuredCoverFor, restAssuredRatedAge, restAssuredEligible,
+  restAssuredPremium, restAssuredPer1000, restAssuredCoverFor, restAssuredRatedAge, restAssuredEligible, ratedAge, canIssue,
 } from "./premiums.ts";
 export type { PremiumBand, FitRow, FitResult, RateKind, RestAssuredInsured } from "./premiums.ts";
 

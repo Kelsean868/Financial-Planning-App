@@ -13,8 +13,9 @@ const CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 const CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
 
 // Was "ff-2026-10-27" until the NIS 70% re-baseline (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-nis70.md), then
-// "ff-2026-10-27-nis70" until the one-allocator fix (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-one-allocator.md).
-export const ASSUMPTION_SET_ID = "ff-2026-10-27-ladder1";
+// "ff-2026-10-27-nis70" until the one-allocator fix (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-one-allocator.md), then
+// "ff-2026-10-27-ladder1" until fix run 3 (27 Oct 2026, docs/audit/RUN-2026-10-27-fix-ladder-advice.md).
+export const ASSUMPTION_SET_ID = "ff-2026-10-27-ladder2";
 
 export type EducationRoute = "local" | "regional" | "uk" | "canada" | "usa" | "none";
 export type CostLevel = "lean" | "typical" | "full";

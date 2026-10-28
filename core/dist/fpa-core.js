@@ -745,7 +745,7 @@ var D = "2026-10-27";
 var PROTO = "Fact-Finder Prototype v17 (docs/prototype/fact-finder-prototype-v17.html), 27 Oct 2026";
 var CG = "Care graph brief §4–§5 (signed 27 Oct 2026)";
 var CLOSE = "Closing engine brief and addendum §11–15 (signed 27 Oct 2026)";
-var ASSUMPTION_SET_ID = "ff-2026-10-27-ladder1";
+var ASSUMPTION_SET_ID = "ff-2026-10-27-ladder2";
 var FF = deepFreeze2({
   assumptionSetId: row(ASSUMPTION_SET_ID, "rule", "Section 1 §1.2: the assumption set is a versioned constant in the engine", D),
   rates: {
@@ -2431,13 +2431,19 @@ function coverForPremium(b, kind, monthly, age) {
   const r = ratePer1000(b, kind, age);
   return r > 0 ? monthly / r * 1e3 : 0;
 }
-function restAssuredRatedAge(age) {
+function ratedAge(age) {
   return age + 1;
 }
-function restAssuredEligible(b, age) {
-  const { min, max } = b.get("core:products.rest-assured-ii").issueAge;
-  const rated = restAssuredRatedAge(age);
+function canIssue(b, id2, age) {
+  const { min, max } = b.get(`core:products.${id2}`).issueAge;
+  const rated = ratedAge(age);
   return (min === null || rated >= min) && (max === null || rated <= max);
+}
+function restAssuredRatedAge(age) {
+  return ratedAge(age);
+}
+function restAssuredEligible(b, age) {
+  return canIssue(b, "rest-assured-ii", age);
 }
 function restAssuredPer1000(b, insured) {
   if (insured.sex === null) {
@@ -2624,14 +2630,29 @@ function savingsRows(facts, profile) {
     r("annuity-unregistered", "Unregistered annuity", "destiny", 0.4, "Retirement money you can reach more easily, with no tax-relief limit.", "none")
   ];
 }
-function protectionPlanFor(b, facts, profile, key) {
+var fmt = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
+function protectionPlanFor(b, facts, profile, item) {
+  const { key } = item;
   const age = facts.client.age;
   const capped = (product2, cover) => Math.min(b.get(`core:products.${product2}`).cover?.max ?? Infinity, cover);
   const at = (basis, product2) => (monthly) => capped(product2, monthly * coverPerDollar(b, basis, age));
   const ra = (insured) => (monthly) => capped("rest-assured-ii", restAssuredCoverFor(b, insured, monthly));
+  const life = item.product === "whole-life" ? { product: "whole-life", name: "Whole life" } : { product: "term", name: "Term life" };
   if (key === "life-ruin") {
     const why = profile === "later" ? "Clears what you still owe so it does not pass to the family." : profile === "single" ? "Clears what you owe and pays your funeral, so nothing falls on your family. The most cover for each dollar." : "Replaces your income for the people who depend on you. The most cover for each dollar.";
-    return { name: profile === "later" ? "Term life to clear debts" : "Term life", product: "term", riders: [], why, cover: at("term", "term") };
+    return { name: profile === "later" ? `${life.name} to clear debts` : life.name, product: life.product, riders: [], why, cover: at(life.product, life.product) };
+  }
+  const goalId = key.startsWith("loan-cover:") ? key.slice("loan-cover:".length) : null;
+  const goal = facts.goals.find((g) => g.goalId === goalId);
+  if (goal) {
+    const loan = item.product === "whole-life" ? { product: "whole-life", name: "Whole life" } : { product: "term", name: "Term life" };
+    return {
+      name: `${loan.name} for your ${goal.kind === "home" ? "home" : "car"} loan`,
+      product: loan.product,
+      riders: [],
+      why: `Your lender will want this from year ${goal.years}. It costs about ${fmt(item.min)} a month if you start now.`,
+      cover: at(loan.product, loan.product)
+    };
   }
   if (key === "critical-illness") {
     const why = profile === "single" ? "At your age a serious illness or injury is far more likely than death. This pays a lump sum to live on while you recover." : profile === "family" ? "Keeps the family going while you recover." : "Illness is the biggest money risk from 50.";
@@ -2671,13 +2692,13 @@ var notYetNote = (notYet) => notYet.length ? ` Not yet: ${notYet.map((x) => `${x
 function protectionGroup(b, facts, profile, from, note) {
   const drafts = [];
   const notYet = [];
-  const wait = (key, needs) => {
-    const plan = protectionPlanFor(b, facts, profile, key);
+  const wait = (s) => {
+    const plan = protectionPlanFor(b, facts, profile, s);
     assertRidersAllowed(b, plan.product, plan.riders);
-    notYet.push({ key, name: plan.name, product: plan.product, riders: ridersOf(b, plan.riders), needsMonthly: needs, ladderKeys: [key] });
+    notYet.push({ key: s.key, name: plan.name, product: plan.product, riders: ridersOf(b, plan.riders), needsMonthly: s.min, why: plan.why, ladderKeys: [s.key] });
   };
   if (from.ladder.underwater) {
-    for (const s of from.ladderSpecs) if (s.insurance && s.min > 0) wait(s.key, s.min);
+    for (const s of from.ladderSpecs) if (s.insurance && s.min > 0) wait(s);
   }
   for (const it of from.ladder.items) {
     if (!it.insurance) continue;
@@ -2690,11 +2711,11 @@ function protectionGroup(b, facts, profile, from, note) {
       continue;
     }
     if (it.allocated > 0) {
-      const plan = protectionPlanFor(b, facts, profile, it.key);
+      const plan = protectionPlanFor(b, facts, profile, it);
       assertRidersAllowed(b, plan.product, plan.riders);
       drafts.push({ plan, key: it.key, monthly: it.allocated, min: it.min, keys: [it.key] });
     } else if (it.notYet) {
-      wait(it.key, it.min);
+      wait(it);
     }
   }
   const funded = drafts.map(({ plan, key, monthly, min, keys }) => {
@@ -2743,7 +2764,7 @@ function fitGroup(b, title, total, rows, note) {
       ladderKeys: []
     };
   });
-  const notYet = fit.notYet.map(({ key: r0, needs }) => ({ key: r0.key, name: r0.name, product: r0.product, riders: ridersOf(b, r0.riders), needsMonthly: needs, ladderKeys: [] }));
+  const notYet = fit.notYet.map(({ key: r0, needs }) => ({ key: r0.key, name: r0.name, product: r0.product, riders: ridersOf(b, r0.riders), needsMonthly: needs, why: r0.why, ladderKeys: [] }));
   return { title, totalMonthly: Math.max(0, total), funded, notYet, note: note + notYetNote(notYet) };
 }
 function computeInsuranceBudget(facts, budget, buckets, from) {
@@ -2751,10 +2772,9 @@ function computeInsuranceBudget(facts, budget, buckets, from) {
   const profile = profileFor(facts);
   const fromBuilder = buckets.retirement + buckets.goals;
   const savTotal = fromBuilder > 1 ? fromBuilder : Math.round(budget.netPay.householdNetMonthly * b.num("core:ff.budget.savingsDefaultShareOfNet"));
-  const fmt = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
-  const protNote = budget.stage === 0 ? "Costs are bigger than income, so we hold new protection until the gap is closed." : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}, with ${fmt(budget.band.recommended)} recommended. The plans are funded in priority order, inside the ${fmt(budget.band.ceiling)} ceiling.`;
+  const protNote = budget.stage === 0 ? "Costs are bigger than income, so we hold new protection until the gap is closed." : `Your safe range is ${fmt(budget.band.floor)} to ${fmt(budget.band.ceiling)}. We plan to ${fmt(budget.band.recommended)}, the recommended amount, and fund plans in priority order.`;
   const savNote = fromBuilder > 1 ? "From your pay-yourself-first plan." : "About 10% of take-home, once your emergency fund is full.";
-  b.rule("protection follows the priority ladder: each insurance plan gets its minimum or waits as 'not yet', inside the stage ceiling");
+  b.rule("protection follows the priority ladder: each insurance plan gets its minimum or waits as 'not yet', inside the recommended figure");
   b.rule("each savings plan gets its minimum first; plans that cannot reach their minimum wait as 'not yet'");
   return {
     profile,
@@ -2864,6 +2884,7 @@ function allocateLadder(budget, specs, order) {
       whatWouldChange: { shortfallMonthly: budget.shortfallMonthly, hoursAtMinimumWage: budget.hoursAtMinimumWage },
       items: [],
       budgetMonthly: 0,
+      insuranceCapMonthly: 0,
       insuranceCeilingMonthly: 0,
       insuranceAllocated: 0,
       preconditionsNotCaptured: ["Compulsory motor third-party cover"]
@@ -2873,7 +2894,7 @@ function allocateLadder(budget, specs, order) {
   const byKey = new Map(specs.map((s) => [s.key, s]));
   const ordered = keys.map((k) => byKey.get(k)).filter(Boolean);
   let left = Math.max(0, budget.surplusMonthly);
-  let capLeft = budget.ceilingMonthly;
+  let capLeft = budget.band.recommended;
   const got = new Map(ordered.map((s) => [s.key, 0]));
   const notYet = /* @__PURE__ */ new Set();
   const roomFor = (s) => s.insurance ? Math.min(left, capLeft) : left;
@@ -2901,6 +2922,7 @@ function allocateLadder(budget, specs, order) {
     whatWouldChange: null,
     items,
     budgetMonthly: Math.max(0, budget.surplusMonthly),
+    insuranceCapMonthly: budget.band.recommended,
     insuranceCeilingMonthly: budget.ceilingMonthly,
     insuranceAllocated: items.filter((i) => i.insurance).reduce((a, i) => a + i.allocated, 0),
     preconditionsNotCaptured: ["Compulsory motor third-party cover"]
@@ -3078,61 +3100,8 @@ function computeClosing(ctxIn, options = {}) {
   };
   const usingBudget = options.budgetMonthly !== void 0 && options.budgetMonthly !== null;
   const pkg = options.package ?? "recommended";
-  const isFull = !usingBudget && pkg === "full";
   const wanted = usingBudget ? floorCover(Math.min(uw, coverFor(options.budgetMonthly, false))) : packages[pkg];
-  const item = (product2, cover) => {
-    const spec = product2 === "term" ? term : whole;
-    const est = cover * (product2 === "term" ? TR : WL) / 1e3;
-    const band = roughBand(b, est, spec.minPremiumMonthly);
-    return { product: product2, cover, premiumMonthly: Math.max(spec.minPremiumMonthly ?? 0, est), band };
-  };
-  const split = (cover, allTerm) => {
-    if (cover <= 0) return [];
-    if (allTerm) return [item("term", cover)];
-    const pm = permOf(isFull);
-    let perm = pm > 0 ? Math.min(cover, Math.max(pm, whole.cover.min)) : 0;
-    let termPart = cover - perm;
-    if (termPart > 0 && termPart < term.cover.min) {
-      perm = cover;
-      termPart = 0;
-    }
-    return [...termPart > 0 ? [item("term", termPart)] : [], ...perm > 0 ? [item("whole-life", perm)] : []];
-  };
-  const high = (xs) => xs.reduce((a, x) => a + x.band.high, 0);
   const notCoveredAt = (cover) => layerAt(5, cover).lines.filter((l) => !l.met).map((l) => l.label);
-  const buildBasket = (cover) => {
-    const empty = (notYet) => ({ cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: cover > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet });
-    if (budget.stage === 0 || cover <= 0) return empty(budget.stage !== 0 && cover > 0);
-    const ceiling = budget.ceilingMonthly;
-    let items = split(cover, false);
-    let permanentDropped = false;
-    let c = cover;
-    if (high(items) > ceiling) {
-      items = split(cover, true);
-      permanentDropped = true;
-    }
-    if (high(items) > ceiling) {
-      const spread = b.num("core:ff.premiumRates.bandSpread");
-      c = Math.min(cover, TR > 0 ? ceiling / (1 + spread) / TR * 1e3 : 0);
-      items = c >= term.cover.min ? split(c, true) : [];
-      if (!items.length || high(items) > ceiling) return empty(true);
-    }
-    return {
-      cover: c,
-      items,
-      totalMonthly: items.reduce((a, x) => a + x.premiumMonthly, 0),
-      totalHighMonthly: high(items),
-      partial: c < cover,
-      permanentDropped,
-      notCovered: notCoveredAt(c),
-      notYet: false
-    };
-  };
-  const basket = buildBasket(wanted);
-  b.rule("the life basket is bounded by the stage ceiling: if the need costs more, partial cover is shown and what is not covered is named");
-  const layers = [1, 2, 3, 4, 5].map((L) => layerAt(L, basket.cover));
-  const today = layers[3].outcome;
-  const plan = layers[4].outcome;
   const bands = ["floor", "recommended", "ceiling"].map((k) => {
     const monthly = budget.ceilingMonthly * shares[k];
     const cover = monthly > 0 ? floorCover(Math.min(uw, coverFor(monthly, false))) : 0;
@@ -3198,27 +3167,6 @@ function computeClosing(ctxIn, options = {}) {
     ] : ["No extra retirement saving is needed for the income you want."],
     unknowns: []
   };
-  const legLine = layers[4].lines.find((l) => l.key === "legacy");
-  const legacy = {
-    today: {
-      lumpAvailable: 0,
-      monthlyAvailable: 0,
-      monthsUntilShortfall: null,
-      obligationsMet: [],
-      obligationsFailed: w.legacy > 0 ? ["What you leave behind"] : [],
-      sentences: [w.legacy > 0 ? "Money in your own name is frozen until probate, which in T&T can take years." : "No legacy goal was set."],
-      unknowns: []
-    },
-    plan: {
-      lumpAvailable: legLine?.paid ?? 0,
-      monthlyAvailable: 0,
-      monthsUntilShortfall: null,
-      obligationsMet: legLine?.met ? ["What you leave behind"] : [],
-      obligationsFailed: legLine && !legLine.met ? ["What you leave behind"] : [],
-      sentences: [w.legacy <= 0 ? "No legacy goal was set." : legLine?.met ? `${money(w.legacy)} goes straight to the person you name. It does not form part of your estate, and creditors cannot reach it (Insurance Act s.187).` : "The plan does not yet reach what you want to leave behind."],
-      unknowns: []
-    }
-  };
   const ra = b.get("core:products.rest-assured-ii");
   const pe = b.get("core:products.platinum-edge");
   const f = b.num("core:ff.rates.careBasket");
@@ -3235,6 +3183,7 @@ function computeClosing(ctxIn, options = {}) {
     const g = p.nisContributions === "yes" ? grant : 0;
     const flag = p.nisContributions === "unknown" ? `${parentLabel(p)}'s NIS record is not known, so no funeral grant is counted. Ask whether they paid 25 or more contributions.` : null;
     const eligible = restAssuredEligible(b, pa);
+    if (!eligible) b.rule(`${parentLabel(p)}: rated age ${restAssuredRatedAge(pa)} is past Rest Assured II's issue ages, so there is no funeral cover item`);
     const sex = parentSex(p);
     const insured = { age: pa, sex, who: parentLabel(p) };
     const cover = eligible ? Math.min(ra.cover.max ?? Infinity, Math.max(ra.cover.min, costAtEnd - g)) : 0;
@@ -3261,9 +3210,20 @@ function computeClosing(ctxIn, options = {}) {
       ownership: "You own the policy on your parent's life, pay for it, and receive the money."
     };
   });
-  const termPremium = (cover) => cover > 0 ? Math.max(term.minPremiumMonthly ?? 0, cover * TR / 1e3) : 0;
-  const essPrem = termPremium(packages.essential);
-  const recPrem = termPremium(packages.recommended);
+  const dependants = facts.partner !== null || facts.children.length > 0 || careGraph2.goals.some((g) => g.kind === "care" && g.presentValue > 0);
+  if (!dependants) b.rule("no partner, no children, no parent care paid: no ruin-level life cover");
+  const lifeProduct = canIssue(b, "term", age) ? "term" : "whole-life";
+  if (dependants && lifeProduct === "whole-life") b.rule(`term life cannot be issued at rated age ${ratedAge(age)}, so the ruin-level life plan is whole life`);
+  const lifeSpec = lifeProduct === "term" ? term : whole;
+  const lifeRate = lifeProduct === "term" ? TR : WL;
+  const lifePremium = (cover) => cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, cover * lifeRate / 1e3) : 0;
+  const essPrem = lifePremium(packages.essential);
+  const recPrem = lifePremium(packages.recommended);
+  const issuable = (id2, insuredAge, what) => {
+    const ok = canIssue(b, id2, insuredAge);
+    if (!ok) b.rule(`${what}: ${id2} cannot be issued at rated age ${ratedAge(insuredAge)}, so there is no ladder item`);
+    return ok;
+  };
   const ciRate = ratePer1000(b, "ci", age);
   const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, lsg.cover.min * ciRate / 1e3);
   const ciFull = Math.max(ciMin, ciCover * ciRate / 1e3);
@@ -3276,36 +3236,87 @@ function computeClosing(ctxIn, options = {}) {
   const token = ri.routing.mode === "registered" && ri.gapMonthly > 0 ? b.get("core:products.destiny").minPremiumMonthly ?? 0 : 0;
   const profile = profileFor(facts);
   const funerals = parentFuneral.filter((x) => x.product).sort((x, y) => y.age - x.age);
-  const di = profile !== "later" ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
+  const ciOn = ciNeed > 0 && issuable("life-span-gold", age, "Critical illness cover");
+  const di = profile !== "later" && issuable("cashbuilder-ii", age, "Disability income") ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
   const own = { age, sex: facts.client.sex, who: "You" };
   const ownCover = Math.min(ra.cover.max ?? Infinity, Math.max(ra.cover.min, w.funeral));
-  const ownFinal = profile === "later" && restAssuredEligible(b, age) ? { min: restAssuredPremium(b, own, ra.cover.min), full: restAssuredPremium(b, own, ownCover) } : null;
+  const ownFinal = profile === "later" && issuable("rest-assured-ii", age, "Your own final expense") ? { min: restAssuredPremium(b, own, ra.cover.min), full: restAssuredPremium(b, own, ownCover) } : null;
+  const loanCover = goals.plans.flatMap((p) => {
+    const loan = p.home?.loan ?? p.car?.loan ?? 0;
+    if (loan <= 0) return [];
+    const id2 = canIssue(b, "term", age + p.years) ? "term" : "whole-life";
+    const spec = id2 === "term" ? term : whole;
+    const cover = Math.min(spec.cover.max ?? Infinity, Math.max(spec.cover.min, loan));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, ratedAge(age)));
+    return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id2 }];
+  });
   const specs = [
     { key: "buffer-one-month", tier: 0, label: "One month of buffer cash", min: oneMonth, full: oneMonth, insurance: false },
-    { key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true },
+    ...dependants ? [{ key: "life-ruin", tier: 1, label: "Life cover to the ruin level", min: essPrem, full: essPrem, insurance: true, product: lifeProduct }] : [],
+    { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciOn ? ciMin : 0, full: ciOn ? ciFull : 0, insurance: true, product: "life-span-gold" },
     ...funerals.map((x) => ({
       key: `parent-funeral:${x.personId}`,
       tier: 1,
       label: `${x.who}'s funeral cover`,
       min: x.minimumMonthly,
       full: Math.max(x.minimumMonthly, x.fullMonthly),
-      insurance: true
+      insurance: true,
+      product: "rest-assured-ii"
     })),
-    { key: "critical-illness", tier: 1, label: "Critical illness cover", min: ciNeed > 0 ? ciMin : 0, full: ciNeed > 0 ? ciFull : 0, insurance: true },
-    // The engine sizes no disability income need yet, so the item is funded at its minimum.
-    { key: "disability-income", tier: 1, label: "Disability income (Cashbuilder II with the Disability Income Rider)", min: di, full: di, insurance: true },
-    ...ownFinal ? [{ key: "own-final-expense", tier: 1, label: "Your own final expense (Rest Assured II)", min: ownFinal.min, full: ownFinal.full, insurance: true }] : [],
+    // The engine sizes no disability income need yet, so the item is funded at its minimum (F-17).
+    { key: "disability-income", tier: 1, label: "Disability income (Cashbuilder II with the Disability Income Rider)", min: di, full: di, insurance: true, product: "cashbuilder-ii" },
+    ...ownFinal ? [{ key: "own-final-expense", tier: 1, label: "Your own final expense (Rest Assured II)", min: ownFinal.min, full: ownFinal.full, insurance: true, product: "rest-assured-ii" }] : [],
     ...token > 0 ? [{ key: "token-annuity", tier: 1.5, label: "Token registered annuity (unused tax relief)", min: token, full: token, insurance: false }] : [],
     { key: "buffer-three-months", tier: 2, label: "Buffer out to three months", min: 0, full: Math.max(0, threeMonths - oneMonth), insurance: false },
     { key: "expensive-debt", tier: 2, label: "Expensive debt, extra", min: 0, full: debts.summary.expensiveDebt > 0 ? debts.extraMonthly : 0, insurance: false },
     { key: "near-dated", tier: 2, label: "Anything due inside three years", min: 0, full: sum(futureGoals.filter((g) => g.start <= near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years <= near).map((p) => p.monthlySaving)), insurance: false },
-    { key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin" },
+    ...loanCover,
+    ...dependants ? [{ key: "life-beyond-ruin", tier: 3, label: "Life cover beyond the ruin level", min: 0, full: Math.max(0, recPrem - essPrem), insurance: true, addsTo: "life-ruin", product: lifeProduct }] : [],
     { key: "retirement", tier: 3, label: "Retirement", min: 0, full: Math.max(0, ri.saveMonthly - token), insurance: false },
     { key: "education", tier: 3, label: "Education", min: 0, full: sum(futureGoals.filter((g) => g.kind === "edu" && g.start > near).map((g) => g.monthlySaving)), insurance: false },
     { key: "milestones", tier: 3, label: "Milestones and your own goals", min: 0, full: sum(futureGoals.filter((g) => g.kind === "milestone" && g.start > near).map((g) => g.monthlySaving)) + sum(goals.plans.filter((p) => p.years > near).map((p) => p.monthlySaving)), insurance: false }
   ];
   const ladderSpecs = specs.filter((s) => s.full > 0 || s.min > 0);
   const ladder = allocateLadder(budget, ladderSpecs, options.ladderOrder ?? defaultOrder(ladderSpecs));
+  const buildBasket = (lad) => {
+    const ruin = lad.items.find((i) => i.key === "life-ruin");
+    const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
+    const prem = (ruin?.allocated ?? 0) + (beyond?.allocated ?? 0);
+    if (budget.stage === 0 || !ruin || prem <= 0) {
+      return { cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: !!ruin && wanted > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet: ruin?.notYet ?? false };
+    }
+    const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
+    const cover = packages.essential + share * Math.max(0, packages.recommended - packages.essential);
+    const band = roughBand(b, cover * lifeRate / 1e3, lifeSpec.minPremiumMonthly);
+    const items = [{ product: lifeProduct, cover, premiumMonthly: prem, band }];
+    return { cover, items, totalMonthly: prem, totalHighMonthly: band.high, partial: cover < wanted - 0.5, permanentDropped: false, notCovered: notCoveredAt(cover), notYet: false };
+  };
+  const basket = buildBasket(ladder);
+  b.rule("the life basket is the ladder's life allocation; when the need costs more than the cap, partial cover is shown and what is not covered is named");
+  const layers = [1, 2, 3, 4, 5].map((L) => layerAt(L, basket.cover));
+  const today = layers[3].outcome;
+  const plan = layers[4].outcome;
+  const legLine = layers[4].lines.find((l) => l.key === "legacy");
+  const legacy = {
+    today: {
+      lumpAvailable: 0,
+      monthlyAvailable: 0,
+      monthsUntilShortfall: null,
+      obligationsMet: [],
+      obligationsFailed: w.legacy > 0 ? ["What you leave behind"] : [],
+      sentences: [w.legacy > 0 ? "Money in your own name is frozen until probate, which in T&T can take years." : "No legacy goal was set."],
+      unknowns: []
+    },
+    plan: {
+      lumpAvailable: legLine?.paid ?? 0,
+      monthlyAvailable: 0,
+      monthsUntilShortfall: null,
+      obligationsMet: legLine?.met ? ["What you leave behind"] : [],
+      obligationsFailed: legLine && !legLine.met ? ["What you leave behind"] : [],
+      sentences: [w.legacy <= 0 ? "No legacy goal was set." : legLine?.met ? `${money(w.legacy)} goes straight to the person you name. It does not form part of your estate, and creditors cannot reach it (Insurance Act s.187).` : "The plan does not yet reach what you want to leave behind."],
+      unknowns: []
+    }
+  };
   const gaps = [
     { gapKey: "death", label: "If you die too soon" },
     { gapKey: "critical-illness", label: "If you get seriously ill" },
@@ -3437,7 +3448,7 @@ function computeLovedOnes(lv) {
   for (const n of fit.notYet) slot.set(`${n.key.oi}-${n.key.pi}`, { monthly: 0, status: "not-yet", min: n.needs });
   const endowMin = b.get("core:products.endowment").cover.min;
   const endowShare = b.num("core:ff.premiumRates.endowmentCoverShare");
-  const fmt = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
+  const fmt2 = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
   const ones = lv.ones.map((o, oi) => ({
     personId: o.personId,
     title: o.firstName && o.firstName.trim() ? o.firstName : o.relation === "child" ? "Your grandchild" : o.relation === "elder" ? "Your parent or elder" : "Your loved one",
@@ -3446,7 +3457,7 @@ function computeLovedOnes(lv) {
       const s = slot.get(`${oi}-${pi}`) ?? { monthly: 0, status: "not-yet", min: 0 };
       const spec = c.product ? b.get(`core:products.${c.product}`) : null;
       const needE = c.product === "endowment" && c.years > 0 ? endowMin / endowShare / (12 * c.years) : 0;
-      const warning = s.status === "not-yet" ? `Not yet: this plan needs at least ${fmt(s.min)} a month. Raise the budget, or start with the plans above.` : needE > s.monthly + 0.5 ? `Tatil's endowment starts at ${fmt(endowMin)} of cover. Over ${c.years} years that needs about ${fmt(needE)} a month.` : null;
+      const warning = s.status === "not-yet" ? `Not yet: this plan needs at least ${fmt2(s.min)} a month. Raise the budget, or start with the plans above.` : needE > s.monthly + 0.5 ? `Tatil's endowment starts at ${fmt2(endowMin)} of cover. Over ${c.years} years that needs about ${fmt2(needE)} a month.` : null;
       return {
         name: c.name,
         product: c.product,
@@ -3497,7 +3508,7 @@ var TYPE_NOTE = {
 };
 function computeBusiness(bz) {
   const b = new ProvenanceBuilder();
-  const fmt = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
+  const fmt2 = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
   const multi = bz.type !== "sole" && bz.owners >= 2;
   const share = multi ? bz.sharePct / 100 : 1;
   const keyX = b.num("core:ff.business.keyPersonMultiple");
@@ -3508,14 +3519,14 @@ function computeBusiness(bz) {
     tag: "BUY-SELL AGREEMENT",
     title: "If an owner dies",
     amount: bz.value,
-    what: `Life cover on each owner, equal to their share: about ${fmt(bz.value * share)} on you and ${fmt(bz.value * (1 - share))} across your partners. If an owner dies, the others use it to buy the share from the family at a fair price.`,
+    what: `Life cover on each owner, equal to their share: about ${fmt2(bz.value * share)} on you and ${fmt2(bz.value * (1 - share))} across your partners. If an owner dies, the others use it to buy the share from the family at a fair price.`,
     how: "Set it up with a written agreement, and hold the policies in a way that fits it (each owner on the others, or a trust). Kyron specialises in this."
   });
   needs.push({
     tag: "KEY PERSON",
     title: "If the key person is lost",
     amount: bz.keyPersonAnnual * keyX,
-    what: `Cover of about ${keyX} times what they bring in (${fmt(bz.keyPersonAnnual)} a year) gives the business time to recover, hire and retrain. Some businesses use up to ${keyHigh} times.`,
+    what: `Cover of about ${keyX} times what they bring in (${fmt2(bz.keyPersonAnnual)} a year) gives the business time to recover, hire and retrain. Some businesses use up to ${keyHigh} times.`,
     how: "The business owns the policy, pays for it and receives the money."
   });
   if (bz.loans > 0) needs.push({
@@ -3529,7 +3540,7 @@ function computeBusiness(bz) {
     tag: "OVERHEADS",
     title: "If you cannot work for a while",
     amount: bz.overheadsMonthly * months,
-    what: `A year of overheads (${fmt(bz.overheadsMonthly)} a month), so rent and salaries are paid while you recover.`,
+    what: `A year of overheads (${fmt2(bz.overheadsMonthly)} a month), so rent and salaries are paid while you recover.`,
     how: "Critical illness or disability cover on the owner. Kyron confirms what is available."
   });
   if (bz.staff >= b.num("core:ff.business.groupPlanFromStaff")) needs.push({
@@ -3736,6 +3747,7 @@ export {
   buildBudgetBuckets,
   buildScopeStatement,
   buildSnapshot,
+  canIssue,
   carLoan,
   careGraph,
   careGraphInputFromFacts,
@@ -3777,6 +3789,7 @@ export {
   premiumFor,
   profileFor,
   ratePer1000,
+  ratedAge,
   registeredEligible,
   registeredWithdrawalGrossUp,
   requestReorder,
