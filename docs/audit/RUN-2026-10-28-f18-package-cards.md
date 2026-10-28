@@ -277,7 +277,20 @@ Privacy guards 7 and 8 pass (above). Guard 11 (the queue strip) passes in the GR
     the new check included; no page errors, no Supabase writes, no overflow. Evidence `fix4/` overwritten.
   - GRP commit **`7dbe512c78c0256c0ab03014771fdcacf03d7140`** (PR #160). The engine and its hash did not change.
   - Note: after a reorder that puts a plan above life in Tier 1, that plan can get more than its minimum, while the line
-    still says "minimum first". The wording is Kyron's; not changed.
+    said "minimum first". The new wording below no longer claims a minimum.
+- **Wording change (Kyron, 28 Oct 2026).** The line is now: "Your budget also pays for: {plans}. To keep the {card}
+  life cover as well, you need $X more a month." Only the opening words changed; the plans, the card and $X come from
+  the engine as before.
+  - Family at $711, Recommended: "Your budget also pays for: critical illness cover, your father's funeral cover. To
+    keep the Recommended life cover as well, you need $281 more a month." Full: the same plans, "$351". At $533,
+    Recommended: "Your budget also pays for: critical illness cover. … you need $195 more a month." Essential: no line.
+  - The Decision 9 test and the smoke walk check use the new text. Fact-finder test files: 55/55. Smoke walk re-run
+    at 390 (Recommended at $711): **13/13**; no page errors, no Supabase writes, no overflow. Evidence `fix4/`
+    overwritten.
+  - **Full portal suite, once, on the final code** (`npm test` in `C:\Projects\GRP-wt-fact-finder`): **3,091 tests,
+    3,061 pass, 0 fail, 30 skipped** (the same 30 as before; one more test than §7: the Decision 9 test). The three
+    files `npm test` rewrites were restored, not committed.
+  - GRP commit **`db74f97c925b148029f27b9b8f3caf4729c528c1`** (PR #160). The engine and its hash did not change.
 
 ## Appendix — every dump line that moved, was added or dropped
 
