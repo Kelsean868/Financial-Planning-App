@@ -87,6 +87,39 @@ given 2028-06. Make room default split (family, $500 freed from Food): protectio
 **Dist hash note.** `origin/master`'s dist (`0c052d55…`) differs from the GRP pin (`e3e38f7d…`) because merge `9903799`
 rebuilt it after master's parameter file gained rows (for example `corporation_tax`). Not line endings.
 
-### Build B — page
+### Build B — page (done, 28 Oct 2026)
+
+PR https://github.com/Kelsean868/General_Raters_Portal/pull/161 (`feat/section3-page` → `main`, not merged; merge after
+FPA #6). Code `0b23253`, run record `75aeaaa`. Vendored engine `59224e2`, SHA-256 `b6976268…308e`, assumption set
+`ff-2026-10-28-s3`; pins updated in `PINNED.txt`, `fact-finder.js`, `life-case-store.js` and the guard 9/10 SQL file.
+Full portal suite: 3,108 tests, 3,078 pass, 0 fail, 30 skipped (the existing live-database tests; none new). The
+orchestrator re-ran the fact-finder tests (50/50) and the vendored hash. No hard stop hit.
+
+Guard 34 (live inputs, real headless Chrome), sabotage "listen to `change` only": both tests failed ("the engine re-ran
+while typing"; the label showed $2,000 while the slider read 1950). Guard 35, sabotage "ladder controls in Client
+view": failed with "full/choose: Client view shows the ladder controls (Up / Down)". It also caught a real "Stage 02"
+leak, now fixed. Guards 7, 8, 9–13, 15 and 18 pass.
+
+Run record `docs/audit/RUN-2026-10-28-section3-b.md` (GRP): 24 decisions (B1–B24), five spec/prototype rule clashes
+(spec followed each time: event tabs, step list, where the scope record lives, 7 report blocks not 8, work pension under
+retirement), and the **wording table for Kyron** (§8).
+
+Main decisions: Full check-up runs the §0 3.5a order to the final report; Make a budget runs Your money and ends at next
+steps; other doors keep the quick form. Starting the application and the scope record live on the final report only.
+Client view does not render advisor-only content at all. Money fields are text fields with a decimal keypad (number
+fields have no caret position). After "Use this plan", later screens show the Make room figures; pay, loans and budget
+keep the real numbers.
+
+Open items from Build B:
+1. Kyron approves the wording table.
+2. "Income if you cannot work" cover is recorded but not counted by the engine.
+3. The snapshot has no field for the Make room plan; the "both versions" line on the one-page plan is page-held.
+4. The one-page plan's tile still says "Stage".
+5. A typed value followed by an instant click can rarely lose the click (the old page had the same exposure).
+6. Checked by the orchestrator, not a defect: the engine note "Your safe range is $355 to $711" names the safe range;
+   the Choose slider runs $200 to $711 (§5.2). Both are true.
+7. Sent to Build C: the furniture line label (65 characters) fails the 60-character label check; savings typed twice.
+
+### Build C — net worth
 
 Running.
