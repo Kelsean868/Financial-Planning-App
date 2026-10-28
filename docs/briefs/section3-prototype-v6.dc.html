@@ -1,0 +1,1015 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Guided fact-finder, Section 3</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,600&amp;family=Manrope:wght@400;500;600;700&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#F4F1EA;color:#1D2B30;font-family:Manrope,system-ui,sans-serif;font-size:16px;line-height:1.45}
+a{color:#17505E}a:hover{color:#0E3B47}
+.top{background:#0E3B47;color:#fff;position:sticky;top:0;z-index:5}
+.topin{max-width:600px;margin:0 auto;padding:12px 16px;display:flex;flex-direction:column;gap:8px}
+.toprow{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap}
+.eyebrow{font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:#E9C46A;font-weight:700}
+.sect{font-size:15px;font-weight:700}
+.dots{display:flex;gap:4px}
+.dot{height:4px;flex:1 1 0;border-radius:2px}
+.vw{display:flex;background:#17505E;border-radius:999px;padding:3px}
+.vwb{border:0;border-radius:999px;padding:6px 12px;font:600 13px Manrope,sans-serif;cursor:pointer;min-height:32px}
+.bar{background:#fff;border-bottom:1px solid #E2DCCF;position:sticky;top:74px;z-index:4}
+.barin{max-width:600px;margin:0 auto;padding:10px 16px;display:flex;gap:16px;flex-wrap:wrap;font-size:14px}
+.app{max-width:600px;margin:0 auto;padding:16px 16px 120px;display:flex;flex-direction:column;gap:16px}
+h1{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:30px;line-height:1.15;margin:0;color:#0E3B47}
+h2{font-family:Fraunces,Georgia,serif;font-weight:600;font-size:21px;margin:0;color:#0E3B47}
+h3{font-size:16px;margin:0;font-weight:700}
+.lede{margin:4px 0 0;color:#4A5A60}
+.card{background:#fff;border:1px solid #E2DCCF;border-radius:16px;padding:18px;display:flex;flex-direction:column;gap:12px}
+.hint{font-size:14px;color:#55656B}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pill{border:1px solid #B9C6C9;border-radius:999px;padding:9px 14px;font:600 14px Manrope,sans-serif;cursor:pointer;min-height:44px;background:#fff;color:#17505E}
+.btn{border:0;border-radius:12px;padding:12px 18px;font:700 15px Manrope,sans-serif;cursor:pointer;min-height:48px}
+.pri{background:#0E3B47;color:#fff}
+.sec{background:#fff;color:#0E3B47;border:1px solid #9FB3B8}
+.link{background:none;border:0;color:#17505E;font:700 14px Manrope,sans-serif;cursor:pointer;padding:8px 0;text-decoration:underline;min-height:40px}
+.fld{display:flex;flex-direction:column;gap:6px;font-size:14px;font-weight:600}
+.in{border:1px solid #B9C6C9;border-radius:10px;padding:10px 12px;font:500 16px Manrope,sans-serif;min-height:44px;box-sizing:border-box;width:100%;background:#fff;color:#1D2B30}
+.sel{border:1px solid #B9C6C9;border-radius:10px;padding:10px 8px;font:500 15px Manrope,sans-serif;min-height:44px;background:#fff;color:#1D2B30}
+.line{display:grid;grid-template-columns:minmax(0,1fr) 110px 120px;gap:8px;align-items:center}
+.lbl{font-size:14px;font-weight:600}
+.num{font-variant-numeric:tabular-nums;font-weight:700}
+.kv{display:flex;justify-content:space-between;gap:12px;padding:6px 0;border-bottom:1px solid #EFEAE0;font-size:15px}
+.kv:last-child{border-bottom:0}
+.tag{font-size:12px;font-weight:700;border-radius:999px;padding:3px 9px;white-space:nowrap}
+.ok{background:#E3F0E8;color:#245A40}
+.warn{background:#FBEFD9;color:#7A4A00}
+.no{background:#F7E3DF;color:#8A2F22}
+.step{background:#E6EEF0;color:#17505E}
+.note{background:#FBEFD9;border-radius:12px;padding:12px 14px;font-size:14px;color:#5C3D00}
+.adv{border:1px dashed #9FB3B8;background:#F6F9F9}
+.rng{width:100%;accent-color:#17505E;min-height:32px}
+.grp{border:1px solid #E2DCCF;border-radius:14px;overflow:hidden;background:#fff}
+.grph{display:flex;justify-content:space-between;align-items:center;gap:8px;padding:12px 14px;background:#FBFAF6;flex-wrap:wrap}
+.grpb{padding:12px 14px;display:flex;flex-direction:column;gap:10px}
+.track{position:relative;height:16px;background:#F0ECE3;border-radius:8px;overflow:hidden}
+.band{position:absolute;top:0;bottom:0;background:#CFE0D8}
+.fill{position:absolute;top:4px;bottom:4px;left:0;border-radius:6px}
+.ba{display:grid;grid-template-columns:minmax(0,1fr) 92px 112px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #EFEAE0;font-size:15px}
+.ic{font-weight:800;font-size:15px}
+.foot{position:fixed;left:0;right:0;bottom:0;background:#fff;border-top:1px solid #E2DCCF;z-index:6}
+.footin{max-width:600px;margin:0 auto;padding:12px 16px;display:flex;gap:10px}
+.cardopt{border:2px solid #E2DCCF;border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:8px;background:#fff;cursor:pointer;text-align:left;font:inherit;color:inherit}
+@media (max-width:420px){.line{grid-template-columns:minmax(0,1fr) 96px;}.line .sel{grid-column:2}.ba{grid-template-columns:minmax(0,1fr) 70px 96px}}
+@media print{.top,.foot,.bar{display:none}.app{padding:0}}
+</style>
+</helmet>
+<div style="min-height: 100vh; background: #F4F1EA">
+<div class="top">
+<div class="topin">
+<div class="toprow">
+<div style="display: flex; flex-direction: column; gap: 2px">
+<span class="eyebrow">{{eyebrow}}</span>
+<span class="sect">{{sectTitle}}</span>
+</div>
+<div class="vw" role="group" aria-label="Who is looking">
+<button type="button" class="vwb" style="background: {{vClientBg}}; color: {{vClientFg}}" aria-pressed="{{isClient}}" onClick="{{setClient}}">Client view</button>
+<button type="button" class="vwb" style="background: {{vAdvBg}}; color: {{vAdvFg}}" aria-pressed="{{advisor}}" onClick="{{setAdvisor}}">Advisor view</button>
+</div>
+</div>
+<div class="dots" aria-hidden="true">
+<sc-for list="{{dots}}" as="d" hint-placeholder-count="7"><span class="dot" style="background: {{d.bg}}"></span></sc-for>
+</div>
+</div>
+</div>
+
+<sc-if value="{{showBar}}" hint-placeholder-val="{{ false }}">
+<div class="bar"><div class="barin">
+<span>Going out: <span class="num">{{fOut}}</span> a month</span>
+<span>Left: <span class="num" style="color: {{leftCol}}">{{fLeft}}</span></span>
+</div></div>
+</sc-if>
+
+<div class="app">
+
+<!-- ============ START ============ -->
+<sc-if value="{{sStart}}" hint-placeholder-val="{{ true }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div>
+<span class="eyebrow" style="color: #8A6417">Prototype · Section 3</span>
+<h1>Your full check-up</h1>
+<p class="lede">Seven short sections, then one final report: what you told us, what it means, and what to do next.</p>
+</div>
+<div class="card">
+<sc-for list="{{sectList}}" as="x" hint-placeholder-count="7">
+<div class="kv"><span>{{x.n}}. {{x.name}}</span><span class="hint">{{x.mins}}</span></div>
+</sc-for>
+</div>
+<div class="card">
+<h3>Practice client</h3>
+<p class="hint" style="margin: 0">Family of four. Client 38, paid monthly, partner brings home $4,000. Mother 66 and father 71. Every figure can be changed.</p>
+</div>
+
+</div>
+</sc-if>
+
+<!-- ============ 1 OPENER ============ -->
+<sc-if value="{{sOpener}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>What matters to you</h1><p class="lede">Before any numbers: what worries you, and what you would love to do.</p></div>
+<div class="card">
+<h2>What keeps you up at night?</h2>
+<div class="row"><sc-for list="{{worryPills}}" as="p" hint-placeholder-count="6"><button type="button" class="pill" style="background: {{p.bg}}; color: {{p.fg}}" aria-pressed="{{p.on}}" onClick="{{p.tog}}">{{p.label}}</button></sc-for></div>
+<sc-for list="{{ownWorryList}}" as="o" hint-placeholder-count="0"><div class="kv"><span>{{o.t}}</span><button type="button" class="link" onClick="{{o.del}}">Remove</button></div></sc-for>
+<sc-if value="{{canAddWorry}}" hint-placeholder-val="{{ true }}">
+<label class="fld">Add your own
+<div style="display: flex; gap: 8px"><input class="in" type="text" maxlength="80" placeholder="For example: losing my job" value="{{draftWorry}}" onChange="{{onDraftWorry}}"><button type="button" class="btn sec" onClick="{{addWorry}}">Add</button></div>
+<span class="hint">Please leave out any health details.</span>
+</label>
+</sc-if>
+</div>
+<div class="card">
+<h2>What would you love to do?</h2>
+<div class="row"><sc-for list="{{dreamPills}}" as="p" hint-placeholder-count="6"><button type="button" class="pill" style="background: {{p.bg}}; color: {{p.fg}}" aria-pressed="{{p.on}}" onClick="{{p.tog}}">{{p.label}}</button></sc-for></div>
+<sc-for list="{{ownDreamList}}" as="o" hint-placeholder-count="0"><div class="kv"><span>{{o.t}}</span><span class="row"><button type="button" class="link" onClick="{{o.plan}}">{{o.planLabel}}</button><button type="button" class="link" onClick="{{o.del}}">Remove</button></span></div></sc-for>
+<sc-if value="{{canAddDream}}" hint-placeholder-val="{{ true }}">
+<label class="fld">Add your own
+<div style="display: flex; gap: 8px"><input class="in" type="text" maxlength="80" placeholder="For example: renovate the kitchen" value="{{draftDream}}" onChange="{{onDraftDream}}"><button type="button" class="btn sec" onClick="{{addDream}}">Add</button></div>
+<span class="hint">Tap "Plan for this" to turn it into a goal.</span>
+</label>
+</sc-if>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ 3 PEOPLE ============ -->
+<sc-if value="{{sPeople}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Your people</h1><p class="lede">Who depends on you. What you spend on them today comes from your budget. Here we ask about the years ahead.</p></div>
+<div class="card">
+<h2>Your family</h2>
+<div class="kv"><span>Partner</span><span>Yes</span></div>
+<div class="kv"><span>Child A</span><span>Age 4</span></div>
+<div class="kv"><span>Child B</span><span>Age 11</span></div>
+</div>
+<sc-for list="{{parentCards}}" as="p" hint-placeholder-count="2">
+<div class="card">
+<h2>{{p.title}}</h2>
+<div class="kv"><span>From your budget, today</span><span class="num">{{p.fToday}} a month</span></div>
+<span class="lbl">Will {{p.her}} care needs grow?</span>
+<div class="row"><button type="button" class="pill" style="background: {{p.noBg}}; color: {{p.noFg}}" aria-pressed="{{p.growNo}}" onClick="{{p.setNo}}">No</button><button type="button" class="pill" style="background: {{p.yesBg}}; color: {{p.yesFg}}" aria-pressed="{{p.grow}}" onClick="{{p.setYes}}">Yes, probably</button></div>
+<sc-if value="{{p.grow}}" hint-placeholder-val="{{ false }}">
+<span class="lbl">The care {{p.she}} may need</span>
+<div class="row"><sc-for list="{{p.tiers}}" as="t" hint-placeholder-count="4"><button type="button" class="pill" style="background: {{t.bg}}; color: {{t.fg}}" aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}} · {{t.amt}}</button></sc-for></div>
+<label class="fld">From what age?<input class="in" type="number" inputmode="numeric" min="{{p.age}}" max="100" value="{{p.fromAge}}" onChange="{{p.onFrom}}"></label>
+</sc-if>
+<span class="lbl">Does {{p.she}} get the Senior Citizens' Pension?</span>
+<div class="row"><sc-for list="{{p.scpOpts}}" as="o" hint-placeholder-count="2"><button type="button" class="pill" style="background: {{o.bg}}; color: {{o.fg}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
+<span class="lbl">Did {{p.she}} pay 25 or more NIS contributions?</span>
+<div class="row"><sc-for list="{{p.nisOpts}}" as="o" hint-placeholder-count="3"><button type="button" class="pill" style="background: {{o.bg}}; color: {{o.fg}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
+<p class="hint" style="margin: 0">{{p.line}}</p>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<!-- ============ 2a PAY ============ -->
+<sc-if value="{{sPay}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Your pay</h1><p class="lede">However often you are paid, we turn it into a month.</p></div>
+<div class="card">
+<h2>How often are you paid?</h2>
+<div class="row"><sc-for list="{{payPills}}" as="p" hint-placeholder-count="4"><button type="button" class="pill" style="background: {{p.bg}}; color: {{p.fg}}" aria-pressed="{{p.on}}" onClick="{{p.pick}}">{{p.label}}</button></sc-for></div>
+<label class="fld">{{payLabel}}<input class="in" type="number" inputmode="decimal" min="0" value="{{grossPer}}" onChange="{{onGross}}"><span class="hint">Before any deductions. That is {{fGrossUsual}} a month.</span></label>
+<label class="row" style="font-size: 15px; font-weight: 600"><input type="checkbox" checked="{{varies}}" onChange="{{togVaries}}" style="width: 22px; height: 22px"> My pay changes from month to month</label>
+<sc-if value="{{varies}}" hint-placeholder-val="{{ false }}">
+<label class="fld">Your lowest month in the last year<input class="in" type="number" inputmode="decimal" min="0" value="{{lowest}}" onChange="{{onLowest}}"><span class="hint">We plan on the lowest month, so a slow month never breaks the plan.</span></label>
+</sc-if>
+<label class="fld">Partner's take-home each month<input class="in" type="number" inputmode="decimal" min="0" value="{{partner}}" onChange="{{onPartner}}"></label>
+</div>
+<div class="card">
+<h2>From gross to take-home</h2>
+<div class="kv"><span>Gross pay, a month</span><span class="num">{{fGross}}</span></div>
+<div class="kv"><span>NIS, your share</span><span class="num">−{{fNis}}</span></div>
+<div class="kv"><span>Health surcharge</span><span class="num">−{{fHs}}</span></div>
+<div class="kv"><span>PAYE income tax</span><span class="num">−{{fPaye}}</span></div>
+<div class="kv"><span><strong>Your take-home</strong></span><span class="num">{{fTh}}</span></div>
+<div class="kv"><span>Partner's take-home</span><span class="num">+{{fPartner}}</span></div>
+<div class="kv"><span><strong>Household take-home</strong></span><span class="num">{{fHh}}</span></div>
+<sc-if value="{{showExtraPay}}" hint-placeholder-val="{{ false }}"><div class="note">{{extraPayLine}}</div></sc-if>
+</div>
+<sc-if value="{{advisor}}" hint-placeholder-val="{{ false }}">
+<div class="card adv"><h3>How we worked this out</h3><p class="hint" style="margin: 0">PAYE: 25% of yearly pay above the $90,000 allowance, after 70% of NIS (IRD form TD1). NIS at 5.4% of insurable earnings, health surcharge $8.25 a week. Weekly ×52÷12, fortnightly ×26÷12, twice a month ×2. Prototype figures are rough.</p></div>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ============ 2b BUDGET ============ -->
+<sc-if value="{{sBudget}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Where your money goes</h1><p class="lede">Line by line. Enter each amount the way you think of it: a week, a fortnight, a month or a year. Not sure about a group? Skip it and give one total.</p></div>
+<sc-for list="{{groupCards}}" as="g" hint-placeholder-count="12">
+<div class="grp">
+<div class="grph">
+<button type="button" class="link" style="text-decoration: none; font-size: 16px; color: #0E3B47" aria-expanded="{{g.open}}" onClick="{{g.toggle}}">{{g.arrow}} {{g.name}}</button>
+<span class="row"><span class="num">{{g.fTotal}}</span><span class="tag {{g.tagCls}}">{{g.tagText}}</span></span>
+</div>
+<sc-if value="{{g.open}}" hint-placeholder-val="{{ false }}">
+<div class="grpb">
+<sc-if value="{{g.isSaving}}" hint-placeholder-val="{{ false }}"><p class="hint" style="margin: 0">This counts as saving, not spending.</p></sc-if>
+<sc-if value="{{g.isHome}}" hint-placeholder-val="{{ false }}">
+<span class="lbl">Your home</span>
+<div class="row"><sc-for list="{{g.homePills}}" as="h" hint-placeholder-count="4"><button type="button" class="pill" style="background: {{h.bg}}; color: {{h.fg}}" aria-pressed="{{h.on}}" onClick="{{h.pick}}">{{h.label}}</button></sc-for></div>
+<p class="hint" style="margin: 0">{{g.homeNote}}</p>
+<sc-if value="{{g.isMortgage}}" hint-placeholder-val="{{ false }}">
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<label class="fld">Balance left<input class="in" type="number" inputmode="decimal" min="0" value="{{g.mBal}}" onChange="{{g.onMBal}}"></label>
+<label class="fld">Years left to pay<input class="in" type="number" inputmode="numeric" min="0" value="{{g.mYears}}" onChange="{{g.onMYears}}"></label>
+</div>
+</sc-if>
+</sc-if>
+<sc-if value="{{g.isSupport}}" hint-placeholder-val="{{ false }}"><p class="hint" style="margin: 0">One line per person you help: a parent, a relative, a grown child. Count only money not already in the lines above. If you buy their groceries with yours, leave them in Food.</p></sc-if>
+<button type="button" class="link" style="align-self: flex-start" onClick="{{g.togSkip}}">{{g.skipLabel}}</button>
+<sc-if value="{{g.skip}}" hint-placeholder-val="{{ false }}">
+<div class="line"><span class="lbl">One total for {{g.name}}</span><input class="in" type="number" inputmode="decimal" min="0" value="{{g.total}}" onChange="{{g.onTotal}}" aria-label="One total"><select class="sel" value="{{g.totalFreq}}" onChange="{{g.onTotalFreq}}" aria-label="How often"><option value="w">a week</option><option value="f">a fortnight</option><option value="m">a month</option><option value="y">a year</option></select></div>
+</sc-if>
+<sc-if value="{{g.notSkip}}" hint-placeholder-val="{{ true }}">
+<sc-for list="{{g.lines}}" as="l" hint-placeholder-count="5">
+
+<sc-if value="{{l.custom}}" hint-placeholder-val="{{ false }}"><input class="in" type="text" maxlength="40" placeholder="Name this line" value="{{l.label}}" onChange="{{l.onLabel}}"></sc-if>
+<sc-if value="{{l.editable}}" hint-placeholder-val="{{ true }}">
+<div class="line"><span class="lbl">{{l.shown}}</span><input class="in" type="number" inputmode="decimal" min="0" value="{{l.amt}}" onChange="{{l.onAmt}}" aria-label="{{l.shown}}"><select class="sel" value="{{l.freq}}" onChange="{{l.onFreq}}" aria-label="How often"><option value="w">a week</option><option value="f">a fortnight</option><option value="m">a month</option><option value="y">a year</option></select></div>
+</sc-if>
+</sc-for>
+<button type="button" class="link" style="align-self: flex-start" onClick="{{g.addLine}}">{{g.addLabel}}</button>
+</sc-if>
+</div>
+</sc-if>
+</div>
+</sc-for>
+<div class="card">
+<div class="kv"><span>Spending</span><span class="num">{{fSpend}}</span></div>
+<div class="kv"><span>Loan and card payments (from the step before)</span><span class="num">{{fDebtPay}}</span></div>
+<div class="kv"><span>Saving you already do</span><span class="num">{{fSaving}}</span></div>
+<div class="kv"><span><strong>Left each month</strong></span><span class="num" style="color: {{leftCol}}">{{fLeft}}</span></div>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ 2c WHERE ============ -->
+<sc-if value="{{sWhere}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Your money, next to common guides</h1><p class="lede">Each bar is a share of your take-home. The green band is the usual range. These are guides, not rules: many T&amp;T families spend more on needs.</p></div>
+<div class="card">
+<sc-for list="{{whereBars}}" as="b" hint-placeholder-count="10">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 6px 0">
+<div style="display: flex; justify-content: space-between; gap: 8px; font-size: 14px"><span class="lbl">{{b.name}}</span><span><span class="num">{{b.fAmt}}</span> · {{b.pct}}%<span class="hint"> {{b.guide}}</span></span></div>
+<div class="track"><span class="band" style="left: {{b.bandL}}%; width: {{b.bandW}}%"></span><span class="fill" style="width: {{b.w}}%; background: {{b.col}}"></span></div>
+</div>
+</sc-for>
+<p class="hint" style="margin: 0">Dark bar: inside or under the range. Orange: above it. Red: well above it.</p>
+</div>
+<div class="card">
+<h2>What stands out</h2>
+<sc-for list="{{standouts}}" as="s" hint-placeholder-count="3"><p style="margin: 0">{{s.t}}</p></sc-for>
+</div>
+<sc-if value="{{advisor}}" hint-placeholder-val="{{ false }}">
+<div class="card adv"><h3>Where the guides come from</h3><p class="hint" style="margin: 0">Take-home ranges: The Penny Hoarder budget percentages. Debt and insurance: PALIG net worth calculator benchmarks (loans 25%, life 5%, general 5%, savings 10%). Each guide is an advisor-editable setting.</p></div>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ============ 2d MAKE ROOM ============ -->
+<sc-if value="{{sRoom}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Make room</h1><p class="lede">Move a slider to try spending less in a group. Nothing changes until you press "Use this plan".</p></div>
+<div class="card" style="position: sticky; top: 124px; z-index: 3">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><h2>Freed up</h2><span class="num" style="font-size: 26px; color: #245A40">{{fFreed}} a month</span></div>
+</div>
+<div class="card">
+<sc-for list="{{roomRows}}" as="r" hint-placeholder-count="10">
+<label class="fld" style="padding: 4px 0">
+<span style="display: flex; justify-content: space-between; gap: 8px"><span>{{r.name}}</span><span><span class="num">{{r.fNew}}</span><span class="hint"> from {{r.fCur}}</span></span></span>
+<input class="rng" type="range" min="0" max="{{r.max}}" step="10" value="{{r.val}}" onChange="{{r.onSlide}}" aria-label="{{r.name}}">
+<sc-if value="{{r.canSuggest}}" hint-placeholder-val="{{ false }}"><button type="button" class="link" style="align-self: flex-start" onClick="{{r.suggest}}">{{r.suggestLabel}}</button></sc-if>
+</label>
+</sc-for>
+</div>
+<div class="card">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px; flex-wrap: wrap"><h2>Where the freed money goes</h2><span class="tag {{unassignedCls}}">Not yet given a job: {{fUnassigned}}</span></div>
+<p class="hint" style="margin: 0">{{allocHint}}</p>
+<sc-for list="{{allocRows}}" as="a" hint-placeholder-count="6">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0; border-bottom: 1px solid #EFEAE0">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: center">
+<label class="row" style="font-size: 15px; font-weight: 600"><input type="checkbox" checked="{{a.sel}}" onChange="{{a.tog}}" style="width: 22px; height: 22px"> <span class="tag step">{{a.step}}</span> {{a.name}}</label>
+<span class="num">{{a.fAmt}}</span>
+</div>
+<sc-if value="{{a.sel}}" hint-placeholder-val="{{ true }}"><input class="rng" type="range" min="0" max="{{a.max}}" step="10" value="{{a.val}}" onChange="{{a.onSlide}}" aria-label="{{a.name}}"></sc-if>
+</div>
+</sc-for>
+<details>
+<summary style="cursor: pointer; font-weight: 700; min-height: 32px">Spend more on another group</summary>
+<sc-for list="{{grpDestRows}}" as="a" hint-placeholder-count="10">
+<div style="display: flex; flex-direction: column; gap: 4px; padding: 8px 0; border-bottom: 1px solid #EFEAE0">
+<div style="display: flex; justify-content: space-between; gap: 8px; align-items: center">
+<label class="row" style="font-size: 15px; font-weight: 600"><input type="checkbox" checked="{{a.sel}}" onChange="{{a.tog}}" style="width: 22px; height: 22px"> {{a.name}}</label>
+<span class="num">{{a.fAmt}}</span>
+</div>
+<sc-if value="{{a.sel}}" hint-placeholder-val="{{ false }}"><input class="rng" type="range" min="0" max="{{a.max}}" step="10" value="{{a.val}}" onChange="{{a.onSlide}}" aria-label="{{a.name}}"></sc-if>
+</div>
+</sc-for>
+</details>
+<button type="button" class="link" style="align-self: flex-start" onClick="{{autoFill}}">Fill in plan order</button>
+</div>
+<div class="row">
+<button type="button" class="btn pri" onClick="{{useRoom}}">Use this plan</button>
+<button type="button" class="btn sec" onClick="{{resetRoom}}">Back to my real numbers</button>
+</div>
+<sc-if value="{{roomOn}}" hint-placeholder-val="{{ false }}"><div class="note" style="background: #E3F0E8; color: #245A40">Using this plan. Every screen now uses the new amounts. Your real numbers are kept, and both print on the report.</div></sc-if>
+</div>
+</sc-if>
+
+<!-- ============ 3 DEBTS ============ -->
+<sc-if value="{{sDebts}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Your loans and cards</h1><p class="lede">Before the budget: every loan and card, what you pay each month, and when it ends. We work out the end date too, and tell you if the two do not match. Your mortgage, rent or household contribution goes under Home in the next step.</p></div>
+<sc-for list="{{debtCards}}" as="d" hint-placeholder-count="3">
+<div class="card">
+<div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap"><h2>{{d.type}}</h2><span class="tag {{d.tagCls}}">{{d.tagText}}</span></div>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<label class="fld">Type<select class="sel" value="{{d.type}}" onChange="{{d.onType}}"><sc-for list="{{debtTypes}}" as="o" hint-placeholder-count="7"><option value="{{o}}">{{o}}</option></sc-for></select></label>
+<label class="fld">Lender<input class="in" type="text" value="{{d.lender}}" onChange="{{d.onLender}}"></label>
+<label class="fld">Balance owed<input class="in" type="number" inputmode="decimal" min="0" value="{{d.bal}}" onChange="{{d.onBal}}"></label>
+<label class="fld">Interest rate, % a year<input class="in" type="number" inputmode="decimal" min="0" step="0.1" value="{{d.rate}}" onChange="{{d.onRate}}"></label>
+<label class="fld">Payment each month<input class="in" type="number" inputmode="decimal" min="0" value="{{d.pay}}" onChange="{{d.onPay}}"></label>
+<label class="fld">End date, if you know it<input class="in" type="text" placeholder="MM/YYYY" value="{{d.end}}" onChange="{{d.onEnd}}"></label>
+</div>
+<div class="kv"><span>Paid off, at this payment</span><span class="num">{{d.payoff}}</span></div>
+<sc-if value="{{d.hasFlag}}" hint-placeholder-val="{{ false }}"><div class="note">{{d.flag}}</div></sc-if>
+<span class="lbl">Did anyone co-sign or guarantee this?</span>
+<div class="row"><button type="button" class="pill" style="background: {{d.cosNoBg}}; color: {{d.cosNoFg}}" aria-pressed="{{d.cosNo}}" onClick="{{d.setNo}}">No</button><button type="button" class="pill" style="background: {{d.cosYesBg}}; color: {{d.cosYesFg}}" aria-pressed="{{d.cosYes}}" onClick="{{d.setYes}}">Yes</button></div>
+<sc-if value="{{d.cosYes}}" hint-placeholder-val="{{ false }}"><label class="fld">Who?<input class="in" type="text" value="{{d.who}}" onChange="{{d.onWho}}"><span class="hint">If you die, they owe it. We suggest cover for this loan in "Protecting it".</span></label></sc-if>
+<button type="button" class="link" style="align-self: flex-start" onClick="{{d.del}}">Remove this debt</button>
+</div>
+</sc-for>
+<button type="button" class="btn sec" onClick="{{addDebt}}">+ Add a debt</button>
+<div class="card">
+<div class="kv"><span>Owed in total (not the mortgage)</span><span class="num">{{fDebtBal}}</span></div>
+<div class="kv"><span>Payments each month</span><span class="num">{{fDebtPay}}</span></div>
+<div class="kv"><span><strong>Debt-free by</strong></span><span class="num">{{debtFree}}</span></div>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ 4 OWN ============ -->
+<sc-if value="{{sOwn}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>What you own and owe</h1><p class="lede">A rough value is fine. This gives your net worth: what you would have if you sold everything and paid every debt.</p></div>
+<div class="card">
+<h2>What you own</h2>
+<sc-for list="{{assetRows}}" as="a" hint-placeholder-count="10">
+<label class="line" style="grid-template-columns: minmax(0, 1fr) 150px"><span class="lbl">{{a.label}}</span><input class="in" type="number" inputmode="decimal" min="0" value="{{a.val}}" onChange="{{a.onVal}}"></label>
+</sc-for>
+</div>
+<div class="card">
+<h2>What you owe</h2>
+<div class="kv"><span>Mortgage balance (from Your home)</span><span class="num">{{fMortgage}}</span></div>
+<div class="kv"><span>Other debts (from Your debts)</span><span class="num">{{fDebtBal}}</span></div>
+</div>
+<div class="card">
+<div class="kv"><span>You own</span><span class="num">{{fAssets}}</span></div>
+<div class="kv"><span>You owe</span><span class="num">−{{fOwe}}</span></div>
+<div class="kv"><span><strong>Net worth</strong></span><span class="num" style="font-size: 22px">{{fNet}}</span></div>
+</div>
+</div>
+</sc-if>
+
+<!-- ============ 5 GOALS ============ -->
+<sc-if value="{{sGoals}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Your goals</h1><p class="lede">What you are saving for, how much, and by when.</p></div>
+<sc-for list="{{goalCards}}" as="g" hint-placeholder-count="2">
+<div class="card">
+<label class="fld">Goal<input class="in" type="text" value="{{g.name}}" onChange="{{g.onName}}"></label>
+<div style="display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px">
+<label class="fld">Amount needed, today's money<input class="in" type="number" inputmode="decimal" min="0" value="{{g.amt}}" onChange="{{g.onAmt}}"></label>
+<label class="fld">In how many years?<input class="in" type="number" inputmode="numeric" min="1" value="{{g.years}}" onChange="{{g.onYears}}"></label>
+</div>
+<div class="kv"><span>Save each month</span><span class="num">{{g.fMonthly}}</span></div>
+<button type="button" class="link" style="align-self: flex-start" onClick="{{g.del}}">Remove</button>
+</div>
+</sc-for>
+<button type="button" class="btn sec" onClick="{{addGoal}}">+ Add a goal</button>
+</div>
+</sc-if>
+
+<!-- ============ 6 RETIRE ============ -->
+<sc-if value="{{sRetire}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Your retirement</h1><p class="lede">One figure to plan for. It uses your pay, the way you live, the years to go, and inflation.</p></div>
+<div class="card" style="background: #0E3B47; color: #fff; border-color: #0E3B47">
+<span class="eyebrow">We recommend you plan for at least</span>
+<span style="font-family: Fraunces, Georgia, serif; font-size: 40px; line-height: 1.1">{{fRetFuture}} a month</span>
+<span>when you retire at {{retireAge}}, in {{retireYear}}. That is about {{fRetToday}} in today's money.</span>
+</div>
+<label class="fld card">Retire at age<span class="num" style="font-size: 20px">{{retireAge}}</span><input class="rng" type="range" min="50" max="70" step="1" value="{{retireAge}}" onChange="{{onRetireAge}}" aria-label="Retire at age"></label>
+<div class="card">
+<h2>How we worked it out</h2>
+<div class="kv"><span>A. 70% of today's household take-home</span><span class="num">{{fRetA}}</span></div>
+<div class="kv"><span>B. What you spend now</span><span class="num">{{fSpendNow}}</span></div>
+<sc-for list="{{stopRows}}" as="s" hint-placeholder-count="4"><div class="kv"><span class="hint">less {{s.t}}</span><span class="num">−{{s.f}}</span></div></sc-for>
+<div class="kv"><span>B. Your lifestyle at retirement</span><span class="num">{{fRetB}}</span></div>
+<div class="kv"><span>The larger of A and B, today's money</span><span class="num">{{fRetToday}}</span></div>
+<div class="kv"><span>Inflation 3.0% a year for {{retYears}} years</span><span class="num">× {{retFactor}}</span></div>
+<div class="kv"><span><strong>Plan for, a month in {{retireYear}}</strong></span><span class="num">{{fRetFuture}}</span></div>
+</div>
+<label class="fld card">The income you want, today's money<span class="num" style="font-size: 20px">{{fWant}}</span><input class="rng" type="range" min="2000" max="30000" step="250" value="{{want}}" onChange="{{onWant}}" aria-label="The income you want"><sc-if value="{{wantLow}}" hint-placeholder-val="{{ false }}"><span class="note">That is below our recommended {{fRetToday}} (today's money). Most people spend more in retirement than they expect.</span></sc-if></label>
+</div>
+</sc-if>
+
+<!-- ============ 7a COVER ============ -->
+<sc-if value="{{sCover}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Cover you already have</h1><p class="lede">"None" is a fine answer. "Not sure" is fine too: we will not count it either way.</p></div>
+<button type="button" class="btn sec" onClick="{{noCover}}">I have no cover</button>
+<sc-for list="{{coverRows}}" as="c" hint-placeholder-count="5">
+<div class="card">
+<h3>{{c.label}}</h3>
+<div class="row"><sc-for list="{{c.opts}}" as="o" hint-placeholder-count="3"><button type="button" class="pill" style="background: {{o.bg}}; color: {{o.fg}}" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div>
+<sc-if value="{{c.has}}" hint-placeholder-val="{{ false }}"><label class="fld">{{c.amtLabel}}<input class="in" type="number" inputmode="decimal" min="0" value="{{c.amt}}" onChange="{{c.onAmt}}"></label></sc-if>
+</div>
+</sc-for>
+</div>
+</sc-if>
+
+<!-- ============ 7b EVENTS ============ -->
+<sc-if value="{{sEvents}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>If something happens</h1><p class="lede">Today, and with your plan. One event at a time.</p></div>
+<div class="row"><sc-for list="{{eventTabs}}" as="t" hint-placeholder-count="4"><button type="button" class="pill" style="background: {{t.bg}}; color: {{t.fg}}" aria-pressed="{{t.on}}" onClick="{{t.pick}}">{{t.label}}</button></sc-for></div>
+<div class="card">
+<div style="display: flex; justify-content: space-between; gap: 8px; flex-wrap: wrap"><h2>{{evTitle}}</h2><span class="tag step">{{evPlanLine}}</span></div>
+<div class="ba" style="font-size: 13px; font-weight: 700; color: #55656B"><span></span><span>Today</span><span>With your plan</span></div>
+<sc-for list="{{evRows}}" as="r" hint-placeholder-count="8">
+<div class="ba"><span>{{r.label}}</span><span class="ic" style="color: {{r.tCol}}">{{r.tTxt}}</span><span class="ic" style="color: {{r.pCol}}">{{r.pTxt}}</span></div>
+</sc-for>
+<sc-if value="{{hasEvNext}}" hint-placeholder-val="{{ false }}"><div class="note">{{evNext}}</div></sc-if>
+</div>
+<sc-if value="{{advisor}}" hint-placeholder-val="{{ false }}">
+<div class="card adv"><h3>How we worked this out</h3><p class="hint" style="margin: 0">{{evWorking}}</p></div>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ============ 7c CHOOSE ============ -->
+<sc-if value="{{sChoose}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><h1>Choose your plan</h1><p class="lede">Pick how much life cover you want, and how much a month you can put into protection.</p></div>
+<sc-if value="{{noPlan}}" hint-placeholder-val="{{ false }}"><div class="note">{{noPlanLine}}</div></sc-if>
+<sc-if value="{{hasPlan}}" hint-placeholder-val="{{ true }}">
+<div class="card">
+<div style="display: flex; justify-content: space-between; align-items: baseline; gap: 8px"><h2>Your protection budget</h2><span class="num" style="font-size: 24px">{{fIns}} a month</span></div>
+<input class="rng" type="range" min="200" max="{{insMax}}" step="1" value="{{insR}}" onChange="{{onIns}}" aria-label="Your protection budget">
+<div style="display: flex; justify-content: space-between" class="hint"><span>Lowest plan: $200</span><span>Safe top: {{fInsMax}}</span></div>
+<p class="hint" style="margin: 0">{{insLine}}</p>
+<sc-if value="{{aboveSafe}}" hint-placeholder-val="{{ false }}"><div class="note">$200 is above the safe range for your budget. Use "Make room" in Your money to free the difference.</div></sc-if>
+</div>
+<sc-for list="{{cardOpts}}" as="c" hint-placeholder-count="3">
+<button type="button" class="cardopt" style="border-color: {{c.border}}" aria-pressed="{{c.on}}" onClick="{{c.pick}}">
+<span style="display: flex; justify-content: space-between; gap: 8px; width: 100%"><strong style="font-size: 17px">{{c.name}}</strong><span class="tag step">{{c.tag}}</span></span>
+<span style="font-family: Fraunces, Georgia, serif; font-size: 22px; color: #0E3B47">{{c.fCover}} life cover</span>
+<span class="hint">About {{c.fPrem}} a month</span>
+<span style="font-size: 14px"><strong>Covers:</strong> {{c.covers}}</span>
+<span style="font-size: 14px"><strong>Does not cover:</strong> {{c.notCovers}}</span>
+<span class="tag {{c.stCls}}" style="align-self: flex-start">{{c.status}}</span>
+<sc-if value="{{c.hasAlso}}" hint-placeholder-val="{{ false }}"><span class="hint">{{c.also}}</span></sc-if>
+</button>
+</sc-for>
+<div class="card">
+<h2>What your {{fIns}} pays for</h2>
+<sc-for list="{{planRows}}" as="p" hint-placeholder-count="5"><div class="kv"><span>{{p.name}}<br><span class="hint">{{p.sub}}</span></span><span class="num" style="color: {{p.col}}">{{p.fAmt}}</span></div></sc-for>
+<p class="hint" style="margin: 0">Rough costs from sample rates. Kyron turns this into real prices.</p>
+</div>
+<sc-if value="{{advisor}}" hint-placeholder-val="{{ false }}">
+<div class="card adv">
+<h3>Priority order (advisor)</h3>
+<p class="hint" style="margin: 0">Must have: life to keep the family afloat, critical illness, parents' funerals (oldest first), income if you cannot work, loan cover for co-signed loans. Next: three months saved, expensive debt. Later: retirement, education, goals. The client may reorder inside "Must have" only.</p>
+<h3>Scope record</h3>
+<sc-for list="{{scopeRows}}" as="s" hint-placeholder-count="4">
+<div style="display: flex; flex-direction: column; gap: 6px; padding: 6px 0; border-bottom: 1px solid #E2DCCF"><span>{{s.label}}</span><div class="row"><sc-for list="{{s.opts}}" as="o" hint-placeholder-count="3"><button type="button" class="pill" style="background: {{o.bg}}; color: {{o.fg}}; min-height: 40px; padding: 6px 12px" aria-pressed="{{o.on}}" onClick="{{o.pick}}">{{o.label}}</button></sc-for></div></div>
+</sc-for>
+</div>
+</sc-if>
+</sc-if>
+</div>
+</sc-if>
+
+<!-- ============ FINAL REPORT ============ -->
+<sc-if value="{{sReport}}" hint-placeholder-val="{{ false }}">
+<div style="display: flex; flex-direction: column; gap: 16px">
+<div><span class="eyebrow" style="color: #8A6417">Your plan · {{today}}</span><h1>Your financial check-up</h1><p class="lede">Prepared with Kyron, your Tatil Life agent. A plan, not a quote.</p></div>
+<div class="card" style="background: #0E3B47; color: #fff; border-color: #0E3B47">
+<span class="eyebrow">Your next steps</span>
+<sc-for list="{{topNext}}" as="n" hint-placeholder-count="5"><div style="display: flex; gap: 10px; align-items: baseline; padding: 4px 0"><span class="num" style="color: #E9C46A">{{n.i}}</span><span>{{n.t}}</span></div></sc-for>
+</div>
+<sc-for list="{{reportSections}}" as="r" hint-placeholder-count="7">
+<div class="card">
+<h2>{{r.title}}</h2>
+<sc-for list="{{r.means}}" as="m" hint-placeholder-count="3"><div class="kv"><span>{{m.t}}</span><span class="num">{{m.v}}</span></div></sc-for>
+<sc-for list="{{r.next}}" as="n" hint-placeholder-count="2"><div style="font-size: 14px; padding: 2px 0">→ {{n.t}}</div></sc-for>
+</div>
+</sc-for>
+<sc-if value="{{advisor}}" hint-placeholder-val="{{ false }}">
+<div class="card adv"><h3>Scope record</h3><p class="hint" style="margin: 0">{{scopeLine}}</p><p class="hint" style="margin: 0">This report is the snapshot kept on file. The section summaries are views of it.</p></div>
+</sc-if>
+<button type="button" class="btn sec" onClick="{{printIt}}">Print or save as PDF</button>
+</div>
+</sc-if>
+
+</div>
+
+<div class="foot">
+<div class="footin">
+<sc-if value="{{hasBack}}" hint-placeholder-val="{{ false }}"><button type="button" class="btn sec" style="flex: 1 1 0" onClick="{{back}}">Back</button></sc-if>
+<sc-if value="{{hasNext}}" hint-placeholder-val="{{ true }}"><button type="button" class="btn pri" style="flex: 2 1 0" onClick="{{next}}">{{nextLabel}}</button></sc-if>
+</div>
+</div>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":1280,"height":1800}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props);
+    var L = function (label, amt, freq, stop) { return { label: label, amt: String(amt), freq: freq, stop: stop || '' }; };
+    this.state = {
+      screen: 'start', advisor: false, skipSums: false,
+      worries: { die: true, sick: true, parents: true }, ownWorries: [], draftWorry: '',
+      dreams: { retire: true, edu: true }, ownDreams: [], draftDream: '',
+      parents: [
+        { key: 'mother', name: 'Mother', age: 66, scp: true, nis: 'yes', grow: true, futTier: 1, fromAge: '75' },
+        { key: 'father', name: 'Father', age: 71, scp: false, nis: 'unsure', grow: true, futTier: 3, fromAge: '80' }
+      ],
+      homeType: 'mortgage', mBal: '420000', mYears: '18',
+      payFreq: 'm', grossPer: '17000', varies: false, lowest: '15000', partner: '4000',
+      groups: [
+        { key: 'home', name: 'Home', open: true, lines: [{ label: 'Mortgage', amt: '3000', freq: 'm', stop: 'mortgage', home: true }, L('Land and building tax', 1200, 'y'), L('Home insurance', 3000, 'y'), L('Repairs and maintenance', 100, 'm'), L('Security', 0, 'm'), L('Domestic help and yard work', 0, 'm'), L('Furniture and appliances (cash)', 0, 'm')] },
+        { key: 'util', name: 'Utilities and bills', lines: [L('T&TEC', 380, 'm'), L('WASA', 1200, 'y'), L('Cooking gas', 120, 'm'), L('Mobile phones', 200, 'm'), L('Home internet and cable', 280, 'm'), L('Streaming and apps', 80, 'm')] },
+        { key: 'food', name: 'Food', lines: [L('Groceries and market', 300, 'w'), L('Work and school lunches, snacks', 150, 'f', 'work'), L('Eating out, doubles, takeaway', 40, 'w'), L('Drinks', 40, 'm')] },
+        { key: 'move', name: 'Getting around', lines: [L('Fuel', 130, 'w'), L('Maxi taxi, taxi, bus or ferry', 0, 'w'), L('Motor insurance', 4800, 'y'), L('Licence and inspection', 600, 'y'), L('Servicing and tyres', 2400, 'y'), L('Parking and car wash', 40, 'm')] },
+        { key: 'kids', name: 'Children', lines: [L('School fees', 0, 'y', 'kids'), L('Books and uniforms', 2400, 'y', 'kids'), L('Lunch money', 30, 'w', 'kids'), L('Transport to school', 0, 'm', 'kids'), L('Lessons and extra classes', 150, 'm', 'kids'), L('Daycare or babysitter', 400, 'm', 'kids'), L('Sport and activities', 0, 'm', 'kids'), L('Allowances', 0, 'w', 'kids')] },
+        { key: 'health', name: 'Health and personal care', lines: [L('Health insurance premium', 0, 'm'), L('Doctor, dentist, optician', 900, 'y'), L('Medication', 50, 'm'), L('Gym', 0, 'm'), L('Hair and barber', 120, 'm'), L('Nails and beauty', 0, 'm'), L('Toiletries', 150, 'm'), L('Clothing and shoes', 120, 'm')] },
+        { key: 'support', name: 'Family you support', support: true, lines: [{ label: 'Mother', amt: '0', freq: 'm', person: 'mother', stop: 'care' }, { label: 'Father', amt: '4000', freq: 'm', person: 'father', stop: 'care' }] },
+        { key: 'giving', name: 'Giving', lines: [L('Church, tithes and offerings', 80, 'm'), L('Gifts and birthdays', 600, 'y'), L('Child support', 0, 'm')] },
+        { key: 'ins', name: 'Insurance you pay now', lines: [L('Life insurance', 0, 'm'), L('Other premiums', 0, 'm')] },
+        { key: 'save', name: 'Saving you already do', saving: true, lines: [L('Sou-sou hand', 0, 'm', 'save'), L('Credit union shares', 400, 'm', 'save'), L('Pension or annuity', 0, 'm', 'save'), L('Unit trust or standing order', 0, 'm', 'save')] },
+        { key: 'fun', name: 'Fun and lifestyle', lines: [L('Entertainment and outings', 100, 'm'), L('Hobbies', 0, 'm'), L('Travel and vacation', 1800, 'y'), L('Carnival and fetes', 1200, 'y'), L('Lotto and betting', 0, 'w')] },
+        { key: 'yearly', name: 'Once-a-year costs', lines: [L('Christmas', 1800, 'y'), L('Back to school (other)', 0, 'y'), L('Big home repairs', 0, 'y'), L('Medical and dental not covered', 0, 'y')] },
+        { key: 'other', name: 'Pets and other', lines: [L('Pet food and vet', 100, 'm'), L('Bank fees', 45, 'm'), L('Anything else', 0, 'm')] }
+      ],
+      room: {}, roomOn: false, roomDraft: {}, allocCustom: false, allocSel: {}, allocAmt: {}, applied: null,
+      debts: [
+        { type: 'Credit card', lender: 'Republic Bank', bal: '18000', rate: '24', pay: '650', end: '', cos: 'no', who: '' },
+        { type: 'Car loan', lender: 'First Citizens', bal: '38000', rate: '8.5', pay: '1100', end: '03/2029', cos: 'no', who: '' },
+        { type: 'Credit union loan', lender: 'Credit union', bal: '7000', rate: '12', pay: '350', end: '09/2028', cos: 'yes', who: 'Mother' }
+      ],
+      assets: [['Bank and fixed deposits', '25000', 'cash'], ['Credit union shares', '15000', 'cash'], ['Unit trusts and money market', '0', 'cash'], ['Shares and bonds', '0', ''], ['Pension or annuity cash value', '0', ''], ['Life insurance cash value', '0', ''], ['Home and other property', '950000', ''], ['Vehicles', '85000', ''], ['Furniture and equipment', '40000', ''], ['Other', '0', '']],
+      goals: [{ name: "Children's education fund", amt: '120000', years: '7' }, { name: 'Family holiday', amt: '15000', years: '2' }],
+      retireAge: 65, want: 10000,
+      cover: { life: { st: 'none', amt: '' }, ci: { st: 'none', amt: '' }, health: { st: 'unsure', amt: '' }, di: { st: 'none', amt: '' }, pension: { st: 'none', amt: '' } },
+      event: 'die', card: 'essential', ins: null,
+      scope: {}
+    };
+  }
+  up(fn) { this.setState(function (s) { var n = JSON.parse(JSON.stringify(s)); fn(n); return n; }); }
+  renderVals() {
+    var self = this, s = this.state;
+    var F = { w: 52 / 12, f: 26 / 12, s: 2, m: 1, y: 1 / 12 };
+    var num = function (v) { var x = parseFloat(v); return isNaN(x) ? 0 : x; };
+    var fmt = function (n) { var r = Math.round(n); return (r < 0 ? '−$' : '$') + Math.abs(r).toLocaleString('en-US'); };
+    var on = function (b) { return b ? { bg: '#0E3B47', fg: '#fff' } : { bg: '#fff', fg: '#17505E' }; };
+    var TIERS = [{ l: 'No care', m: 0 }, { l: 'Light top-up', m: 1500 }, { l: 'Help at home', m: 4000 }, { l: 'Day care', m: 5600 }, { l: 'Full-time care', m: 12000 }];
+    var SCPM = 3750;
+    var SECTS = [
+      { key: 'opener', name: 'What matters to you', mins: '1 min', screens: ['opener'] },
+      { key: 'money', name: 'Your money', mins: '10 min', screens: ['pay', 'debts', 'budget', 'where', 'room'] },
+      { key: 'people', name: 'Your people', mins: '2 min', screens: ['people'] },
+      { key: 'own', name: 'What you own and owe', mins: '2 min', screens: ['own'] },
+      { key: 'goals', name: 'Your goals', mins: '2 min', screens: ['goals'] },
+      { key: 'retire', name: 'Your retirement', mins: '2 min', screens: ['retire'] },
+      { key: 'protect', name: 'Protecting it', mins: '6 min', screens: ['cover', 'events', 'choose'] }
+    ];
+    var FLOW = ['start']; SECTS.forEach(function (x) { x.screens.forEach(function (k) { FLOW.push(k); }); }); FLOW.push('report');
+    var STEPS = ['Step 1 of 5: one month saved', 'Step 2 of 5: protection basics', 'Step 3 of 5: expensive debt gone', 'Step 4 of 5: three months saved', 'Step 5 of 5: goals and retirement'];
+    var isSum = function (k) { return /Sum$/.test(k); };
+    var flow = s.advisor && s.skipSums ? FLOW.filter(function (k) { return !isSum(k); }) : FLOW;
+    var idx = Math.max(0, flow.indexOf(s.screen));
+    var go = function (k) { self.setState({ screen: k }); if (typeof window !== 'undefined') window.scrollTo(0, 0); };
+    var sectOf = function (k) { for (var i = 0; i < SECTS.length; i++) if (SECTS[i].screens.indexOf(k) >= 0) return i; return -1; };
+    var si = sectOf(s.screen);
+
+    // ---- people
+
+    // ---- pay
+    var grossUsual = num(s.grossPer) * F[s.payFreq];
+    var gross = s.varies ? num(s.lowest) : grossUsual;
+    var nis = Math.min(gross, 13593) * 0.054;
+    var hs = gross > 470 ? 8.25 * 52 / 12 : 0;
+    var paye = Math.max(0, gross * 12 - 90000 - 0.7 * nis * 12) * 0.25 / 12;
+    var th = gross - nis - hs - paye;
+    var partner = num(s.partner);
+    var hh = th + partner;
+
+    // ---- budget
+    var lineM = function (l) { return num(l.amt) * F[l.freq]; };
+    var groupBase = function (g) {
+      if (g.skip) return num(g.total) * F[g.totalFreq || 'm'];
+      return g.lines.reduce(function (a, l) { return a + (l.home && s.homeType === 'own' ? 0 : lineM(l)); }, 0);
+    };
+    var groupM = function (g) { return s.roomOn && s.room[g.key] != null ? s.room[g.key] : groupBase(g); };
+    var supG = s.groups.filter(function (g) { return g.support; })[0];
+    var parentShare = s.parents.map(function (p) { if (!supG || supG.skip) return 0; return supG.lines.filter(function (l) { return l.person === p.key; }).reduce(function (a, l) { return a + lineM(l); }, 0); });
+    var care = parentShare.reduce(function (a, b) { return a + b; }, 0);
+    var spend = 0, saving = 0;
+    s.groups.forEach(function (g) { if (g.saving) saving += groupM(g); else spend += groupM(g); });
+    var debtPay = s.debts.reduce(function (a, d) { return a + num(d.pay); }, 0);
+    var debtBal = s.debts.reduce(function (a, d) { return a + num(d.bal); }, 0);
+    var left = hh - spend - saving - debtPay;
+    var needs = spend + debtPay;
+    var cash = s.assets.reduce(function (a, x) { return a + (x[2] === 'cash' ? num(x[1]) : 0); }, 0);
+
+    // ---- insurance range
+    var band = function (lf) { var c = Math.max(0, Math.min(0.05 * hh, 0.25 * lf)); return { ceil: c, rec: 0.75 * c }; };
+    var B = band(left);
+    var noPlan = left < 200;
+    var insMax = Math.max(200, B.ceil);
+    var insDefault = Math.max(200, B.rec);
+    var ins = s.ins == null ? insDefault : s.ins;
+    ins = Math.min(Math.max(ins, 200), insMax);
+    var aboveSafe = !noPlan && B.ceil < 200;
+
+    // ---- ladder (Tier 1, minimum or nothing, then fulls top down)
+    var CARDS = [
+      { k: 'essential', n: 'Essential', cover: 823567, prem: 238.83, tag: 'Keeps the family afloat' },
+      { k: 'recommended', n: 'Recommended', cover: 1994846, prem: 578.13, tag: 'Our pick' },
+      { k: 'full', n: 'Full', cover: 2236674, prem: 649.13, tag: 'Everything' }
+    ];
+    var cosigned = s.debts.filter(function (d) { return d.cos === 'yes'; });
+    var ladder = function (cap, ck) {
+      var card = CARDS.filter(function (c) { return c.k === ck; })[0] || CARDS[0];
+      var items = [
+        { k: 'life', n: 'Term life', min: 238.83, full: card.prem, sub: 'Keeps the family afloat' },
+        { k: 'ci', n: 'Critical illness (Life Span Gold)', min: 150, full: 1700, sub: 'A lump sum if you are diagnosed' },
+        { k: 'father', n: "Father's funeral (Rest Assured II)", min: 262.88, full: 1088.68, sub: 'Paid to the funeral home, no probate wait' },
+        { k: 'mother', n: "Mother's funeral (Rest Assured II)", min: 178.56, full: 892.80, sub: 'Paid to the funeral home, no probate wait' },
+        { k: 'di', n: 'Income if you cannot work (Cashbuilder II)', min: 300, full: 300, sub: 'With the Disability Income Rider' }
+      ];
+      cosigned.forEach(function (d) { items.push({ k: 'loan', n: 'Cover for the ' + d.type.toLowerCase() + (d.who ? ' ' + d.who.toLowerCase() + ' co-signed' : ''), min: 150, full: 150, sub: 'Term life, sized to the loan' }); });
+      var rem = cap;
+      items.forEach(function (it) { if (rem >= it.min - 0.001) { it.a = it.min; rem -= it.min; } else { it.a = 0; } });
+      items.forEach(function (it) { if (it.a > 0) { var add = Math.min(it.full - it.a, rem); it.a += add; rem -= add; } });
+      return { items: items, unused: rem };
+    };
+    var LD = noPlan ? ladder(0, s.card) : ladder(ins, s.card);
+    var got = function (k) { var x = LD.items.filter(function (i) { return i.k === k; })[0]; return x ? x.a : 0; };
+    var lifeAlloc = got('life');
+    var curCard = CARDS.filter(function (c) { return c.k === s.card; })[0];
+    var heldLife = s.cover.life.st === 'have' ? num(s.cover.life.amt) : 0;
+    var lifeCover = Math.min(curCard.cover, lifeAlloc / 0.29 * 1000) + heldLife;
+    var ciCover = got('ci') > 0 ? got('ci') / 0.85 * 1000 : 0;
+    var heldCi = s.cover.ci.st === 'have' ? num(s.cover.ci.amt) : 0;
+
+    // ---- make room
+    var roomVal = function (g) { var d = s.roomDraft[g.key]; return d != null ? d : groupBase(g); };
+    var freed = s.groups.reduce(function (a, g) { return a + Math.max(0, groupBase(g) - roomVal(g)); }, 0);
+    var baseLeft = hh - s.groups.reduce(function (a, g) { return a + groupBase(g); }, 0) - debtPay;
+    var alloc = (function () {
+      var r = freed, out = [];
+      var bufNeed = Math.max(0, (spend + debtPay) - cash); var a1 = Math.min(r, bufNeed / 12); r -= a1;
+      out.push({ step: 'Step 1', name: bufNeed > 0 ? 'One month of costs saved' : 'One month of costs saved (done)', a: a1 });
+      var oldT = Math.max(200, band(baseLeft).rec), newT = Math.max(200, band(baseLeft + freed).rec);
+      var a2 = Math.min(r, Math.max(0, newT - oldT)); r -= a2;
+      out.push({ step: 'Step 2', name: 'Protection: budget ' + fmt(oldT) + ' → ' + fmt(oldT + a2), a: a2 });
+      var a3 = Math.min(r, 500); r -= a3; out.push({ step: 'Step 3', name: 'Extra on the 24% credit card', a: a3 });
+      var efNeed = Math.max(0, 3 * (spend + debtPay) - cash) / 12; var a4 = Math.min(r, efNeed); r -= a4;
+      out.push({ step: 'Step 4', name: 'Emergency fund to three months', a: a4 });
+      out.push({ step: 'Step 5', name: 'Retirement and goals', a: r });
+      return out;
+    })();
+    var DESTS = [['buffer', 'One month of costs saved', 'Step 1'], ['ins', 'Protection budget', 'Step 2'], ['debt', 'Extra on the 24% credit card', 'Step 3'], ['ef', 'Emergency fund to three months', 'Step 4'], ['retire', 'Retirement', 'Step 5'], ['goals', 'Your goals', 'Step 5']];
+    var GDESTS = s.groups.filter(function (g) { return !g.saving; }).map(function (g) { return ['grp:' + g.key, 'Spend more on ' + g.name, 'Your choice']; });
+    var ALLD = DESTS.concat(GDESTS);
+    var autoMap = { buffer: alloc[0].a, ins: alloc[1].a, debt: alloc[2].a, ef: alloc[3].a, retire: alloc[4].a, goals: 0 };
+    var effSel = {}, eff = {}, assigned = 0;
+    ALLD.forEach(function (d) {
+      var k = d[0];
+      var sel = s.allocCustom ? !!s.allocSel[k] : (k.indexOf('grp:') !== 0);
+      var want = s.allocCustom ? (sel ? (s.allocAmt[k] || 0) : 0) : (autoMap[k] || 0);
+      var a = Math.max(0, Math.min(want, freed - assigned));
+      effSel[k] = sel; eff[k] = a; assigned += a;
+    });
+    var unassigned = Math.max(0, freed - assigned);
+    var makeCustom = function (n) { if (!n.allocCustom) { n.allocCustom = true; n.allocSel = {}; n.allocAmt = {}; ALLD.forEach(function (d) { n.allocSel[d[0]] = !!effSel[d[0]]; n.allocAmt[d[0]] = eff[d[0]] || 0; }); } };
+    var destRow = function (d) {
+      var k = d[0];
+      return { name: d[1], step: d[2], sel: !!effSel[k], fAmt: fmt(eff[k] || 0), val: Math.round(eff[k] || 0), max: Math.max(10, Math.round((eff[k] || 0) + unassigned)),
+        tog: function () { self.up(function (n) { makeCustom(n); n.allocSel[k] = !n.allocSel[k]; if (!n.allocSel[k]) n.allocAmt[k] = 0; }); },
+        onSlide: function (e) { var x = parseFloat(e.target.value); self.up(function (n) { makeCustom(n); n.allocSel[k] = true; n.allocAmt[k] = x; }); } };
+    };
+    var ap = s.roomOn && s.applied ? s.applied : null;
+    var retireSave = ap ? (ap.retire || 0) : 0;
+    var debtExtra = ap ? (ap.debt || 0) : 0;
+
+    // ---- debts
+    var MON = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    var base = 2026 * 12 + 9;
+    var mlabel = function (m) { return MON[m % 12] + ' ' + Math.floor(m / 12); };
+    var payoffM = function (d) { var b = num(d.bal), p = num(d.pay), r = num(d.rate) / 1200; if (b <= 0) return 0; if (p <= 0 || p <= r * b) return null; if (r === 0) return Math.ceil(b / p); return Math.ceil(-Math.log(1 - r * b / p) / Math.log(1 + r)); };
+    var parseEnd = function (t) { var m = /^(\d{1,2})\/(\d{4})$/.exec((t || '').trim()); return m ? (+m[2]) * 12 + (+m[1] - 1) : null; };
+    var latest = 0, never = false;
+    var hiIdx = -1, hiRate = -1; s.debts.forEach(function (d, i) { if (num(d.rate) > hiRate && num(d.bal) > 0) { hiRate = num(d.rate); hiIdx = i; } });
+    var debtCards = s.debts.map(function (d, i) {
+      var dd = (i === hiIdx && debtExtra > 0) ? { bal: d.bal, rate: d.rate, pay: String(num(d.pay) + debtExtra) } : d;
+      var n = payoffM(dd), endM = parseEnd(d.end), flag = '', tagCls = 'ok', tagText = num(d.rate) >= 10 ? 'Expensive: ' + d.rate + '%' : d.rate + '%';
+      if (num(d.rate) >= 10) tagCls = 'warn';
+      if (n === null) { never = true; flag = 'This payment never clears the debt: it does not cover the interest.'; tagCls = 'no'; }
+      else { latest = Math.max(latest, n); if (endM !== null && Math.abs(base + n - endM) > 3) flag = 'You said ' + mlabel(endM) + '. At this payment it ends ' + mlabel(base + n) + '.'; }
+      var set = function (k) { return function (e) { var v = e.target.value; self.up(function (x) { x.debts[i][k] = v; }); }; };
+      var c = on(d.cos === 'no'), y = on(d.cos === 'yes');
+      return { type: d.type, lender: d.lender, bal: d.bal, rate: d.rate, pay: d.pay, end: d.end, who: d.who, tagCls: tagCls, tagText: tagText,
+        payoff: (n === null ? 'Never' : (n === 0 ? 'Paid' : mlabel(base + n))) + (dd !== d ? ' (with ' + fmt(debtExtra) + ' extra from Make room)' : ''), hasFlag: !!flag, flag: flag,
+        cosNo: d.cos === 'no', cosYes: d.cos === 'yes', cosNoBg: c.bg, cosNoFg: c.fg, cosYesBg: y.bg, cosYesFg: y.fg,
+        onType: set('type'), onLender: set('lender'), onBal: set('bal'), onRate: set('rate'), onPay: set('pay'), onEnd: set('end'), onWho: set('who'),
+        setNo: function () { self.up(function (x) { x.debts[i].cos = 'no'; }); }, setYes: function () { self.up(function (x) { x.debts[i].cos = 'yes'; }); },
+        del: function () { self.up(function (x) { x.debts.splice(i, 1); }); } };
+    });
+    var debtFree = never ? 'Never, at today\'s payments' : (latest ? mlabel(base + latest) : 'Now');
+    var mortgageBal = s.homeType === 'mortgage' ? num(s.mBal) : 0;
+
+    // ---- own
+    var assetsTot = s.assets.reduce(function (a, x) { return a + num(x[1]); }, 0);
+    var owe = mortgageBal + debtBal;
+
+    // ---- retirement
+    var age = 38, years = Math.max(1, s.retireAge - age), retireYear = 2026 + years;
+    var mortgageEnd = 2026 + Math.round(num(s.mYears));
+    var stopTot = { mortgage: 0, kids: 0, work: 0, care: 0 };
+    s.groups.forEach(function (g) { if (g.skip || g.saving) return; g.lines.forEach(function (l) { if (l.stop && stopTot[l.stop] != null && !(l.stop === 'mortgage' && s.homeType !== 'mortgage')) stopTot[l.stop] += lineM(l); }); });
+    var stopRows = [];
+    if (mortgageEnd <= retireYear && stopTot.mortgage) stopRows.push({ t: 'the mortgage (ends ' + mortgageEnd + ')', v: stopTot.mortgage });
+    if (stopTot.kids) stopRows.push({ t: 'children\'s costs', v: stopTot.kids });
+    if (stopTot.work) stopRows.push({ t: 'work lunches', v: stopTot.work });
+    if (stopTot.care) stopRows.push({ t: 'support for your parents (ends before you retire)', v: stopTot.care });
+    var retA = 0.7 * hh;
+    var retB = Math.max(0, spend - stopRows.reduce(function (a, r) { return a + r.v; }, 0));
+    var retToday = Math.max(retA, retB);
+    var factor = Math.pow(1.03, years);
+    var retFuture = retToday * factor;
+
+    // ---- events
+    var NEEDS = [['Funeral paid', 50000], ['Final medical bills paid', 60000], ['Expensive debt cleared', 85000], ['Mortgage cleared', 505000], ['Family income until the youngest is 19', 823567], ["Father's care continues", 1300000], ["Child B's degree", 1650000], ["Child A's degree", 1994846], ["Child B's first vehicle", 2100000], ["Child B's wedding", 2180000], ['Something left behind', 2236674]];
+    if (s.homeType !== 'mortgage') NEEDS = NEEDS.filter(function (n) { return n[0] !== 'Mortgage cleared'; });
+    var tick = function (b) { return b ? { txt: '✓ Yes', col: '#245A40' } : { txt: '✗ No', col: '#8A2F22' }; };
+    var row = function (label, t, p, tt, pt) { var a = tick(t), b = tick(p); return { label: label, tTxt: tt || a.txt, tCol: a.col, pTxt: pt || b.txt, pCol: b.col }; };
+    var ev = { title: '', plan: '', rows: [], next: '', working: '' };
+    if (s.event === 'die') {
+      ev.title = 'If you die too soon'; ev.plan = 'Life cover ' + fmt(lifeCover);
+      ev.rows = NEEDS.map(function (n) { return row(n[0], heldLife >= n[1], lifeCover >= n[1]); });
+      ev.rows.splice(5, 0, row("Mother's care continues", true, true, '✓ Her SCP', '✓ Her SCP'));
+      var miss = NEEDS.filter(function (n) { return lifeCover < n[1]; })[0];
+      if (miss) { var extra = (miss[1] - lifeCover) * 0.29 / 1000; ev.next = 'Next to fix: ' + miss[0].toLowerCase() + '. About ' + fmt(Math.max(1, extra)) + ' a month more of life cover does it.'; }
+      ev.working = 'Need: funeral, bills, debts, mortgage, then income until the youngest is 19, then care and degrees. Less partner income and NIS survivors\' benefit, less cover in force (' + fmt(heldLife) + '). Term life at about $0.29 a month per $1,000.';
+    } else if (s.event === 'ill') {
+      var monthsT = needs > 0 ? cash / needs : 0, monthsP = needs > 0 ? (cash + ciCover + heldCi) / needs : 0;
+      ev.title = 'If you get seriously ill'; ev.plan = ciCover ? 'Lump sum ' + fmt(ciCover) : 'No new cover';
+      ev.rows = [row('A lump sum when you are diagnosed', heldCi > 0, ciCover + heldCi > 0, heldCi ? '✓ ' + fmt(heldCi) : '✗ None', ciCover + heldCi ? '✓ ' + fmt(ciCover + heldCi) : '✗ None'),
+        row('Months of costs covered while you recover', monthsT >= 6, monthsP >= 6, monthsT.toFixed(1) + ' months', monthsP.toFixed(1) + ' months'),
+        row('Income if you cannot work', s.cover.di.st === 'have', got('di') > 0 || s.cover.di.st === 'have')];
+      if (!got('di')) ev.next = 'Next to fix: income if you cannot work. Cashbuilder II with the Disability Income Rider starts at about $300 a month.';
+      ev.working = 'Months covered = cash (' + fmt(cash) + ') plus the critical illness lump sum, divided by monthly needs (' + fmt(needs) + '). Life Span Gold at about $0.85 a month per $1,000, $150 minimum.';
+    } else if (s.event === 'parent') {
+      ev.title = 'If a parent dies'; ev.plan = 'Funeral cover ' + fmt(got('father') + got('mother')) + ' a month';
+      ev.rows = [row("Father's funeral paid, no probate wait", false, got('father') > 0), row("Mother's funeral paid, no probate wait", false, got('mother') > 0)].concat(s.parents.map(function (p) { var y = p.nis === 'yes'; return row('NIS funeral grant, ' + p.name.toLowerCase(), y, y, y ? '✓ $7,500' : (p.nis === 'no' ? '✗ None' : '? Ask'), y ? '✓ $7,500' : (p.nis === 'no' ? '✗ None' : '? Ask')); }));
+      if (!got('father')) ev.next = "Next to fix: your father's funeral. Rest Assured II on $30,000 is about $263 a month at his age.";
+      ev.working = 'Rest Assured II, real ApplyOn quotes 27 Oct 2026: $8.76 a month per $1,000 for a man rated 72, $5.95 for a woman rated 67. Graded benefit: premiums back in year one, 25% of cover in year two, full cover from year three.';
+    } else {
+      ev.title = 'If you live long'; ev.plan = 'Retire at ' + s.retireAge;
+      ev.rows = [row('Income you will need', true, true, fmt(retFuture), fmt(retFuture)), row('NIS and the Senior Citizens\' Pension pay part', true, true, '✓ Part', '✓ Part'),
+        row('The rest is being saved', false, retireSave > 0, '✗ Not yet', retireSave > 0 ? '✓ ' + fmt(retireSave) + '/mo' : '✗ Not yet')];
+      if (!retireSave) ev.next = 'Next to fix: start retirement saving. Use "Make room" in Your money, or start Destiny from $200 a month.';
+      ev.working = 'Income need from Your retirement: the larger of 70% of take-home and your lifestyle less costs that stop, grown by 3% a year.';
+    }
+
+    // ---- cards
+    var CARD_COVERS = function (cov) { var c = [], n = []; NEEDS.forEach(function (x) { (cov >= x[1] ? c : n).push(x[0].toLowerCase()); }); return { c: c.join(', ') || 'nothing yet', n: n.join(', ') || 'nothing' }; };
+    var cardOpts = CARDS.map(function (c) {
+      var L2 = noPlan ? null : ladder(ins, c.k);
+      var la = L2 ? L2.items.filter(function (i) { return i.k === 'life'; })[0].a : 0;
+      var X = c.prem - la, also = L2 ? L2.items.filter(function (i) { return i.k !== 'life' && i.a > 0; }).map(function (i) { return i.n.split(' (')[0].toLowerCase(); }) : [];
+      var cv = CARD_COVERS(c.cover);
+      var inPlan = X <= 0.5;
+      return { name: c.n, tag: c.tag, fCover: fmt(c.cover), fPrem: fmt(c.prem), covers: cv.c, notCovers: cv.n, on: s.card === c.k, border: s.card === c.k ? '#0E3B47' : '#E2DCCF',
+        status: inPlan ? 'In your plan' : 'Needs ' + fmt(X) + ' more a month', stCls: inPlan ? 'ok' : 'warn',
+        hasAlso: !inPlan && also.length > 0, also: 'Your budget also pays for: ' + also.join(', ') + '. To keep the ' + c.n + ' life cover as well, you need ' + fmt(X) + ' more a month.',
+        pick: function () { self.setState({ card: c.k }); } };
+    });
+    var planRows = LD.items.map(function (i) { return { name: i.n, sub: i.a > 0 ? i.sub : 'Not yet: needs about ' + fmt(i.min) + ' a month', fAmt: i.a > 0 ? fmt(i.a) : 'Not yet', col: i.a > 0 ? '#1D2B30' : '#7A4A00' }; });
+    if (LD.unused > 1) planRows.push({ name: 'Not used yet', sub: 'Too small for the next plan. Pick a bigger card to use it.', fAmt: fmt(LD.unused), col: '#55656B' });
+
+    // ---- summaries
+    var WORRY = [['die', 'My family if I die'], ['sick', 'Getting seriously ill'], ['parents', 'Looking after my parents'], ['debt', 'Debt'], ['retire', 'Not enough to retire'], ['job', 'Losing my job']];
+    var DREAM = [['retire', 'Retire comfortably'], ['edu', "My children's education"], ['home', 'Own or upgrade a home'], ['travel', 'Travel'], ['biz', 'Start a business'], ['help', 'Help my parents']];
+    var chosen = function (list, map, own) { return list.filter(function (x) { return map[x[0]]; }).map(function (x) { return x[1]; }).concat(own); };
+    var payWord = { w: 'every week', f: 'every fortnight', s: 'twice a month', m: 'every month' }[s.payFreq];
+    var perPay = (0.10 * th) / F[s.payFreq];
+    var freqName = { w: 'Weekly', f: 'Fortnightly', s: 'Twice a month', m: 'Monthly' }[s.payFreq];
+    var skipped = s.groups.filter(function (g) { return g.skip; }).length;
+    var groupsSorted = s.groups.filter(function (g) { return !g.saving; }).map(function (g) { return { n: g.name, v: groupM(g) }; }).sort(function (a, b) { return b.v - a.v; });
+    var funded = LD.items.filter(function (i) { return i.a > 0; }), notYet = LD.items.filter(function (i) { return !i.a; });
+    var metCount = NEEDS.filter(function (n) { return lifeCover >= n[1]; }).length + 1;
+    var goalM = s.goals.reduce(function (a, g) { return a + num(g.amt) / Math.max(1, num(g.years) * 12); }, 0);
+    var SUMS = {
+      opener: { title: 'What matters to you', told: [{ t: 'Worries: ' + (chosen(WORRY, s.worries, s.ownWorries).join(', ') || 'none picked') }, { t: 'Dreams: ' + (chosen(DREAM, s.dreams, s.ownDreams).join(', ') || 'none picked') }],
+        means: [{ t: 'Worries picked', v: String(chosen(WORRY, s.worries, s.ownWorries).length) }, { t: 'Dreams picked', v: String(chosen(DREAM, s.dreams, s.ownDreams).length) }],
+        next: s.ownDreams.length ? [{ t: 'Plan for "' + s.ownDreams[0] + '" in Your goals.', step: STEPS[4] }] : [] },
+      people: { title: 'Your people', told: [{ t: 'Partner, Child A (4), Child B (11)' }].concat(s.parents.map(function (p, i) { return { t: p.name + ' ' + p.age + ': ' + fmt(parentShare[i]) + ' a month today' + (p.grow ? ', ' + TIERS[p.futTier].l.toLowerCase() + ' from ' + p.fromAge : '') }; })),
+        means: [{ t: 'Support for parents today', v: fmt(care) + '/mo' }, { t: 'Care costs grow about', v: '5.5% a year' }],
+        next: s.parents.filter(function (p) { return p.nis !== 'yes'; }).map(function (p) { return { t: 'Ask whether your ' + p.name.toLowerCase() + ' paid 25 or more NIS contributions. It decides the $7,500 funeral grant.', step: 'Protecting it' }; }) },
+      money: { title: 'Your money', told: [{ t: 'Paid ' + freqName.toLowerCase() + ': ' + fmt(num(s.grossPer)) + ' a pay before deductions' + (s.varies ? ', planning on your lowest month (' + fmt(num(s.lowest)) + ')' : '') }, { t: 'Partner brings home ' + fmt(partner) + ' a month' }, { t: 'Budget: 12 groups' + (skipped ? ', ' + skipped + ' given as one total (estimated)' : ', line by line') }],
+        means: [{ t: 'Household take-home', v: fmt(hh) }, { t: 'Going out (spending, debts, saving)', v: fmt(spend + debtPay + saving) }, { t: 'Left each month', v: fmt(left) }, { t: 'Biggest group: ' + groupsSorted[0].n, v: fmt(groupsSorted[0].v) }].concat(s.roomOn ? [{ t: 'Freed by "Make room"', v: fmt(freed) }] : []),
+        next: [{ t: 'Save ' + fmt(perPay) + ' ' + payWord + ', the day you are paid.', step: STEPS[3] }, { t: 'Put the ' + fmt(Math.max(0, left)) + ' left to work in plan order: protection, the 24% card, then three months saved.', step: STEPS[1] }].concat(!s.roomOn ? [{ t: 'Try "Make room": every $100 freed moves you up the plan.', step: STEPS[1] }] : []) },
+      debts: { title: 'Your loans and cards', told: [{ t: s.debts.length + ' debts, ' + fmt(debtBal) + ' owed' }, { t: 'Payments: ' + fmt(debtPay) + ' a month' }, { t: cosigned.length + ' co-signed' }],
+        means: [{ t: 'Debt-free by', v: debtFree }, { t: 'Interest on the 24% card, a month', v: fmt(18000 * 0.02) }, { t: 'Dates that do not match', v: String(debtCards.filter(function (d) { return d.hasFlag; }).length) }],
+        next: [{ t: 'Pay the most expensive debt first: the credit card at 24%.', step: STEPS[2] }].concat(debtCards.filter(function (d) { return d.hasFlag; }).map(function (d) { return { t: 'Check the ' + d.type.toLowerCase() + ': ' + d.flag, step: 'Your money' }; })).concat(cosigned.length ? [{ t: 'Cover the loan your ' + (cosigned[0].who || 'co-signer').toLowerCase() + ' co-signed, so it never falls to them.', step: STEPS[1] }] : []) },
+      own: { title: 'What you own and owe', told: [{ t: 'You own ' + fmt(assetsTot) }, { t: 'You owe ' + fmt(owe) + ' (mortgage ' + fmt(mortgageBal) + ')' }],
+        means: [{ t: 'Net worth', v: fmt(assetsTot - owe) }, { t: 'Cash covers', v: (needs > 0 ? cash / needs : 0).toFixed(1) + ' months' }, { t: 'Debts (not mortgage) ÷ yearly gross pay', v: Math.round(gross > 0 ? debtBal / (gross * 12) * 100 : 0) + '%' }],
+        next: [{ t: 'Grow cash to three months of costs: ' + fmt(Math.max(0, 3 * needs - cash)) + ' more.', step: STEPS[3] }] },
+      goals: { title: 'Your goals', told: s.goals.map(function (g) { return { t: g.name + ': ' + fmt(num(g.amt)) + ' in ' + g.years + ' years' }; }),
+        means: [{ t: 'Saving needed for all goals', v: fmt(goalM) + '/mo' }, { t: 'Left each month today', v: fmt(left) }],
+        next: [{ t: 'Start with ' + (s.goals[0] ? s.goals[0].name.toLowerCase() : 'your first goal') + ' once three months are saved.', step: STEPS[4] }] },
+      retire: { title: 'Your retirement', told: [{ t: 'Retire at ' + s.retireAge + ', in ' + retireYear }, { t: 'You want ' + fmt(s.want) + ' a month, today\'s money' }],
+        means: [{ t: 'Plan for, a month in ' + retireYear, v: fmt(retFuture) }, { t: 'In today\'s money', v: fmt(retToday) }],
+        next: [{ t: 'Start a retirement plan. Destiny starts at $200 a month; registered plans also cut your tax.', step: STEPS[4] }] },
+      protect: { title: 'Protecting it', told: [{ t: 'Cover held: ' + ['life', 'ci', 'health', 'di', 'pension'].map(function (k) { return k + ' ' + ({ none: 'none', unsure: 'not sure', have: 'yes' })[s.cover[k].st]; }).join(', ') }, { t: 'Plan chosen: ' + curCard.n + ', budget ' + fmt(noPlan ? 0 : ins) + ' a month' }],
+        means: [{ t: 'If you die: needs met', v: metCount + ' of 12' }, { t: 'If seriously ill: lump sum', v: ciCover ? fmt(ciCover) : 'None' }, { t: 'Parents\' funerals covered', v: String((got('father') ? 1 : 0) + (got('mother') ? 1 : 0)) + ' of 2' }],
+        next: (funded.length ? [{ t: 'Start: ' + funded.map(function (i) { return i.n.split(' (')[0]; }).join(', ') + '.', step: STEPS[1] }] : []).concat(notYet.length ? [{ t: 'Add when the budget grows: ' + notYet.map(function (i) { return i.n.split(' (')[0]; }).join(', ') + '.', step: STEPS[1] }] : []) }
+    };
+    var sumKey = isSum(s.screen) ? s.screen.replace('Sum', '') : null;
+    var SUM = sumKey ? SUMS[sumKey] : { title: '', told: [], means: [], next: [] };
+
+    // ---- nav
+    var cur = flow[idx], nxt = flow[idx + 1];
+    var nextName = function (k) { if (!k) return ''; if (k === 'report') return 'See your final report'; if (isSum(k)) return 'See the summary'; var j = sectOf(k); if (j !== si) return 'Next: ' + SECTS[j].name; return 'Next'; };
+    var pills = function (list, isOn, act) { return list.map(function (x) { var c = on(isOn(x[0])); return { label: x[1], bg: c.bg, fg: c.fg, on: isOn(x[0]), tog: function () { act(x[0]); }, pick: function () { act(x[0]); } }; }); };
+    var guides = { home: [25, 30], food: [10, 15], move: [10, 15], util: [5, 10], health: [5, 10], fun: [5, 10], ins: [5, 10] };
+    var whereBars = s.groups.filter(function (g) { return !g.saving; }).map(function (g) {
+      var v = groupM(g), pct = hh > 0 ? v / hh * 100 : 0, gd = guides[g.key];
+      var col = '#17505E'; if (gd && pct > gd[1]) col = pct > gd[1] * 1.5 ? '#A63D2F' : '#C26A00';
+      return { name: g.name + (g.skip ? ' (estimated)' : ''), fAmt: fmt(v), pct: Math.round(pct), guide: gd ? 'guide ' + gd[0] + '–' + gd[1] + '%' : 'no guide', bandL: gd ? gd[0] * 2 : 0, bandW: gd ? (gd[1] - gd[0]) * 2 : 0, w: Math.min(100, pct * 2), col: col, over: gd ? v - gd[1] / 100 * hh : 0 };
+    });
+    whereBars.push((function () { var pct = hh > 0 ? debtPay / hh * 100 : 0; return { name: 'Debt payments', fAmt: fmt(debtPay), pct: Math.round(pct), guide: 'guide 0–20%', bandL: 0, bandW: 40, w: Math.min(100, pct * 2), col: pct > 20 ? '#C26A00' : '#17505E', over: debtPay - 0.2 * hh }; })());
+    whereBars.push((function () { var pct = hh > 0 ? saving / hh * 100 : 0; return { name: 'Saving', fAmt: fmt(saving), pct: Math.round(pct), guide: 'guide 10–20%', bandL: 20, bandW: 20, w: Math.min(100, pct * 2), col: pct < 10 ? '#C26A00' : '#17505E', over: 0 }; })());
+    var over = whereBars.filter(function (b) { return b.over > 1; }).sort(function (a, b) { return b.over - a.over; }).slice(0, 3);
+    var standouts = over.map(function (b) { return { t: b.name + ' is ' + b.fAmt + ' a month, about ' + fmt(b.over) + ' above the usual range.' }; });
+    var savePct = hh > 0 ? saving / hh * 100 : 0;
+    if (savePct < 10) standouts.push({ t: 'Saving is ' + Math.round(savePct) + '% of take-home. The usual guide is 10% to 20%.' });
+    if (!standouts.length) standouts.push({ t: 'Nothing is far above the usual ranges.' });
+    var roomRows = s.groups.filter(function (g) { return !g.saving; }).map(function (g) {
+      var cur0 = groupBase(g), v = roomVal(g), gd = guides[g.key], top = gd ? gd[1] / 100 * hh : null;
+      return { name: g.name, fCur: fmt(cur0), fNew: fmt(v), max: Math.max(10, Math.ceil(cur0 / 10) * 10), val: Math.round(v),
+        onSlide: function (e) { var x = parseFloat(e.target.value); self.up(function (n) { n.roomDraft[g.key] = x; }); },
+        canSuggest: top != null && cur0 > top + 1, suggestLabel: 'Bring to the top of the range (' + fmt(top || 0) + ')',
+        suggest: function () { self.up(function (n) { n.roomDraft[g.key] = Math.round(top); }); } };
+    });
+    var eyebrow = s.screen === 'start' ? 'Fact-finder prototype' : (s.screen === 'report' ? 'Final report' : 'Section ' + (si + 1) + ' of 7');
+    var sectTitle = s.screen === 'start' ? 'Section 3 changes, sample family' : (s.screen === 'report' ? 'Your plan' : SECTS[si].name);
+    var cv = on(!s.advisor), av = on(s.advisor);
+
+    var groupCards = s.groups.map(function (g, gi) {
+      var tot = groupM(g), gd = guides[g.key], pct = hh > 0 ? tot / hh * 100 : 0;
+      var tagCls = 'step', tagText = Math.round(pct) + '%';
+      if (g.skip) { tagCls = 'warn'; tagText = 'Estimated'; }
+      return { name: g.name, open: !!g.open, arrow: g.open ? '▾' : '▸', fTotal: fmt(tot), tagCls: tagCls, tagText: tagText, skip: !!g.skip, notSkip: !g.skip, isSaving: !!g.saving, isHome: g.key === 'home', isMortgage: g.key === 'home' && s.homeType === 'mortgage', mBal: s.mBal, mYears: s.mYears,
+        onMBal: function (e) { self.setState({ mBal: e.target.value }); }, onMYears: function (e) { self.setState({ mYears: e.target.value }); },
+        homePills: [['mortgage', 'Mortgage'], ['rent', 'Rent'], ['contrib', 'Household contribution'], ['own', 'Own it outright']].map(function (x) { var c = on(s.homeType === x[0]); return { label: x[1], bg: c.bg, fg: c.fg, on: s.homeType === x[0], pick: function () { self.up(function (n) { n.homeType = x[0]; var L0 = n.groups[0].lines[0]; L0.label = { mortgage: 'Mortgage', rent: 'Rent', contrib: 'Household contribution', own: 'Mortgage' }[x[0]]; if (x[0] === 'contrib' && L0.amt === '3000') L0.amt = '1000'; }); } }; }),
+        homeNote: { mortgage: 'If you die, life cover can clear the balance. It stops when the mortgage is paid off.', rent: 'Rent never stops. It carries on into retirement, and life cover cannot clear it.', contrib: 'What you give the household for living there. It carries on, like rent.', own: 'No payment. Land and building tax, insurance and repairs still count.' }[s.homeType],
+        isSupport: !!g.support, addLabel: g.support ? '+ Add a person' : '+ Add a line',
+        skipLabel: g.skip ? 'Go line by line instead' : 'Skip: give one total', total: g.total || '', totalFreq: g.totalFreq || 'm',
+        toggle: function () { self.up(function (x) { x.groups[gi].open = !x.groups[gi].open; }); },
+        togSkip: function () { self.up(function (x) { var G = x.groups[gi]; if (!G.skip && !G.total) G.total = String(Math.round(groupBase(g))); G.skip = !G.skip; }); },
+        onTotal: function (e) { var v = e.target.value; self.up(function (x) { x.groups[gi].total = v; }); },
+        onTotalFreq: function (e) { var v = e.target.value; self.up(function (x) { x.groups[gi].totalFreq = v; }); },
+        addLine: function () { self.up(function (x) { x.groups[gi].lines.push({ label: '', amt: '0', freq: 'm', custom: true }); }); },
+        lines: g.lines.map(function (l, li) {
+          return { label: l.label, shown: l.custom ? (l.label || 'Your line') : (l.home ? ({ mortgage: 'Mortgage payment', rent: 'Rent', contrib: 'Household contribution', own: 'No payment' })[s.homeType] : l.label), locked: !!l.locked, custom: !!l.custom, editable: !l.locked && !(l.home && s.homeType === 'own'), amt: l.amt, freq: l.freq,
+            onAmt: function (e) { var v = e.target.value; self.up(function (x) { x.groups[gi].lines[li].amt = v; }); },
+            onFreq: function (e) { var v = e.target.value; self.up(function (x) { x.groups[gi].lines[li].freq = v; }); },
+            onLabel: function (e) { var v = e.target.value; self.up(function (x) { x.groups[gi].lines[li].label = v; }); } };
+        }) };
+    });
+
+    var extraPay = { w: 'Weekly pay: about 4 months a year have 5 paydays. Plan on 4. Send the extra pay straight to savings.', f: 'Fortnightly pay: 2 months a year have 3 paydays. Plan on 2. Send the extra pay straight to savings.' }[s.payFreq];
+    var payLabelMap = { w: 'Your pay each week', f: 'Your pay each fortnight', s: 'Your pay each half-month', m: 'Your pay each month' };
+    var reportSections = ['opener', 'money', 'debts', 'people', 'own', 'goals', 'retire', 'protect'].map(function (k) { var S = SUMS[k]; return { title: S.title, means: S.means, next: S.next }; });
+    var topNext = []; ['protect', 'debts', 'money', 'own', 'retire'].forEach(function (k) { if (SUMS[k].next[0] && topNext.length < 5) topNext.push({ i: topNext.length + 1, t: SUMS[k].next[0].t }); });
+    var scopeEvents = [['die', 'If you die too soon'], ['ill', 'If you get seriously ill'], ['parent', 'If a parent dies'], ['long', 'If you live long']];
+    var scopeRows = scopeEvents.map(function (e) { return { label: e[1], opts: [['acted', 'Acted on'], ['declined', 'Declined'], ['out', 'Out of scope']].map(function (o) { var c = on(s.scope[e[0]] === o[0]); return { label: o[1], bg: c.bg, fg: c.fg, on: s.scope[e[0]] === o[0], pick: function () { self.up(function (n) { n.scope[e[0]] = o[0]; }); } }; }) }; });
+    var reviewed = scopeEvents.filter(function (e) { return s.scope[e[0]]; }).length;
+
+    return {
+      advisor: s.advisor, isClient: !s.advisor, vClientBg: cv.bg, vClientFg: cv.fg, vAdvBg: av.bg, vAdvFg: av.fg,
+      setClient: function () { self.setState({ advisor: false }); }, setAdvisor: function () { self.setState({ advisor: true }); },
+      skipSums: s.skipSums, toggleSkipSums: function () { self.setState({ skipSums: !s.skipSums }); },
+      eyebrow: eyebrow, sectTitle: sectTitle,
+      dots: SECTS.map(function (x, i) { return { bg: s.screen === 'report' || i < si ? '#E9C46A' : (i === si ? '#fff' : '#3E6A75') }; }),
+      showBar: ['budget', 'where', 'room'].indexOf(s.screen) >= 0, fOut: fmt(spend + debtPay + saving), fLeft: fmt(left), leftCol: left < 0 ? '#A63D2F' : '#245A40',
+      sectList: SECTS.map(function (x, i) { return { n: i + 1, name: x.name, mins: x.mins }; }),
+      sStart: s.screen === 'start', sOpener: s.screen === 'opener', sPeople: s.screen === 'people', sPay: s.screen === 'pay', sBudget: s.screen === 'budget', sWhere: s.screen === 'where', sRoom: s.screen === 'room',
+      sDebts: s.screen === 'debts', sOwn: s.screen === 'own', sGoals: s.screen === 'goals', sRetire: s.screen === 'retire', sCover: s.screen === 'cover', sEvents: s.screen === 'events',
+      sChoose: s.screen === 'choose', sSum: isSum(s.screen), sReport: s.screen === 'report',
+      // people
+      worryPills: pills(WORRY, function (k) { return !!s.worries[k]; }, function (k) { self.up(function (n) { n.worries[k] = !n.worries[k]; }); }),
+      dreamPills: pills(DREAM, function (k) { return !!s.dreams[k]; }, function (k) { self.up(function (n) { n.dreams[k] = !n.dreams[k]; }); }),
+      ownWorryList: s.ownWorries.map(function (t, i) { return { t: t, del: function () { self.up(function (n) { n.ownWorries.splice(i, 1); }); } }; }),
+      ownDreamList: s.ownDreams.map(function (t, i) { var planned = s.goals.some(function (g) { return g.name === t; }); return { t: t, planLabel: planned ? 'In your goals' : 'Plan for this', del: function () { self.up(function (n) { n.ownDreams.splice(i, 1); }); }, plan: function () { if (!planned) self.up(function (n) { n.goals.push({ name: t, amt: '20000', years: '3' }); }); } }; }),
+      canAddWorry: s.ownWorries.length < 3, canAddDream: s.ownDreams.length < 3, draftWorry: s.draftWorry, draftDream: s.draftDream,
+      onDraftWorry: function (e) { self.setState({ draftWorry: e.target.value.slice(0, 80) }); }, onDraftDream: function (e) { self.setState({ draftDream: e.target.value.slice(0, 80) }); },
+      addWorry: function () { var t = (s.draftWorry || '').trim(); if (t) self.up(function (n) { n.ownWorries.push(t); n.draftWorry = ''; }); },
+      addDream: function () { var t = (s.draftDream || '').trim(); if (t) self.up(function (n) { n.ownDreams.push(t); n.draftDream = ''; }); },
+      parentCards: s.parents.map(function (p, i) {
+        var her = p.key === 'father' ? 'his' : 'her', she = p.key === 'father' ? 'he' : 'she';
+        var n0 = on(!p.grow), y0 = on(p.grow);
+        var sp = function (k, v) { return function () { self.up(function (n) { n.parents[i][k] = v; }); }; };
+        var opts = function (k, list) { return list.map(function (o) { var c = on(p[k] === o[0]); return { label: o[1], bg: c.bg, fg: c.fg, on: p[k] === o[0], pick: sp(k, o[0]) }; }); };
+        var fut = TIERS[p.futTier].m, scpAmt = p.scp ? SCPM : 0;
+        return { title: 'Your ' + p.name.toLowerCase() + ', ' + p.age, her: her, she: she, age: p.age, fToday: fmt(parentShare[i]), grow: p.grow, growNo: !p.grow,
+          noBg: n0.bg, noFg: n0.fg, yesBg: y0.bg, yesFg: y0.fg, setNo: sp('grow', false), setYes: sp('grow', true), fromAge: p.fromAge,
+          onFrom: function (e) { var v = e.target.value; self.up(function (n) { n.parents[i].fromAge = v; }); },
+          tiers: TIERS.slice(1).map(function (t, j) { var ti = j + 1, c = on(p.futTier === ti); return { label: t.l, amt: fmt(t.m), bg: c.bg, fg: c.fg, on: p.futTier === ti, pick: sp('futTier', ti) }; }),
+          scpOpts: opts('scp', [[true, 'Yes'], [false, 'No']]), nisOpts: opts('nis', [['yes', 'Yes'], ['no', 'No'], ['unsure', 'Not sure']]),
+          line: p.grow ? 'From age ' + p.fromAge + ', care of about ' + fmt(fut) + ' a month in today\'s money' + (scpAmt ? ', less ' + (p.key === 'father' ? 'his' : 'her') + ' pension of ' + fmt(scpAmt) : '') + ', so you would pay about ' + fmt(Math.max(parentShare[i], fut - scpAmt)) + '. The care graph grows it 5.5% a year.' : 'You keep paying ' + fmt(parentShare[i]) + ' a month, growing with prices.' };
+      }),
+      // pay
+      payPills: [['w', 'Weekly'], ['f', 'Fortnightly'], ['s', 'Twice a month'], ['m', 'Monthly']].map(function (x) { var c = on(s.payFreq === x[0]); return { label: x[1], bg: c.bg, fg: c.fg, on: s.payFreq === x[0], pick: function () { self.up(function (n) { var mo = num(n.grossPer) * F[n.payFreq]; n.payFreq = x[0]; n.grossPer = String(Math.round(mo / F[x[0]])); }); } }; }),
+      payLabel: payLabelMap[s.payFreq], grossPer: s.grossPer, fGrossUsual: fmt(grossUsual), varies: s.varies, lowest: s.lowest, partner: s.partner,
+      onGross: function (e) { self.setState({ grossPer: e.target.value }); }, onLowest: function (e) { self.setState({ lowest: e.target.value }); }, onPartner: function (e) { self.setState({ partner: e.target.value }); },
+      togVaries: function () { self.setState({ varies: !s.varies }); },
+      fGross: fmt(gross), fNis: fmt(nis), fHs: fmt(hs), fPaye: fmt(paye), fTh: fmt(th), fPartner: fmt(partner), fHh: fmt(hh), showExtraPay: !!extraPay, extraPayLine: extraPay || '',
+      // budget
+      groupCards: groupCards, fSpend: fmt(spend), fDebtPay: fmt(debtPay), fSaving: fmt(saving),
+      // where, room
+      whereBars: whereBars, standouts: standouts, roomRows: roomRows, fFreed: fmt(freed), allocRows: DESTS.map(destRow), grpDestRows: GDESTS.map(destRow), fUnassigned: fmt(unassigned), unassignedCls: unassigned > 1 ? 'warn' : 'ok',
+      allocHint: s.allocCustom ? 'Your own split. Tick where you want the money to go, then set each amount. The total can never pass what you freed.' : 'Filled in plan order. Tick or untick, or move any slider, to make your own split.',
+      autoFill: function () { self.setState({ allocCustom: false, allocSel: {}, allocAmt: {} }); },
+      roomOn: s.roomOn,
+      useRoom: function () { var oldT = Math.max(200, band(baseLeft).rec); self.up(function (n) { n.room = {}; n.groups.forEach(function (g) { var extra = eff['grp:' + g.key] || 0; if (n.roomDraft[g.key] != null || extra) n.room[g.key] = (n.roomDraft[g.key] != null ? n.roomDraft[g.key] : groupBase(g)) + extra; }); n.applied = JSON.parse(JSON.stringify(eff)); n.roomOn = true; n.ins = oldT + (eff.ins || 0); }); },
+      resetRoom: function () { self.setState({ room: {}, roomDraft: {}, roomOn: false, ins: null, applied: null, allocCustom: false, allocSel: {}, allocAmt: {} }); },
+      // debts
+      debtCards: debtCards, debtTypes: ['Credit card', 'Car loan', 'Personal or credit union loan', 'Credit union loan', 'Hire purchase', 'Student loan', 'Informal or family', 'Other'], debtFree: debtFree, fDebtBal: fmt(debtBal),
+      addDebt: function () { self.up(function (n) { n.debts.push({ type: 'Hire purchase', lender: '', bal: '0', rate: '20', pay: '0', end: '', cos: 'no', who: '' }); }); },
+      // own
+      assetRows: s.assets.map(function (a, i) { return { label: a[0], val: a[1], onVal: function (e) { var v = e.target.value; self.up(function (n) { n.assets[i][1] = v; }); } }; }),
+      fMortgage: fmt(mortgageBal), fAssets: fmt(assetsTot), fOwe: fmt(owe), fNet: fmt(assetsTot - owe),
+      // goals
+      goalCards: s.goals.map(function (g, i) { var set = function (k) { return function (e) { var v = e.target.value; self.up(function (n) { n.goals[i][k] = v; }); }; }; return { name: g.name, amt: g.amt, years: g.years, fMonthly: fmt(num(g.amt) / Math.max(1, num(g.years) * 12)), onName: set('name'), onAmt: set('amt'), onYears: set('years'), del: function () { self.up(function (n) { n.goals.splice(i, 1); }); } }; }),
+      addGoal: function () { self.up(function (n) { n.goals.push({ name: 'New goal', amt: '10000', years: '3' }); }); },
+      // retire
+      retireAge: s.retireAge, retireYear: retireYear, retYears: years, retFactor: factor.toFixed(4), fRetA: fmt(retA), fSpendNow: fmt(spend), fRetB: fmt(retB), fRetToday: fmt(retToday), fRetFuture: fmt(retFuture),
+      stopRows: stopRows.map(function (r) { return { t: r.t, f: fmt(r.v) }; }), onRetireAge: function (e) { self.setState({ retireAge: parseInt(e.target.value, 10) }); },
+      want: s.want, fWant: fmt(s.want), wantLow: s.want < retToday - 1, onWant: function (e) { self.setState({ want: parseFloat(e.target.value) }); },
+      // cover
+      noCover: function () { self.up(function (n) { Object.keys(n.cover).forEach(function (k) { n.cover[k].st = 'none'; }); }); },
+      coverRows: [['life', 'Life cover', 'Total life cover'], ['ci', 'Critical illness', 'Lump sum'], ['health', 'Health insurance', 'Yearly limit'], ['di', 'Income if you cannot work', 'Monthly income'], ['pension', 'Pension from work', 'Monthly pension']].map(function (c) {
+        var st = s.cover[c[0]].st;
+        return { label: c[1], amtLabel: c[2], has: st === 'have', amt: s.cover[c[0]].amt,
+          onAmt: function (e) { var v = e.target.value; self.up(function (n) { n.cover[c[0]].amt = v; }); },
+          opts: [['none', 'None'], ['unsure', 'Not sure'], ['have', 'I have this']].map(function (o) { var k = on(st === o[0]); return { label: o[1], bg: k.bg, fg: k.fg, on: st === o[0], pick: function () { self.up(function (n) { n.cover[c[0]].st = o[0]; }); } }; }) };
+      }),
+      // events
+      eventTabs: [['die', 'You die too soon'], ['ill', 'You get seriously ill'], ['parent', 'A parent dies'], ['long', 'You live long']].map(function (x) { var c = on(s.event === x[0]); return { label: x[1], bg: c.bg, fg: c.fg, on: s.event === x[0], pick: function () { self.setState({ event: x[0] }); } }; }),
+      evTitle: ev.title, evPlanLine: ev.plan, evRows: ev.rows, hasEvNext: !!ev.next, evNext: ev.next, evWorking: ev.working,
+      // choose
+      noPlan: noPlan, hasPlan: !noPlan, noPlanLine: 'To start the $200 minimum you need ' + fmt(200 - Math.max(0, left)) + ' more a month. Use "Make room" in Your money to free it.',
+      fIns: fmt(ins), insR: Math.round(ins), insMax: Math.round(insMax), fInsMax: fmt(insMax), aboveSafe: aboveSafe,
+      insLine: 'Safe range ' + fmt(Math.max(200, 0.5 * B.ceil)) + ' to ' + fmt(insMax) + ', recommended ' + fmt(insDefault) + '. Plans get their minimum in priority order, then life fills to the card you pick.',
+      onIns: function (e) { self.setState({ ins: parseFloat(e.target.value) }); },
+      cardOpts: cardOpts, planRows: planRows, scopeRows: scopeRows,
+      // summary
+      sumTitle: SUM.title, sumTold: SUM.told, sumToldCount: SUM.told.length, sumMeans: SUM.means, sumNext: SUM.next,
+      sumChange: function () { if (si >= 0) go(SECTS[si].screens[0]); },
+      // report
+      today: '28 Oct 2026', topNext: topNext, reportSections: reportSections,
+      scopeLine: reviewed + ' of 4 events recorded in the scope record. ' + (reviewed < 4 ? 'Record every event before the application starts.' : 'All recorded.'),
+      printIt: function () { if (typeof window !== 'undefined') window.print(); },
+      // nav
+      hasBack: idx > 0, hasNext: !!nxt, nextLabel: s.screen === 'start' ? 'Start the check-up' : nextName(nxt),
+      back: function () { if (idx > 0) go(flow[idx - 1]); }, next: function () { if (nxt) go(nxt); }
+    };
+  }
+}
+</script>
+</body>
+</html>
