@@ -15,20 +15,20 @@ privacy guard failed.
   the brief's own changes: `chosen.package` (recommended → essential), `chosen.basket.partial` (true → false), and
   life-beyond-ruin's `full` (262.10 → 339.67; still $0 allocated). They are card lines. Hard stop 2 not hit.
 - **Decision 9: keep the rule** (raising the budget can lower life cover). A card that "Needs $X more a month", with
-  other Tier 1 plans funded at this budget, now says under the status: "Other plans get their minimum first: {plan
-  names}. To keep the {card} life cover as well, you need $X more a month." GRP only, engine figures only
-  (`cardNeedsLine`). Family, Recommended at $711: "… critical illness cover, your father's funeral cover. … you need
-  $281 more a month." One test (`fact-finder-close.test.mjs`), sabotage-tested; fact-finder tests 55/55; smoke walk
-  re-run at 390: 13/13. GRP commit `7dbe512c78c0256c0ab03014771fdcacf03d7140`; FPA run record §10 at `79e6bc0`.
+  other Tier 1 plans funded at this budget, now says under the status: "Your budget also pays for: {plans}. To keep
+  the {card} life cover as well, you need $X more a month." (Kyron's wording, 28 Oct 2026; it replaced "Other plans
+  get their minimum first: …".) GRP only, engine figures only (`cardNeedsLine`). Family, Recommended at $711: "Your
+  budget also pays for: critical illness cover, your father's funeral cover. … you need $281 more a month." One test (`fact-finder-close.test.mjs`), sabotage-tested; fact-finder tests 55/55; smoke walk
+  re-run at 390: 13/13. Full portal suite on the final code: 3,091 tests, 0 fail, 30 skipped. GRP commits `7dbe512` and `db74f97c925b148029f27b9b8f3caf4729c528c1` (wording); FPA run record §10 at `86c48a4`.
 
 **New hashes.**
 
 | What | Old | New |
 |---|---|---|
-| FPA `feat/fact-finder-engine` head (PR #5) | `3b0e7f4` | `79e6bc0a5f996a332e2694af7fc0a3297743910c` (engine `0a332cf7d7e526981ad1643da4f50005fbbf82d7`, then the run record `13fc2fe` and its §10) |
+| FPA `feat/fact-finder-engine` head (PR #5) | `3b0e7f4` | `86c48a4348014acb95a64b02d96466f0daf7ac40` (engine `0a332cf7d7e526981ad1643da4f50005fbbf82d7`, then the run record `13fc2fe` and its §10) |
 | `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `14b9c994…72e2a` | `e3e38f7ddc4d97ddf4a8e0731053ba728f907c5e4476d2198e2f55fc8146b100` |
 | Assumption set id | `ff-2026-10-27-ladder2` | `ff-2026-10-28-cards1` |
-| GRP `feat/fact-finder` head (PR #160) | `2bfb622` | `7dbe512c78c0256c0ab03014771fdcacf03d7140` (`87b0c81`: re-vendor pinned to FPA `0a332cf`, cards and slider, migration grants; then the Decision 9 card line) |
+| GRP `feat/fact-finder` head (PR #160) | `2bfb622` | `db74f97c925b148029f27b9b8f3caf4729c528c1` (`87b0c81`: re-vendor pinned to FPA `0a332cf`, cards and slider, migration grants; then the Decision 9 card line and its wording) |
 
 **What changed.** The cards are the death-need tiers (floored, capped by the underwriting limit); the budget no longer
 caps the Recommended card. The chosen card is the Tier 1 life target (life-ruin's full); the default is Essential, the
