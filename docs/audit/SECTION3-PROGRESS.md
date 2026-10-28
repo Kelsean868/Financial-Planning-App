@@ -184,6 +184,85 @@ and new value. A full dump of both samples shows 0 changed, 0 dropped, 110 `netW
    not stored). The card says so.
 4. `budget.savings` stays in version 2 as a legacy field; it is read only when there are no cash asset rows.
 
-### Smoke walk
+### Smoke walk (done, 28 Oct 2026)
 
-Running.
+Run by the Build B builder on GRP `9f9aaaf` and then `52c5276`, at 390 and 1280, ZZ clients only, Supabase stubbed
+(`node scripts/fact-finder-preview-server.mjs 8791`, which swaps `portal-auth.js` for an in-memory fake agent). On every
+screen: no page errors, no sideways scroll, 0 network writes. Evidence: GRP `docs/audit/evidence-2026-10-28-section3/`
+(34 screenshots, `smoke-walk-results.md` / `.json`, `smoke-walk.mjs`); GRP run record B §10. The orchestrator scanned the
+evidence folder for tokens: none.
+
+| Scene | 390 | 1280 | What was seen |
+|---|---|---|---|
+| 1. Sample family, all seven sections | pass | pass | 14 screens to the final report; net worth card shown |
+| 1. Make room custom split | pass | pass | Food $2,000 → $1,500 frees $500: retirement $100, the 24% card $150, protection $120, Spend more on Food $80; "Not yet given a job" $50 |
+| 1. Use this plan | pass | pass | Food +$80; insurance budget $533 → $653; card payoff June 2028 → March 2028; "You live long" shows $100 a month; the report shows both versions |
+| 1. Back to my real numbers | pass | pass | Plan cleared; report back on the real numbers |
+| 2. Weekly-paid single who rents | pass | pass | Pay changes on, plans on the lowest month; "In a good month you take home $7,953"; "Plan on 4"; two groups "Estimated" |
+| 3. Under $200 left | pass | pass | "To start the $200 minimum you need $16 more a month."; no plan; the button opens Make room |
+| 4. Safe ceiling under $200, $200+ left | pass | pass | A $200 plan with the "above the safe range" note |
+| 5. Payment under the interest | pass | pass | "This payment never clears the debt."; debt-free "Never, at today's payments" |
+| 6. Client and advisor views | pass | pass | Client view on Choose and the report: no ladder controls, scope record or band detail; advisor view shows them |
+
+**One fix during the walk** (`52c527617a985f8d2e5953c2c5b742056bf2fbdf`, page only): after "Use this plan", "You live
+long" did not show the plan's retirement money (spec §6.3.4). It now adds a "Retirement money from Make room" row from
+the engine's figures. New client-facing label added to the wording table. Fact-finder tests 76/76 after it; the
+orchestrator then ran the full portal suite on the final code `e183c8c`: **3,111 tests, 3,081 pass, 0 fail, 30 skipped.**
+
+## Final summary
+
+### PRs, in merge order (Kyron merges; nothing merged, deployed or applied)
+
+1. FPA https://github.com/Kelsean868/Financial-Planning-App/pull/6 — `feat/section3-engine` → `master`. Builds A and C.
+2. GRP https://github.com/Kelsean868/General_Raters_Portal/pull/161 — `feat/section3-page` → `main`. Builds B and C, and
+   the smoke walk. It vendors the engine from FPA #6, so merge it after FPA #6.
+
+No database migration (facts live in `life_cases.facts`; the store upgrades version 1 on read and writes version 2).
+
+### New hashes
+
+| What | Old | New |
+|---|---|---|
+| FPA `feat/section3-engine` head (PR #6) | — (from `origin/master` 2ec9aa4) | `422a9fee77976423afab31ca8f61c088e2f01f48` |
+| FPA engine commit | `0a332cf` (fix run 4) | `520a6899876435c890dd7677713d3a0f4a90b64a` (Build A `59224e2`, then Build C) |
+| `core/dist/fpa-core.js` SHA-256 (= GRP `vendor/fpa-core/fpa-core.js`) | `e3e38f7d…b100` | `246f0ae65df7853b1c6a8c253eedbdeb185b30213408db261d9b69d1fb207c82` |
+| Assumption set id | `ff-2026-10-28-cards1` | `ff-2026-10-28-s3` |
+| GRP `feat/section3-page` head (PR #161) | — (from `origin/main` db74f97) | `e183c8c6759700ee19bd9dc7e1276ac87edd8f44` |
+
+Guard 9/10 SQL now expects `ff-2026-10-28-s3` and engine commit `520a689`.
+
+### Results
+
+- Goldens: 0 of 37 moved after Build A, and 0 of 37 after Build C (tables above). Care graph §3 goldens included.
+- New guards 28–35, each sabotage-tested; guards 3 and 27 changed meaning and were re-sabotaged.
+- FPA `npm test` 186/186; GRP full suite 3,111 / 0 fail / 30 skipped (the existing live-database tests).
+- Smoke walk 6 scenes × 2 widths: all pass.
+- No hard stop hit. F-16 closed.
+
+### Kyron's calls (taken for him, reversible)
+
+1. **Wording table**: every new client-facing sentence, GRP run record B §8 (plus "Retirement money from Make room").
+2. NIS stays a flat 5.4% (spec §2.2 says class table; switching moves goldens 2 and 16).
+3. Saving the client already does is left out of needs (counts as money left).
+4. Make room's debt step is sized to clear expensive debt within 3 years.
+5. Cash = bank, credit union and unit trust (a non-money-market unit trust counts in full).
+6. Debts as a share of gross yearly pay includes the mortgage (spec), against the prototype (without): family 192% vs 31%.
+7. Gross yearly pay uses the partner's take-home pay, because partner gross is not stored.
+
+### Every open item
+
+1. "Income if you cannot work" cover is recorded but not counted by the engine.
+2. The snapshot has no field for the Make room plan; the "both versions" line on the one-page plan is page-held.
+3. The one-page plan's tile still says "Stage".
+4. A typed value followed by an instant click can rarely lose the click (old page had the same exposure).
+5. A child studying now could be counted twice (care graph and school fees); already true in version 1.
+6. Free-text fields (line labels, lender, co-signer name, own items) are not scanned for health words; the store's
+   health-key check and the on-screen hint are the guard.
+7. Five spec/prototype rule clashes in Build B and one in Build C; the spec was followed each time (run records B and C).
+8. F-13, F-15, F-17, F-19 and F-20 stay open (F-20: parameter refresh before 4 Jan 2027).
+
+### Fenced (not in Section 3)
+
+- **F-21:** bank-statement import or receipt scanning.
+- **F-22:** a "track actual against budget" month view.
+- **F-23:** client self-serve budgeting at home (Section 2 fence 1).
