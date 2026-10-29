@@ -64,8 +64,10 @@ export const PRODUCTS = deepFreeze({
   }, "rule", `${SHAPES}; ${KYRON}`),
   "life-span-gold": product({
     id: "life-span-gold", name: "Life Span Gold (critical illness)", cover: { min: 100000, max: 2000000 }, issueAge: { min: null, max: null },
-    minPremiumMonthly: 150, singleDeposit: null, riders: [], disclosure: null,
-  }, "rule", `Kyron's rule (Section 2 §2.4): $100,000 floor; OIPA allows $50,000, not used`),
+    // Was 150 until 29 Oct 2026. Tatil's minimum is $1,800.00 a year, which is $154.44 a month at the
+    // 0.0858 modal factor (real-life-rates spec decision 6).
+    minPremiumMonthly: 154.44, singleDeposit: null, riders: [], disclosure: null,
+  }, "rule", `Kyron's rule (Section 2 §2.4): $100,000 floor; OIPA allows $50,000, not used. Minimum premium $1,800.00/yr = $154.44/mth: OIPA raised M NS 25 $175,000 to $180,510 to reach $1,800 (real-life-rates spec decision 6, 29 Oct 2026)`),
   goldspoon: product({
     id: "goldspoon", name: "Goldspoon", cover: { min: 10000, max: 150000 }, issueAge: { min: 1, max: 12 },
     minPremiumMonthly: 150, singleDeposit: null, riders: [], disclosure: null,

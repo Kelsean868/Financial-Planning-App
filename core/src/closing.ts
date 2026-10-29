@@ -20,7 +20,7 @@ import { parentLabel, type CareGraphResult } from "./care-graph.ts";
 import { survivorCashflow, type DeathNeedResult, type Obligation, type SurvivorCashflow } from "./death-need.ts";
 import type { RetirementIncome } from "./retirement-income.ts";
 import type { GoalsResult } from "./goals.ts";
-import { ratePer1000, roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, canIssue, ratedAge, premiumFor, type PremiumBand } from "./premiums.ts";
+import { roughBand, restAssuredEligible, restAssuredPremium, restAssuredRatedAge, canIssue, ratedAge, premiumFor, coverForPremium, clientRating, type PremiumBand } from "./premiums.ts";
 import { allocateLadder, completeOrder, defaultOrder, insuranceCap, insuranceRange, type Ladder, type LadderItemSpec } from "./closing-ladder.ts";
 import { minimumFor, profileFor } from "./insurance-budget.ts";
 import type { ScopeGap } from "./scope.ts";
@@ -252,8 +252,10 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const b = new ProvenanceBuilder();
   for (const p of [budget.provenance, careGraph.provenance, deathNeed.provenance, retirement.provenance]) b.merge(p);
   const age = facts.client.age;
-  const TR = ratePer1000(b, "term", age);
-  const WL = ratePer1000(b, "whole-life", age);
+  // Every rate is keyed by age next birthday, and every premium is priced on the client's own rating
+  // (sex, and the nicotine answer when they gave one) — real-life-rates spec §5.7.
+  const anb = ratedAge(age);
+  const rating = clientRating(facts.client);
   const term = b.get<ProductSpec>("core:products.term");
   const whole = b.get<ProductSpec>("core:products.whole-life");
   const minCover = b.num("core:ff.closing.minimumCoverOnPlan");
@@ -458,8 +460,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   const lifeProduct: "term" | "whole-life" = canIssue(b, "term", age) ? "term" : "whole-life";
   if (dependants && lifeProduct === "whole-life") b.rule(`term life cannot be issued at rated age ${ratedAge(age)}, so the ruin-level life plan is whole life`);
   const lifeSpec = lifeProduct === "term" ? term : whole;
-  const lifeRate = lifeProduct === "term" ? TR : WL;
-  const lifePremium = (cover: number): number => (cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, cover * lifeRate / 1000) : 0);
+  const lifePremium = (cover: number): number => (cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, premiumFor(b, lifeProduct, cover, anb, rating) ?? 0) : 0);
   const essPrem = lifePremium(packages.essential);
   const recPrem = lifePremium(packages.recommended);
   const cardPrem = (k: Package): number => lifePremium(packages[k]);
@@ -468,9 +469,8 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     if (!ok) b.rule(`${what}: ${id} cannot be issued at rated age ${ratedAge(insuredAge)}, so there is no ladder item`);
     return ok;
   };
-  const ciRate = ratePer1000(b, "ci", age);
-  const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, lsg.cover!.min * ciRate / 1000);
-  const ciFull = Math.max(ciMin, ciCover * ciRate / 1000);
+  const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, premiumFor(b, "ci", lsg.cover!.min, anb, rating) ?? 0);
+  const ciFull = Math.max(ciMin, premiumFor(b, "ci", ciCover, anb, rating) ?? 0);
   const build = b.num("core:ff.budget.bufferBuildMonths");
   const oneMonth = Math.max(0, needs * b.num("core:ff.budget.bufferPreconditionMonths") - facts.budget.savings) / build;
   const threeMonths = Math.max(0, needs * b.num("core:ff.budget.bufferTargetMonths") - facts.budget.savings) / build;
@@ -482,7 +482,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
   // Tier 1 default order (Kyron, Decision 6 = A, 27 Oct 2026): life, CI, parent funerals oldest first, disability income, own final expense.
   const funerals = parentFuneral.filter((x) => x.product).sort((x, y) => y.age - x.age);
   const ciOn = ciNeed > 0 && issuable("life-span-gold", age, "Critical illness cover");
-  const di = profile !== "later" && issuable("cashbuilder-ii", age, "Disability income") ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
+  const di = profile !== "later" && issuable("cashbuilder-ii", age, "Disability income") ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }, rating) : 0;
   const own = { age, sex: facts.client.sex, who: "You" };
   const ownCover = Math.min(ra.cover!.max ?? Infinity, Math.max(ra.cover!.min, w.funeral));
   const ownFinal = profile === "later" && issuable("rest-assured-ii", age, "Your own final expense") ? { min: restAssuredPremium(b, own, ra.cover!.min), full: restAssuredPremium(b, own, ownCover) } : null;
@@ -495,7 +495,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const id: "term" | "whole-life" = canIssue(b, "term", age + p.years) ? "term" : "whole-life";
     const spec = id === "term" ? term : whole;
     const cover = Math.min(spec.cover!.max ?? Infinity, Math.max(spec.cover!.min, loan));
-    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, ratedAge(age)));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, anb, rating) ?? 0);
     return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id }];
   });
   // Section 3 §7.5 (closes F-16): a debt someone co-signed leaves that person owing it if the client dies. One loan cover
@@ -505,7 +505,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const id: "term" | "whole-life" = canIssue(b, "term", age) ? "term" : "whole-life";
     const spec = id === "term" ? term : whole;
     const cover = Math.min(spec.cover!.max ?? Infinity, Math.max(spec.cover!.min, d.balance));
-    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, ratedAge(age)));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id, cover, anb, rating) ?? 0);
     return [{ key: `cosigned-cover:${ix}`, tier: 2, label: `Life cover for the ${DEBT_WORDS[d.type]} ${d.cosignerName ?? "someone"} co-signed`, min: prem, full: prem, insurance: true, product: id }];
   });
   // Decision 8 = B: the chosen card is the Tier 1 life target. life-ruin's minimum stays the ruin level (pass one is
@@ -549,7 +549,8 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
     const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
     if (budget.stage === 0 || !ruin || ruin.allocated <= 0) return 0;
     const target = Math.max(packages.essential, packages[chosen]);
-    const toCard = ruin.allocated >= ruin.full - 1e-9 ? target : Math.max(packages.essential, Math.min(target, lifeRate > 0 ? ruin.allocated / lifeRate * 1000 : 0));
+    // The fee and the cover bands make this inversion non-linear, so it goes through the rate book (spec R5).
+    const toCard = ruin.allocated >= ruin.full - 1e-9 ? target : Math.max(packages.essential, Math.min(target, coverForPremium(b, lifeProduct, ruin.allocated, anb, rating)));
     const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
     return toCard + share * Math.max(0, packages.recommended - target);
   };
@@ -561,7 +562,7 @@ export function computeClosing(ctxIn: ClosingContext, options: ClosingOptions = 
       return { cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: !!ruin && wanted > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet: ruin?.notYet ?? false };
     }
     const cover = lifeCoverFunded(lad, pkg);
-    const band = roughBand(b, cover * lifeRate / 1000, lifeSpec.minPremiumMonthly);
+    const band = roughBand(b, premiumFor(b, lifeProduct, cover, anb, rating) ?? 0, lifeSpec.minPremiumMonthly);
     const items: BasketItem[] = [{ product: lifeProduct, cover, premiumMonthly: prem, band }];
     return { cover, items, totalMonthly: prem, totalHighMonthly: band.high, partial: cover < wanted - 0.5, permanentDropped: false, notCovered: notCoveredAt(cover), notYet: false };
   };

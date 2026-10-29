@@ -17,7 +17,8 @@ test("§2.4: every product row carries source and asOf, with the signed figures"
     term: { cover: [150000, 10000000], min: 150 },
     "whole-life": { cover: [65000, null], min: 150 },
     endowment: { cover: [55000, null], min: 150 },
-    "life-span-gold": { cover: [100000, 2000000], min: 150 },
+    // $1,800.00 a year at the 0.0858 modal factor (real-life-rates spec decision 6, 29 Oct 2026; was 150).
+    "life-span-gold": { cover: [100000, 2000000], min: 154.44 },
     goldspoon: { cover: [10000, 150000], min: 150 },
     "rest-assured-ii": { cover: [30000, 150000], min: null },
     "cashbuilder-ii": { cover: [10000, null], min: 300 },

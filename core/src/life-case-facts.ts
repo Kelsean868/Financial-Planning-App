@@ -59,6 +59,13 @@ interface ClientBase {
   selfEmployed: boolean;
   /** Whether the client holds health insurance. Cover held, not a health answer (Section 2 §2.6). */
   hasHealthCover: Tristate;
+  /**
+   * Nicotine use in the past 5 years. The one health-related fact allowed in the case facts, by Kyron's
+   * decision of 28 Oct 2026, used only to pick premium rates. Absent until the client answers it; then the
+   * rates are non-smoker ones with a caveat. It never appears in a parameter table, and fixtures use
+   * synthetic people. Every other health answer stays out (rule 8).
+   */
+  smoker?: boolean;
 }
 
 export interface ClientFacts extends ClientBase {
@@ -436,6 +443,7 @@ function checkCommon(f: Record<string, unknown>, problems: string[], parentKeys:
     if (!isNum(f.client.age)) problems.push("client.age must be a number");
     if (!["male", "female"].includes(f.client.sex as string)) problems.push("client.sex must be male or female");
     if (!TRISTATE.has(f.client.hasHealthCover as string)) problems.push("client.hasHealthCover must be yes, no or unknown");
+    if (f.client.smoker !== undefined && typeof f.client.smoker !== "boolean") problems.push("client.smoker must be true or false when it is given");
   }
   if (f.partner !== null) {
     if (!isObj(f.partner)) problems.push("partner must be an object or null");

@@ -161,7 +161,10 @@ export function computeHouseholdBudget(input: BudgetInputs): HouseholdBudget {
   const bad = debts.expensiveDebt;
   const { stage, ceiling } = stageAndCeiling(b, { hhNet, surplus, buffer, expensiveDebt: bad, emergencyFundMonths: ef });
   const shares = b.get<{ floor: number; recommended: number; ceiling: number }>("core:ff.closing.bandShares");
-  const needsRatio = needs / hhNet;
+  // From 60 the client pays no NIS, so a case with no pay entered has a household take-home of exactly $0.
+  // With no costs either, `needs / hhNet` was 0 / 0 = NaN, which made the health score throw and blocked
+  // every screen (real-life-rates spec §5.8). A household with no take-home and no needs is not over budget.
+  const needsRatio = hhNet > 0 ? needs / hhNet : (needs > 0 ? Infinity : 0);
   const hardballRatio = b.num("core:ff.budget.hardballNeedsRatio");
   const shortfall = surplus <= 0 ? -surplus : Math.max(0, needs - hardballRatio * hhNet);
   const hours = Math.ceil(shortfall / b.num("core:ff.budget.minimumWageHourly") / b.num("core:ff.budget.weeksPerMonth"));

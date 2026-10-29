@@ -20,7 +20,7 @@ import type { HouseholdBudget, BudgetBuckets } from "./household-budget.ts";
 import type { Ladder, LadderItemSpec } from "./closing-ladder.ts";
 import { parentLabel } from "./care-graph.ts";
 import type { ProductId, ProductSpec, RiderId, RiderSpec } from "./parameters/tatil-products-2026-10.ts";
-import { fitToMinimums, ratePer1000, roughBand, restAssuredCoverFor, type PremiumBand, type FitRow, type RestAssuredInsured } from "./premiums.ts";
+import { fitToMinimums, roughBand, restAssuredCoverFor, premiumFor, coverForPremium, clientRating, ratedAge, type PremiumBand, type FitRow, type RestAssuredInsured, type Rating } from "./premiums.ts";
 
 export type Profile = "single" | "family" | "later";
 
@@ -102,24 +102,52 @@ export function assertRidersAllowed(b: ProvenanceBuilder, product: ProductId, ri
   }
 }
 
-/** Cover $1 a month of premium buys, for the minimum-sum arithmetic. */
-function coverPerDollar(b: ProvenanceBuilder, basis: CoverBasis, age: number): number {
+/**
+ * Cover a monthly premium buys on a basis.
+ *
+ * There is no "cover per dollar" factor any more: the $360 annual fee and the cover bands make the premium
+ * non-linear in the cover, so every rate-backed basis goes through the rate book (spec R5). Endowment cover
+ * is still a multiple of the premium — it is not priced from a rate table at all.
+ */
+function coverAt(b: ProvenanceBuilder, basis: CoverBasis, monthly: number, age: number, rating: Rating): number {
+  const anb = ratedAge(age);
   switch (basis) {
-    case "term": return 1000 / ratePer1000(b, "term", age);
-    case "whole-life": return 1000 / ratePer1000(b, "whole-life", age);
-    case "ci": return 1000 / ratePer1000(b, "ci", age);
-    case "cashbuilder": return b.num("core:ff.premiumRates.cashbuilderCoverShare") * 1000 / ratePer1000(b, "whole-life", age);
-    case "endowment": return 12 * b.num("core:ff.premiumRates.endowmentCoverYears") * b.num("core:ff.premiumRates.endowmentCoverShare");
+    case "term": return coverForPremium(b, "term", monthly, anb, rating);
+    case "whole-life": return coverForPremium(b, "whole-life", monthly, anb, rating);
+    case "ci": return coverForPremium(b, "ci", monthly, anb, rating);
+    // Cashbuilder II buys cover with 70% of its premium, at the whole life rate.
+    case "cashbuilder": return coverForPremium(b, "whole-life", monthly * b.num("core:ff.premiumRates.cashbuilderCoverShare"), anb, rating);
+    case "endowment": return monthly * 12 * b.num("core:ff.premiumRates.endowmentCoverYears") * b.num("core:ff.premiumRates.endowmentCoverShare");
+    case "none": return 0;
+  }
+}
+
+/** The monthly premium an amount of cover costs on a basis — the inverse of `coverAt`. */
+function premiumForCover(b: ProvenanceBuilder, basis: CoverBasis, cover: number, age: number, rating: Rating): number {
+  const anb = ratedAge(age);
+  switch (basis) {
+    case "term": return premiumFor(b, "term", cover, anb, rating) ?? 0;
+    case "whole-life": return premiumFor(b, "whole-life", cover, anb, rating) ?? 0;
+    case "ci": return premiumFor(b, "ci", cover, anb, rating) ?? 0;
+    case "cashbuilder": {
+      const share = b.num("core:ff.premiumRates.cashbuilderCoverShare");
+      return share > 0 ? (premiumFor(b, "whole-life", cover, anb, rating) ?? 0) / share : 0;
+    }
+    case "endowment": {
+      const per = 12 * b.num("core:ff.premiumRates.endowmentCoverYears") * b.num("core:ff.premiumRates.endowmentCoverShare");
+      return per > 0 ? cover / per : 0;
+    }
     case "none": return 0;
   }
 }
 
 /** The plan's minimum a month: its minimum premium, or what its minimum cover costs, whichever is more. */
-export function minimumFor(b: ProvenanceBuilder, row: Pick<PlanRow, "product" | "basis" | "insuredAge">): number {
+export function minimumFor(
+  b: ProvenanceBuilder, row: Pick<PlanRow, "product" | "basis" | "insuredAge">, rating: Rating,
+): number {
   const spec = b.get<ProductSpec>(`core:products.${row.product}`);
   const minPrem = spec.minPremiumMonthly ?? 0;
-  const per = coverPerDollar(b, row.basis, row.insuredAge);
-  const coverMin = spec.cover && per > 0 ? spec.cover.min / per : 0;
+  const coverMin = spec.cover ? premiumForCover(b, row.basis, spec.cover.min, row.insuredAge, rating) : 0;
   return Math.max(minPrem, coverMin);
 }
 
@@ -167,8 +195,9 @@ const fmt = (n: number): string => `$${Math.round(n).toLocaleString("en-US")}`;
 function protectionPlanFor(b: ProvenanceBuilder, facts: EngineFacts, profile: Profile, item: LadderItemSpec): ProtectionPlan {
   const { key } = item;
   const age = facts.client.age;
+  const rating = clientRating(facts.client);
   const capped = (product: ProductId, cover: number): number => Math.min(b.get<ProductSpec>(`core:products.${product}`).cover?.max ?? Infinity, cover);
-  const at = (basis: CoverBasis, product: ProductId) => (monthly: number): number => capped(product, monthly * coverPerDollar(b, basis, age));
+  const at = (basis: CoverBasis, product: ProductId) => (monthly: number): number => capped(product, coverAt(b, basis, monthly, age, rating));
   const ra = (insured: RestAssuredInsured) => (monthly: number): number => capped("rest-assured-ii", restAssuredCoverFor(b, insured, monthly));
   // Life to the ruin level is term, or whole life once term cannot be issued at the client's rated age (guard 24).
   const life = item.product === "whole-life" ? { product: "whole-life" as const, name: "Whole life" } : { product: "term" as const, name: "Term life" };
@@ -270,14 +299,13 @@ function protectionGroup(b: ProvenanceBuilder, facts: EngineFacts, profile: Prof
   return { title: "Protection", totalMonthly: total, funded, notYet, note: note + notYetNote(notYet) };
 }
 
-function fitGroup(b: ProvenanceBuilder, title: InsuranceBudgetGroup["title"], total: number, rows: readonly PlanRow[], note: string): InsuranceBudgetGroup {
+function fitGroup(b: ProvenanceBuilder, title: InsuranceBudgetGroup["title"], total: number, rows: readonly PlanRow[], note: string, rating: Rating): InsuranceBudgetGroup {
   for (const r0 of rows) assertRidersAllowed(b, r0.product, r0.riders);
-  const fitRows: FitRow<PlanRow>[] = rows.map((r0) => ({ key: r0, min: minimumFor(b, r0), weight: r0.weight }));
+  const fitRows: FitRow<PlanRow>[] = rows.map((r0) => ({ key: r0, min: minimumFor(b, r0, rating), weight: r0.weight }));
   const fit = fitToMinimums(fitRows, total);
   const funded: FundedPlan[] = fit.funded.map(({ key: r0, monthly, min }) => {
     const spec = b.get<ProductSpec>(`core:products.${r0.product}`);
-    const per = coverPerDollar(b, r0.basis, r0.insuredAge);
-    const cover = per > 0 ? Math.min(spec.cover?.max ?? Infinity, monthly * per) : null;
+    const cover = r0.basis === "none" ? null : Math.min(spec.cover?.max ?? Infinity, coverAt(b, r0.basis, monthly, r0.insuredAge, rating));
     const band: PremiumBand = roughBand(b, monthly, spec.minPremiumMonthly);
     return {
       key: r0.key, name: r0.name, product: r0.product,
@@ -306,7 +334,7 @@ export function computeInsuranceBudget(facts: EngineFacts, budget: HouseholdBudg
   b.rule("each savings plan gets its minimum first; plans that cannot reach their minimum wait as 'not yet'");
   return {
     profile,
-    groups: [protectionGroup(b, facts, profile, from, protNote), fitGroup(b, "Savings plans", savTotal, savingsRows(facts, profile), savNote)],
+    groups: [protectionGroup(b, facts, profile, from, protNote), fitGroup(b, "Savings plans", savTotal, savingsRows(facts, profile), savNote, clientRating(facts.client))],
     note: "A budget, not a quote. Kyron turns it into real prices, and checks what fits your health and your goals.",
     provenance: b.build(),
   };

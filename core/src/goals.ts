@@ -8,7 +8,7 @@ import type { GoalFacts } from "./life-case-facts.ts";
 import type { EngineFacts } from "./engine-facts.ts";
 import type { HouseholdBudget } from "./household-budget.ts";
 import { amortisedPayment, carLoan, type CarLoanResult } from "./debts.ts";
-import { premiumFor } from "./premiums.ts";
+import { premiumFor, ratedAge, clientRating } from "./premiums.ts";
 
 export interface HomePlan {
   readonly deposit: number;
@@ -73,6 +73,7 @@ function homePlan(b: ProvenanceBuilder, facts: EngineFacts, budget: HouseholdBud
   const loan = g.price - dep;
   const target = Math.max(0, dep + close - g.saved);
   const age = facts.client.age;
+  const rating = clientRating(facts.client);
   const term = Math.max(b.num("core:ff.goals.mortgageMinYears"), Math.min(b.num("core:ff.goals.mortgageMaxYears"), b.num("core:ff.goals.mortgageEndsByAge") - age - g.years));
   const ratePct = b.num("core:ff.goals.mortgageRatePct");
   const pay = amortisedPayment(loan, ratePct, term);
@@ -86,8 +87,8 @@ function homePlan(b: ProvenanceBuilder, facts: EngineFacts, budget: HouseholdBud
       affordableMonthly: maxPay, fits: pay <= maxPay, likelyLoan: pvOfPayment(maxPay, ratePct, term),
       stampDutyReliefPossible: g.price < b.num("core:ff.goals.stampDutyReliefBelow"),
       loanCoverMonthly: {
-        atPurchase: Math.max(minCover, premiumFor(b, "term", loan, age + g.years)),
-        tenYearsLater: Math.max(minCover, premiumFor(b, "term", loan, age + g.years + 10)),
+        atPurchase: Math.max(minCover, premiumFor(b, "term", loan, ratedAge(age + g.years), rating) ?? 0),
+        tenYearsLater: Math.max(minCover, premiumFor(b, "term", loan, ratedAge(age + g.years + 10), rating) ?? 0),
         label: "rough",
       },
     },

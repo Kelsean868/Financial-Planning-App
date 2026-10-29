@@ -1303,11 +1303,13 @@ var PRODUCTS = deepFreeze2({
     name: "Life Span Gold (critical illness)",
     cover: { min: 1e5, max: 2e6 },
     issueAge: { min: null, max: null },
-    minPremiumMonthly: 150,
+    // Was 150 until 29 Oct 2026. Tatil's minimum is $1,800.00 a year, which is $154.44 a month at the
+    // 0.0858 modal factor (real-life-rates spec decision 6).
+    minPremiumMonthly: 154.44,
     singleDeposit: null,
     riders: [],
     disclosure: null
-  }, "rule", `Kyron's rule (Section 2 §2.4): $100,000 floor; OIPA allows $50,000, not used`),
+  }, "rule", `Kyron's rule (Section 2 §2.4): $100,000 floor; OIPA allows $50,000, not used. Minimum premium $1,800.00/yr = $154.44/mth: OIPA raised M NS 25 $175,000 to $180,510 to reach $1,800 (real-life-rates spec decision 6, 29 Oct 2026)`),
   goldspoon: product({
     id: "goldspoon",
     name: "Goldspoon",
@@ -1451,6 +1453,1537 @@ var RETIREMENT = deepFreeze2({
   annuityConversionRates: unverified(AUDIT, D3, "Annuity conversion rates could not be verified.")
 });
 
+// src/parameters/tatil-life-rates-2026-10.ts
+var SRC_term = "Tatil ApplyOn illustration, harvested 2024-09";
+var ASOF_term = "2024-09-01";
+var SRC_wholeLife = "Tatil ApplyOn illustration, harvested 2026-10-28 (bands 2-3: 2024-09 sheets + 2026-10-28 probe)";
+var ASOF_wholeLife = "2026-10-28";
+var SRC_endowment = "Tatil ApplyOn illustration, harvested 2026-10-28";
+var ASOF_endowment = "2026-10-28";
+var SRC_restAssured = "Tatil ApplyOn illustration, harvested 2026-10-28";
+var ASOF_restAssured = "2026-10-28";
+var SRC_applyonCi = "Tatil ApplyOn illustration, harvested 2026-10-28";
+var ASOF_applyonCi = "2026-10-28";
+var SRC_lifespanGold = "Tatil OIPA illustration, harvested 2026-04-18";
+var ASOF_lifespanGold = "2026-04-18";
+var LIFE_RATES = deepFreeze2({
+  meta: {
+    ages: row("ANB", "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+    feeAnnual: row(360, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+    modal: {
+      annual: row(1, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+      semi: row(0.5125, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+      quarterly: row(0.2585, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+      monthly: row(0.0858, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28")
+    },
+    bookSchema: row(1, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+    cellCount: row(846, "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+    checksum: row("c5b3e442", "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28", "2026-10-28"),
+    missing: row([{ product: "wholeLife", variant: "Whole Life", series: "F-NS", band: 2, anbs: [20, 30, 40, 50, 60, 65, 70], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "F-NS", band: 3, anbs: [20, 30, 40, 50, 60, 65, 70], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "F-S", band: 2, anbs: [20, 30, 40, 50, 60, 65, 70], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "F-S", band: 3, anbs: [20, 30, 40, 50, 60, 65, 70], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "M-NS", band: 2, anbs: [20, 30, 50, 60, 65, 70], harvested: [25, 35, 40, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "M-NS", band: 3, anbs: [20, 30, 50, 60, 65, 70], harvested: [25, 35, 40, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "M-S", band: 2, anbs: [20, 30, 40, 50, 60, 65, 70], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Whole Life", series: "M-S", band: 3, anbs: [20, 30, 40, 50, 60, 65, 70], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-NS", band: 2, anbs: [20, 30, 40, 50], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-NS", band: 3, anbs: [20, 30, 40, 50], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-S", band: 2, anbs: [20, 30, 40, 50], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-S", band: 3, anbs: [20, 30, 40, 50], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-NS", band: 2, anbs: [20, 30, 50], harvested: [25, 35, 40, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-NS", band: 3, anbs: [20, 30, 50], harvested: [25, 35, 40, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-S", band: 2, anbs: [20, 30, 40, 50], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-S", band: 3, anbs: [20, 30, 40, 50], harvested: [25, 35, 45, 55] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "30 year Limited Pay", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "25 year Limited Pay", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50], harvested: [40] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50], harvested: [40] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 60", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "20 year Limited Pay", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45], harvested: [40] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45], harvested: [40] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45], harvested: [] }, { product: "wholeLife", variant: "Limited Pay to Age 55", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45], harvested: [] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "15 year Limited Pay", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65, 70], harvested: [40] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "wholeLife", variant: "10 year Limited Pay", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "endowment", variant: "30 year endowment", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "endowment", variant: "30 year endowment", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "endowment", variant: "30 year endowment", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "endowment", variant: "30 year endowment", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "endowment", variant: "30 year endowment", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55], harvested: [40] }, { product: "endowment", variant: "30 year endowment", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55], harvested: [40] }, { product: "endowment", variant: "30 year endowment", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "endowment", variant: "30 year endowment", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "endowment", variant: "25 year endowment", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "endowment", variant: "25 year endowment", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "endowment", variant: "25 year endowment", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "endowment", variant: "25 year endowment", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "endowment", variant: "25 year endowment", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60], harvested: [40] }, { product: "endowment", variant: "25 year endowment", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60], harvested: [40] }, { product: "endowment", variant: "25 year endowment", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "endowment", variant: "25 year endowment", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "endowment", variant: "20 year endowment", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "20 year endowment", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "20 year endowment", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "20 year endowment", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "20 year endowment", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65], harvested: [40] }, { product: "endowment", variant: "20 year endowment", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65], harvested: [40] }, { product: "endowment", variant: "20 year endowment", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "20 year endowment", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "15 year endowment", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "15 year endowment", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "15 year endowment", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "15 year endowment", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "15 year endowment", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65], harvested: [40] }, { product: "endowment", variant: "15 year endowment", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60, 65], harvested: [40] }, { product: "endowment", variant: "15 year endowment", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "endowment", variant: "15 year endowment", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65], harvested: [] }, { product: "restAssured", variant: "Payment to Age 85", series: "F-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "restAssured", variant: "Payment to Age 85", series: "M-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "restAssured", variant: "Payment to Age 100", series: "F-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "restAssured", variant: "Payment to Age 100", series: "M-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60, 65, 70], harvested: [] }, { product: "restAssured", variant: "Payment to Age 65", series: "F-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "restAssured", variant: "Payment to Age 65", series: "M-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "restAssured", variant: "Payment to Age 60", series: "F-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "restAssured", variant: "Payment to Age 60", series: "M-S", band: 1, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50], harvested: [40] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50], harvested: [40] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 60", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55], harvested: [40] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55], harvested: [40] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 65", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "F-NS", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "F-NS", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "F-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "F-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "M-NS", band: 2, anbs: [20, 25, 30, 35, 45, 50, 55, 60], harvested: [40] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "M-NS", band: 3, anbs: [20, 25, 30, 35, 45, 50, 55, 60], harvested: [40] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "M-S", band: 2, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "applyonCi", variant: "Coverage to Age 70", series: "M-S", band: 3, anbs: [20, 25, 30, 35, 40, 45, 50, 55, 60], harvested: [] }, { product: "lifespanGold", variant: "to age 60", series: "F-NS", band: 1, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "F-NS", band: 2, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "F-S", band: 1, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "F-S", band: 2, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "M-NS", band: 1, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "M-NS", band: 2, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "M-S", band: 1, anbs: [56], harvested: [26, 36, 46] }, { product: "lifespanGold", variant: "to age 60", series: "M-S", band: 2, anbs: [56], harvested: [26, 36, 46] }, { product: "term", variant: "Level convertible term to 65", series: "F-NS", band: 1, anbs: [26, 36], harvested: [46, 56] }, { product: "term", variant: "Level convertible term to 65", series: "F-S", band: 1, anbs: [26], harvested: [36, 46, 56] }, { product: "term", variant: "Level convertible term to 65", series: "M-NS", band: 1, anbs: [26], harvested: [36, 46, 56] }], "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28: cells the book lists as not harvested", "2026-10-28"),
+    heldOut: row([{ source: "rate_cells.csv", note: "ANB off the 5-year grid - held out, not used as a rate", product: "restAssured", variant: "Payment to Age 100", series: "F-NS", anb: 56, cover: 125e3, annual: 5788.75, semi: 2966.73, quarterly: 1496.39, monthly: 496.67 }, { source: "rate_cells.csv", note: "ANB off the 5-year grid - held out, not used as a rate", product: "restAssured", variant: "Payment to Age 85", series: "F-NS", anb: 56, cover: 125e3, annual: 5861.25, semi: 3003.89, quarterly: 1515.13, monthly: 502.9 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-NS", anb: 25, cover: 1e5, monthly: 194.94 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-NS", anb: 35, cover: 1e5, monthly: 230.54 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-NS", anb: 45, cover: 1e5, monthly: 310.25 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-NS", anb: 55, cover: 1e5, monthly: 574.95 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-S", anb: 25, cover: 1e5, monthly: 200.86 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-S", anb: 35, cover: 1e5, monthly: 243.84 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-S", anb: 45, cover: 1e5, monthly: 335.99 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "F-S", anb: 55, cover: 1e5, monthly: 621.96 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-NS", anb: 25, cover: 1e5, monthly: 204.2 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-NS", anb: 35, cover: 1e5, monthly: 243.41 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-NS", anb: 45, cover: 1e5, monthly: 332.82 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-NS", anb: 55, cover: 1e5, monthly: 622.82 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-S", anb: 25, cover: 1e5, monthly: 213.21 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-S", anb: 35, cover: 1e5, monthly: 263.32 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-S", anb: 45, cover: 1e5, monthly: 375.2 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Limited Pay to Age 65", series: "M-S", anb: 55, cover: 1e5, monthly: 708.19 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-NS", anb: 25, cover: 1e5, monthly: 185.93 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-NS", anb: 35, cover: 1e5, monthly: 206.69 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-NS", anb: 45, cover: 1e5, monthly: 243.24 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-NS", anb: 55, cover: 1e5, monthly: 310.68 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-S", anb: 25, cover: 1e5, monthly: 192.62 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-S", anb: 35, cover: 1e5, monthly: 221.71 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-S", anb: 45, cover: 1e5, monthly: 272.33 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "F-S", anb: 55, cover: 1e5, monthly: 359.5 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-NS", anb: 25, cover: 1e5, monthly: 195.2 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-NS", anb: 35, cover: 1e5, monthly: 219.82 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-NS", anb: 45, cover: 1e5, monthly: 265.64 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-NS", anb: 55, cover: 1e5, monthly: 350.41 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-S", anb: 25, cover: 1e5, monthly: 205.75 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-S", anb: 35, cover: 1e5, monthly: 243.41 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-S", anb: 45, cover: 1e5, monthly: 317.2 }, { source: "quotes_2024.csv", note: "2024 band-1 sheet - cross-check only (band 1 comes from rate_cells)", product: "wholeLife", variant: "Whole Life", series: "M-S", anb: 55, cover: 1e5, monthly: 450.28 }], "verified", "General-Rater-Portal rates/life/life-rate-book.json (schema 1), newest harvest 2026-10-28: held-out quotes (dollar amounts), not rates", "2026-10-28")
+  },
+  products: {
+    term: {
+      name: row("Term Life", "verified", SRC_term, ASOF_term),
+      feeAnnual: row(360, "verified", SRC_term, ASOF_term),
+      minPremiumAnnual: row(1748.25, "verified", SRC_term, ASOF_term),
+      minCover: row(15e4, "verified", SRC_term, ASOF_term),
+      maxCover: row(null, "verified", SRC_term, ASOF_term),
+      harvestedOn: row("2024-09", "verified", SRC_term, ASOF_term),
+      bands: row([{ band: 1, from: 0, to: 499999 }, { band: 2, from: 5e5, to: null }], "verified", SRC_term, ASOF_term),
+      variants: {
+        levelConvertibleTermTo65: {
+          name: row("Level convertible term to 65", "verified", SRC_term, ASOF_term),
+          maxIssueAnb: row(65, "verified", SRC_term, ASOF_term),
+          rates: {
+            "F-NS": {
+              "1": {
+                "46": row(5.83728, "verified", SRC_term, ASOF_term),
+                "56": row(7.19108, "verified", SRC_term, ASOF_term)
+              },
+              "2": {
+                "26": row(2.3364, "verified", SRC_term, ASOF_term),
+                "36": row(2.897895, "verified", SRC_term, ASOF_term),
+                "46": row(3.8394, "verified", SRC_term, ASOF_term),
+                "56": row(5.03528, "verified", SRC_term, ASOF_term)
+              }
+            },
+            "F-S": {
+              "1": {
+                "36": row(6.40252, "verified", SRC_term, ASOF_term),
+                "46": row(8.7144, "verified", SRC_term, ASOF_term),
+                "56": row(11.32924, "verified", SRC_term, ASOF_term)
+              },
+              "2": {
+                "26": row(3.035175, "verified", SRC_term, ASOF_term),
+                "36": row(4.449008, "verified", SRC_term, ASOF_term),
+                "46": row(6.706575, "verified", SRC_term, ASOF_term),
+                "56": row(9.050465, "verified", SRC_term, ASOF_term)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "36": row(5.392602, "verified", SRC_term, ASOF_term),
+                "46": row(6.83124, "verified", SRC_term, ASOF_term),
+                "56": row(8.64556, "verified", SRC_term, ASOF_term)
+              },
+              "2": {
+                "26": row(2.777455, "verified", SRC_term, ASOF_term),
+                "36": row(3.374592, "verified", SRC_term, ASOF_term),
+                "46": row(4.69284, "verified", SRC_term, ASOF_term),
+                "56": row(6.179505, "verified", SRC_term, ASOF_term)
+              }
+            },
+            "M-S": {
+              "1": {
+                "26": row(5.87928, "verified", SRC_term, ASOF_term),
+                "36": row(7.7134, "verified", SRC_term, ASOF_term),
+                "46": row(11.5768, "verified", SRC_term, ASOF_term),
+                "56": row(16.09004, "verified", SRC_term, ASOF_term)
+              },
+              "2": {
+                "26": row(3.79988, "verified", SRC_term, ASOF_term),
+                "36": row(5.574135, "verified", SRC_term, ASOF_term),
+                "46": row(9.237615, "verified", SRC_term, ASOF_term),
+                "56": row(13.2082, "verified", SRC_term, ASOF_term)
+              }
+            }
+          }
+        }
+      }
+    },
+    wholeLife: {
+      name: row("Whole Life", "verified", SRC_wholeLife, ASOF_wholeLife),
+      feeAnnual: row(360, "verified", SRC_wholeLife, ASOF_wholeLife),
+      minPremiumAnnual: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+      minCover: row(65e3, "verified", SRC_wholeLife, ASOF_wholeLife),
+      maxCover: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+      harvestedOn: row("2026-10-28 (bands 2-3: 2024-09 sheets + 2026-10-28 probe)", "verified", SRC_wholeLife, ASOF_wholeLife),
+      bands: row([{ band: 1, from: 0, to: 149999 }, { band: 2, from: 15e4, to: 499999 }, { band: 3, from: 5e5, to: null }], "verified", SRC_wholeLife, ASOF_wholeLife),
+      variants: {
+        wholeLife: {
+          name: row("Whole Life", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(17.29, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(18.07, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(19.12, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(20.49, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(22.32, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(24.75, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(28.05, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(32.61, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(38.92, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(47.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(60.17, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(9.96979, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(12.519907, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(16.95021, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(24.96, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(6.320027, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(8.739996, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(12.860004, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(20.139996, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(18.3, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(19.15, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(20.38, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(22.02, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(24.28, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(27.36, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(31.54, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(37.24, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(45.02, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(55.64, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(70.09, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(11.09986, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(14.119907, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(16.46, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(19.62993, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(29.62993, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(7.299981, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(10.170027, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(12.34, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(15.220078, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(24.179984, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(19.13, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(20.38, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(22.22, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(24.77, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(28.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(33.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(40.08, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(48.88, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(60.12, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(74.2, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(91.78, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(12.42993, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(16.989837, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(25.719907, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(41.22993, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(8.939996, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(13.499981, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(22.090008, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(37.179984, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(17.79, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(18.85, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(20.31, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(22.24, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(24.81, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(28.14, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(32.52, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(38.3, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(45.94, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(56.08, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(69.66, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(10.82014, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(14.35021, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(20.389837, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(30.649977, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(7.460004, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(11.030051, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(17.120027, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(27.370027, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        limitedPayToAge65: {
+          name: row("Limited Pay to Age 65", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(55, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(17.96, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(19.12, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(20.81, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(23.27, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(27.02, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(32.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(42.41, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(63.41, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(10.75021, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(14.62993, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(23.119907, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(50.36979, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(6.979984, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(10.579984, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(18.349981, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(43.020078, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(18.97, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(20.2, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(22.05, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(24.77, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(28.96, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(35.19, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(46.08, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(68.99, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(11.89986, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(16.279814, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(20.19, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(26.009883, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(56.519907, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(8.010004, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(12.099981, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(15.7, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(21.060004, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(48.920027, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(19.68, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(21.25, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(23.62, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(27.09, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(32.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(40.13, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(53.06, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(78.94, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(13.139953, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(18.89986, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(31.479814, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(67.56979, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(9.589957, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(15.269961, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(27.539996, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(62.260004, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(18.4, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(19.81, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(21.86, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(24.82, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(29.23, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(35.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(46.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(68.89, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "25": row(11.55021, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(16.36979, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(26.42993, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(56.470023, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "25": row(8.090008, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(12.810004, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(22.570027, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(51.170027, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        v30YearLimitedPay: {
+          name: row("30 year Limited Pay", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(19.86, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(20.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(21.87, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(23.27, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(25.04, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(27.28, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(30.24, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(34.26, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(39.95, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(48.17, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(60.17, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(21.02, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(21.92, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(23.17, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(24.77, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(26.87, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(29.65, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(33.36, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(38.49, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(45.71, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(55.89, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(70.09, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(18.57, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(14.3, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(21.67, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(22.91, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(24.69, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(27.09, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(30.45, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(35.11, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(41.4, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(49.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(60.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(74.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(91.78, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(20.26, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(21.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(22.9, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(24.82, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(27.3, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(30.42, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(34.44, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(39.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(46.82, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(56.44, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(69.66, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        v25YearLimitedPay: {
+          name: row("25 year Limited Pay", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(21.33, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(22.31, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(23.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(25.1, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(27.02, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(29.4, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(32.45, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(36.46, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(41.93, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(49.67, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(61.01, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(22.6, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(23.61, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(24.99, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(26.72, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(28.96, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(31.84, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(35.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(40.51, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(47.34, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(56.97, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(70.61, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(20.19, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(15.7, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(23.26, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(24.6, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(26.48, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(28.98, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(32.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(37.04, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(43.21, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(51.3, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(61.76, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(75.11, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(92.14, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(21.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(22.96, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(24.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(26.63, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(29.23, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(32.46, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(36.53, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(41.77, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(48.61, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(57.78, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(70.4, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        limitedPayToAge60: {
+          name: row("Limited Pay to Age 60", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(50, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(18.35, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(19.76, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(21.87, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(25.1, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(29.92, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(38.54, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(57.07, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(19.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(20.87, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(23.17, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(26.72, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(32.07, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(41.61, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(61.96, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(22.58, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(17.76, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(20.08, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(21.88, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(24.69, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(28.98, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(35.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(46.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(69.64, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(18.77, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(20.42, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(22.9, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(26.63, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(32.12, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(41.63, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(61.58, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        v20YearLimitedPay: {
+          name: row("20 year Limited Pay", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(23.45, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(24.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(26.01, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(27.76, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(29.92, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(32.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(35.85, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(40.03, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(45.45, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(52.75, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(63.07, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(24.89, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(26.05, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(27.62, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(29.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(32.07, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(35.19, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(39.08, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(44.03, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(50.52, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(59.35, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(71.71, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(22.58, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(17.76, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(25.57, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(27.06, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(29.13, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(31.81, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(35.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(40.13, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(46.24, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(54.01, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(63.84, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(76.21, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(91.95, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(23.87, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(25.25, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(27.04, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(29.29, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(32.12, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(35.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(39.8, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(45.09, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(51.76, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(60.38, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(71.94, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        limitedPayToAge55: {
+          name: row("Limited Pay to Age 55", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(45, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(18.94, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(20.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(23.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(27.76, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(35.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(51.8, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(20.03, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(21.92, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(24.99, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(29.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(37.93, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(55.98, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(26.99, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(21.47, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(20.7, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(22.91, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(26.48, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(31.81, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(41.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(61.66, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(19.35, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(21.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(24.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(29.29, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(37.67, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(55.38, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        v15YearLimitedPay: {
+          name: row("15 year Limited Pay", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(27.47, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(28.87, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(30.62, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(32.75, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(35.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(38.54, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(42.41, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(47.16, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(53.05, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(60.5, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(70.31, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(29.19, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(30.64, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(32.56, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(34.94, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(37.93, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(41.61, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(46.08, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(51.5, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(58.19, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(66.69, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(77.95, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(26.99, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(21.47, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(29.93, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(31.73, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(34.18, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(37.31, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(41.37, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(46.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(53.06, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(60.96, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(70.51, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(82.05, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(96.33, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(27.93, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(29.59, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(31.72, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(34.38, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(37.67, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(41.63, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(46.39, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(52.16, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(59.15, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(67.72, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(78.59, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        },
+        v10YearLimitedPay: {
+          name: row("10 year Limited Pay", "verified", SRC_wholeLife, ASOF_wholeLife),
+          maxIssueAnb: row(null, "verified", SRC_wholeLife, ASOF_wholeLife),
+          rates: {
+            "F-NS": {
+              "1": {
+                "20": row(36.43, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(38.38, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(40.82, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(43.8, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(47.43, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(51.8, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(57.07, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(63.41, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(70.97, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(79.99, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(90.92, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "20": row(38.76, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(40.81, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(43.51, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(46.83, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(50.95, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(55.98, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(61.96, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(68.99, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(77.22, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(86.88, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(98.5, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "2": {
+                "40": row(36.67, "verified", SRC_wholeLife, ASOF_wholeLife)
+              },
+              "3": {
+                "40": row(29.51, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(39.67, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(42.14, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(45.48, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(49.66, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(55, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(61.66, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(69.64, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(78.94, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(89.55, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(101.52, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(115.29, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(36.99, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "25": row(39.26, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "30": row(42.16, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "35": row(45.74, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "40": row(50.14, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "45": row(55.38, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "50": row(61.58, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "55": row(68.89, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "60": row(77.41, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "65": row(87.31, "verified", SRC_wholeLife, ASOF_wholeLife),
+                "70": row(98.98, "verified", SRC_wholeLife, ASOF_wholeLife)
+              }
+            }
+          }
+        }
+      }
+    },
+    endowment: {
+      name: row("Endowment", "verified", SRC_endowment, ASOF_endowment),
+      feeAnnual: row(360, "verified", SRC_endowment, ASOF_endowment),
+      minPremiumAnnual: row(null, "verified", SRC_endowment, ASOF_endowment),
+      minCover: row(55e3, "verified", SRC_endowment, ASOF_endowment),
+      maxCover: row(null, "verified", SRC_endowment, ASOF_endowment),
+      harvestedOn: row("2026-10-28", "verified", SRC_endowment, ASOF_endowment),
+      bands: row([{ band: 1, from: 0, to: 149999 }, { band: 2, from: 15e4, to: 499999 }, { band: 3, from: 5e5, to: null }], "verified", SRC_endowment, ASOF_endowment),
+      variants: {
+        v30YearEndowment: {
+          name: row("30 year endowment", "verified", SRC_endowment, ASOF_endowment),
+          maxIssueAnb: row(55, "verified", SRC_endowment, ASOF_endowment),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(30.75, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(30.76, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(30.95, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(31.3, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(32, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(33.29, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(35.5, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(39.23, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "2": {
+                "40": row(24.55, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "3": {
+                "40": row(20.52, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(31.06, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(31.25, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(31.78, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(32.76, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(34.58, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(37.67, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(42.46, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(49.42, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(30.27, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(30.36, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(30.54, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(30.82, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(31.29, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(32.09, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(33.51, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(36, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(30.44, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(30.68, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(31.13, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(31.83, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(32.93, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(34.57, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(37.07, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(40.88, "verified", SRC_endowment, ASOF_endowment)
+              }
+            }
+          }
+        },
+        v25YearEndowment: {
+          name: row("25 year endowment", "verified", SRC_endowment, ASOF_endowment),
+          maxIssueAnb: row(60, "verified", SRC_endowment, ASOF_endowment),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(35.99, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(35.97, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(36.08, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(36.32, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(36.81, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(37.74, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(39.35, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(42.16, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(46.93, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "2": {
+                "40": row(29.6, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "3": {
+                "40": row(25.73, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(36.24, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(36.34, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(36.71, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(37.41, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(38.8, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(41.26, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(45.19, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(51.1, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(59.48, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(35.53, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(35.6, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(35.73, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(35.94, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(36.29, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(36.86, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(37.89, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(39.73, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(42.99, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(35.66, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(35.84, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(36.19, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(36.75, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(37.64, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(38.94, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(40.93, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(44.01, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(48.7, "verified", SRC_endowment, ASOF_endowment)
+              }
+            }
+          }
+        },
+        v20YearEndowment: {
+          name: row("20 year endowment", "verified", SRC_endowment, ASOF_endowment),
+          maxIssueAnb: row(65, "verified", SRC_endowment, ASOF_endowment),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(44.58, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(44.52, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(44.59, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(44.73, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(45.07, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(45.71, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(46.84, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(48.82, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(52.3, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(58.23, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "2": {
+                "40": row(38.01, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "3": {
+                "40": row(34.28, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(44.78, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(44.81, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(45.05, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(45.51, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(46.51, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(48.36, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(51.42, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(56.15, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(63.06, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(72.7, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(44.15, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(44.18, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(44.29, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(44.44, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(44.7, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(45.09, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(45.8, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(47.09, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(49.42, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(53.58, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(44.24, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(44.35, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(44.63, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(45.06, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(45.75, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(46.76, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(48.29, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(50.67, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(54.34, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(59.98, "verified", SRC_endowment, ASOF_endowment)
+              }
+            }
+          }
+        },
+        v15YearEndowment: {
+          name: row("15 year endowment", "verified", SRC_endowment, ASOF_endowment),
+          maxIssueAnb: row(65, "verified", SRC_endowment, ASOF_endowment),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(59.93, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(59.85, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(59.88, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(59.95, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(60.17, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(60.62, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(61.38, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(62.7, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(65.08, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(69.28, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "2": {
+                "40": row(53.09, "verified", SRC_endowment, ASOF_endowment)
+              },
+              "3": {
+                "40": row(49.4, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(60.09, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(60.07, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(60.23, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(60.5, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(61.16, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(62.5, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(64.76, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(68.33, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(73.67, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(81.31, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(59.51, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(59.52, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(59.6, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(59.72, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(59.92, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(60.2, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(60.69, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(61.58, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(63.21, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(66.17, "verified", SRC_endowment, ASOF_endowment)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(59.57, "verified", SRC_endowment, ASOF_endowment),
+                "25": row(59.64, "verified", SRC_endowment, ASOF_endowment),
+                "30": row(59.84, "verified", SRC_endowment, ASOF_endowment),
+                "35": row(60.17, "verified", SRC_endowment, ASOF_endowment),
+                "40": row(60.72, "verified", SRC_endowment, ASOF_endowment),
+                "45": row(61.49, "verified", SRC_endowment, ASOF_endowment),
+                "50": row(62.65, "verified", SRC_endowment, ASOF_endowment),
+                "55": row(64.45, "verified", SRC_endowment, ASOF_endowment),
+                "60": row(67.25, "verified", SRC_endowment, ASOF_endowment),
+                "65": row(71.58, "verified", SRC_endowment, ASOF_endowment)
+              }
+            }
+          }
+        }
+      }
+    },
+    restAssured: {
+      name: row("Rest Assured II", "verified", SRC_restAssured, ASOF_restAssured),
+      feeAnnual: row(0, "verified", SRC_restAssured, ASOF_restAssured),
+      minPremiumAnnual: row(null, "verified", SRC_restAssured, ASOF_restAssured),
+      minCover: row(3e4, "verified", SRC_restAssured, ASOF_restAssured),
+      maxCover: row(15e4, "verified", SRC_restAssured, ASOF_restAssured),
+      harvestedOn: row("2026-10-28", "verified", SRC_restAssured, ASOF_restAssured),
+      bands: row([{ band: 1, from: 0, to: null }], "verified", SRC_restAssured, ASOF_restAssured),
+      variants: {
+        paymentToAge85: {
+          name: row("Payment to Age 85", "verified", SRC_restAssured, ASOF_restAssured),
+          maxIssueAnb: row(null, "verified", SRC_restAssured, ASOF_restAssured),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(28.9, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(29.49, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(30.58, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(32.28, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(35.04, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(39.12, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(44.84, "verified", SRC_restAssured, ASOF_restAssured),
+                "55": row(52.65, "verified", SRC_restAssured, ASOF_restAssured),
+                "60": row(63.11, "verified", SRC_restAssured, ASOF_restAssured),
+                "65": row(77.08, "verified", SRC_restAssured, ASOF_restAssured),
+                "70": row(96.77, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(27.81, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(28.44, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(29.39, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(30.79, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(32.81, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(35.62, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(39.65, "verified", SRC_restAssured, ASOF_restAssured),
+                "55": row(45.46, "verified", SRC_restAssured, ASOF_restAssured),
+                "60": row(53.81, "verified", SRC_restAssured, ASOF_restAssured),
+                "65": row(65.96, "verified", SRC_restAssured, ASOF_restAssured),
+                "70": row(84.59, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            }
+          }
+        },
+        paymentToAge100: {
+          name: row("Payment to Age 100", "verified", SRC_restAssured, ASOF_restAssured),
+          maxIssueAnb: row(null, "verified", SRC_restAssured, ASOF_restAssured),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(28.9, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(29.48, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(30.57, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(32.26, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(35.01, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(39.07, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(44.74, "verified", SRC_restAssured, ASOF_restAssured),
+                "55": row(52.46, "verified", SRC_restAssured, ASOF_restAssured),
+                "60": row(62.71, "verified", SRC_restAssured, ASOF_restAssured),
+                "65": row(76.09, "verified", SRC_restAssured, ASOF_restAssured),
+                "70": row(93.65, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(27.8, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(28.41, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(29.35, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(30.73, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(32.71, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(35.46, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(39.37, "verified", SRC_restAssured, ASOF_restAssured),
+                "55": row(44.95, "verified", SRC_restAssured, ASOF_restAssured),
+                "60": row(52.82, "verified", SRC_restAssured, ASOF_restAssured),
+                "65": row(63.83, "verified", SRC_restAssured, ASOF_restAssured),
+                "70": row(79.2, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            }
+          }
+        },
+        paymentToAge65: {
+          name: row("Payment to Age 65", "verified", SRC_restAssured, ASOF_restAssured),
+          maxIssueAnb: row(null, "verified", SRC_restAssured, ASOF_restAssured),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(29.54, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(30.49, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(32.17, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(34.85, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(39.38, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(46.82, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(59.73, "verified", SRC_restAssured, ASOF_restAssured),
+                "55": row(85.7, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(28.66, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(29.74, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(31.42, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(34.03, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(38.15, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(44.82, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(56.68, "verified", SRC_restAssured, ASOF_restAssured),
+                "55": row(81.16, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            }
+          }
+        },
+        paymentToAge60: {
+          name: row("Payment to Age 60", "verified", SRC_restAssured, ASOF_restAssured),
+          maxIssueAnb: row(null, "verified", SRC_restAssured, ASOF_restAssured),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(30.23, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(31.56, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(33.88, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(37.68, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(44.31, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(56.26, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(80.83, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(29.42, "verified", SRC_restAssured, ASOF_restAssured),
+                "25": row(30.91, "verified", SRC_restAssured, ASOF_restAssured),
+                "30": row(33.26, "verified", SRC_restAssured, ASOF_restAssured),
+                "35": row(37.04, "verified", SRC_restAssured, ASOF_restAssured),
+                "40": row(43.32, "verified", SRC_restAssured, ASOF_restAssured),
+                "45": row(54.47, "verified", SRC_restAssured, ASOF_restAssured),
+                "50": row(77.66, "verified", SRC_restAssured, ASOF_restAssured)
+              }
+            }
+          }
+        }
+      }
+    },
+    applyonCi: {
+      name: row("Critical Illness (ApplyOn)", "verified", SRC_applyonCi, ASOF_applyonCi),
+      feeAnnual: row(360, "verified", SRC_applyonCi, ASOF_applyonCi),
+      minPremiumAnnual: row(1800, "verified", SRC_applyonCi, ASOF_applyonCi),
+      minCover: row(null, "verified", SRC_applyonCi, ASOF_applyonCi),
+      maxCover: row(null, "verified", SRC_applyonCi, ASOF_applyonCi),
+      harvestedOn: row("2026-10-28", "verified", SRC_applyonCi, ASOF_applyonCi),
+      bands: row([{ band: 1, from: 0, to: 499999 }, { band: 2, from: 5e5, to: 75e4 }, { band: 3, from: 1e6, to: null }], "verified", SRC_applyonCi, ASOF_applyonCi),
+      variants: {
+        coverageToAge60: {
+          name: row("Coverage to Age 60", "verified", SRC_applyonCi, ASOF_applyonCi),
+          maxIssueAnb: row(60, "verified", SRC_applyonCi, ASOF_applyonCi),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(7.09232, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(7.57064, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(8.26468, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(9.2786, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(10.849842, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(13.32444, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(17.23168, "verified", SRC_applyonCi, ASOF_applyonCi)
+              },
+              "2": {
+                "40": row(7.18812, "verified", SRC_applyonCi, ASOF_applyonCi)
+              },
+              "3": {
+                "40": row(6.46077, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(7.6572, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.39936, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(9.49656, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(11.13968, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(13.68288, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(17.64172, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(23.79728, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(7.53792, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.23064, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(9.13692, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(10.34376, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(11.94916, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(14.03448, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(16.75956, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(7.78656, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.59232, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(9.67364, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(11.1496, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(13.18472, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(15.8956, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(19.36248, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            }
+          }
+        },
+        coverageToAge65: {
+          name: row("Coverage to Age 65", "verified", SRC_applyonCi, ASOF_applyonCi),
+          maxIssueAnb: row(60, "verified", SRC_applyonCi, ASOF_applyonCi),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(7.38088, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(7.97752, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(8.835, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(10.07704, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(11.951045, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(14.76492, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(18.84344, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(24.87544, "verified", SRC_applyonCi, ASOF_applyonCi)
+              },
+              "2": {
+                "40": row(8.3752, "verified", SRC_applyonCi, ASOF_applyonCi)
+              },
+              "3": {
+                "40": row(7.69146, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(7.98856, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.88056, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(10.19308, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(12.15096, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(15.14236, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(19.68008, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(26.35372, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(35.89132, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(7.75588, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.52768, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(9.5352, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(10.86784, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(12.6094, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(14.77796, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(17.3382, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(21.09076, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(8.02404, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.92292, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(10.12848, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(11.7682, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(13.9982, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(16.875, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(20.28476, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(24.98828, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            }
+          }
+        },
+        coverageToAge70: {
+          name: row("Coverage to Age 70", "verified", SRC_applyonCi, ASOF_applyonCi),
+          maxIssueAnb: row(60, "verified", SRC_applyonCi, ASOF_applyonCi),
+          rates: {
+            "M-NS": {
+              "1": {
+                "20": row(7.62996, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.33888, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(9.35756, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(10.82864, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(13.030242, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(16.29532, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(20.93088, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(27.4182, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "60": row(36.34504, "verified", SRC_applyonCi, ASOF_applyonCi)
+              },
+              "2": {
+                "40": row(9.4843, "verified", SRC_applyonCi, ASOF_applyonCi)
+              },
+              "3": {
+                "40": row(8.82687, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "M-S": {
+              "1": {
+                "20": row(8.20772, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(9.20848, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(10.683, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(12.88108, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(16.23532, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(21.31336, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(28.73536, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(39.0562, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "60": row(52.27776, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "F-NS": {
+              "1": {
+                "20": row(7.95012, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(8.80196, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(9.9196, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(11.39964, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(13.33704, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(15.75196, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(18.58192, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(22.40644, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "60": row(27.92896, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            },
+            "F-S": {
+              "1": {
+                "20": row(8.21772, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "25": row(9.2018, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "30": row(10.528, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "35": row(12.33556, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "40": row(14.79848, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "45": row(17.986, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "50": row(21.775, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "55": row(26.73364, "verified", SRC_applyonCi, ASOF_applyonCi),
+                "60": row(33.77744, "verified", SRC_applyonCi, ASOF_applyonCi)
+              }
+            }
+          }
+        }
+      }
+    },
+    lifespanGold: {
+      name: row("Life Span Gold", "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      feeAnnual: row(360, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      minPremiumAnnual: row(1800, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      minCover: row(1e5, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      maxCover: row(2e6, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      harvestedOn: row("2026-04-18", "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      bands: row([{ band: 1, from: 0, to: 499999 }, { band: 2, from: 5e5, to: null }], "verified", SRC_lifespanGold, ASOF_lifespanGold),
+      variants: {
+        toAge60: {
+          name: row("to age 60", "verified", SRC_lifespanGold, ASOF_lifespanGold),
+          maxIssueAnb: row(null, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+          rates: {
+            "F-NS": {
+              "1": {
+                "26": row(8.230639, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(10.343761, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(14.034473, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(4.80636, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(7.006055, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(10.577712, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            },
+            "F-S": {
+              "1": {
+                "26": row(8.592327, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(11.1496, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(15.8956, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(5.182248, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(7.83772, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(12.51088, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "26": row(7.570639, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(9.27861, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(13.324444, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(3.999855, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(5.69432, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(9.457495, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            },
+            "M-S": {
+              "1": {
+                "26": row(8.399361, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(11.139673, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(17.64172, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(4.82764, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(7.5454, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(13.761472, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            }
+          }
+        },
+        toAge65: {
+          name: row("to age 65", "verified", SRC_lifespanGold, ASOF_lifespanGold),
+          maxIssueAnb: row(null, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+          rates: {
+            "F-NS": {
+              "1": {
+                "26": row(8.527693, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(10.867859, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(14.777956, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(21.090756, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(5.10392, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(7.579665, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(11.580295, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(17.427705, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            },
+            "F-S": {
+              "1": {
+                "26": row(8.92292, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(11.76821, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(16.87501, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(24.98828, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(5.5162, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(8.50816, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(13.75012, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(21.505415, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            },
+            "M-NS": {
+              "1": {
+                "26": row(7.977518, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(10.077039, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(14.76492, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(24.875439, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(4.398265, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(6.521855, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(11.11376, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(20.523448, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            },
+            "M-S": {
+              "1": {
+                "26": row(8.880561, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(12.150961, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(19.680073, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(35.89132, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              },
+              "2": {
+                "26": row(5.304415, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "36": row(8.585095, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "46": row(15.99884, "verified", SRC_lifespanGold, ASOF_lifespanGold),
+                "56": row(31.560088, "verified", SRC_lifespanGold, ASOF_lifespanGold)
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+});
+
 // src/parameters/index.ts
 var CORE_TABLES = Object.freeze({
   ff: FF,
@@ -1458,7 +2991,8 @@ var CORE_TABLES = Object.freeze({
   riders: RIDERS,
   vehicles: VEHICLES,
   annuityLevers: ANNUITY_LEVERS,
-  retirement: RETIREMENT
+  retirement: RETIREMENT,
+  lifeRates: LIFE_RATES
 });
 var CORE_PREFIX = "core:";
 function resolveCoreRow(path) {
@@ -1472,6 +3006,23 @@ function resolveCoreRow(path) {
   }
   if (!isRow(node)) throw new Error(`Parameter path "${path}" is a group, not a row`);
   return node;
+}
+function nodeAt(path) {
+  if (!path.startsWith(CORE_PREFIX)) return void 0;
+  let node = CORE_TABLES;
+  for (const key of path.slice(CORE_PREFIX.length).split(".")) {
+    if (node == null || typeof node !== "object" || !(key in node)) return void 0;
+    node = node[key];
+  }
+  return node;
+}
+function coreRowExists(path) {
+  return isRow(nodeAt(path));
+}
+function coreGroupKeys(path) {
+  const node = nodeAt(path);
+  if (!node || typeof node !== "object" || isRow(node)) return [];
+  return Object.keys(node);
 }
 function coreRowPaths() {
   const out = [];
@@ -2105,6 +3656,7 @@ function checkCommon(f, problems, parentKeys) {
     if (!isNum(f.client.age)) problems.push("client.age must be a number");
     if (!["male", "female"].includes(f.client.sex)) problems.push("client.sex must be male or female");
     if (!TRISTATE.has(f.client.hasHealthCover)) problems.push("client.hasHealthCover must be yes, no or unknown");
+    if (f.client.smoker !== void 0 && typeof f.client.smoker !== "boolean") problems.push("client.smoker must be true or false when it is given");
   }
   if (f.partner !== null) {
     if (!isObj(f.partner)) problems.push("partner must be an object or null");
@@ -2554,7 +4106,7 @@ function computeHouseholdBudget(input) {
   const bad = debts.expensiveDebt;
   const { stage, ceiling } = stageAndCeiling(b, { hhNet, surplus, buffer, expensiveDebt: bad, emergencyFundMonths: ef });
   const shares = b.get("core:ff.closing.bandShares");
-  const needsRatio = needs / hhNet;
+  const needsRatio = hhNet > 0 ? needs / hhNet : needs > 0 ? Infinity : 0;
   const hardballRatio = b.num("core:ff.budget.hardballNeedsRatio");
   const shortfall = surplus <= 0 ? -surplus : Math.max(0, needs - hardballRatio * hhNet);
   const hours = Math.ceil(shortfall / b.num("core:ff.budget.minimumWageHourly") / b.num("core:ff.budget.weeksPerMonth"));
@@ -3244,16 +4796,219 @@ function computeRetirementIncome(facts, netPay) {
   };
 }
 
-// src/premiums.ts
-var RATE_PATHS = {
+// src/life-rates.ts
+var BOOK = Object.freeze({
+  term: { product: "term", variant: "levelConvertibleTermTo65", productId: "term" },
+  "whole-life": { product: "wholeLife", variant: "wholeLife", productId: "whole-life" },
+  ci: { product: "lifespanGold", variant: "toAge65", productId: "life-span-gold" },
+  "rest-assured": { product: "restAssured", variant: "paymentToAge100", productId: "rest-assured-ii" }
+});
+var SAMPLE_PATHS = Object.freeze({
   term: ["core:ff.premiumRates.termPer1000", "core:ff.premiumRates.termAgeGrowth"],
   "whole-life": ["core:ff.premiumRates.wholeLifePer1000", "core:ff.premiumRates.wholeLifeAgeGrowth"],
   ci: ["core:ff.premiumRates.ciPer1000", "core:ff.premiumRates.ciAgeGrowth"]
-};
-function ratePer1000(b, kind, age) {
-  const [base, growth] = RATE_PATHS[kind];
-  return b.num(base) * Math.pow(b.num(growth), age - b.num("core:ff.premiumRates.baseAge"));
+});
+function cents(x) {
+  const y = x * 100;
+  const f = Math.floor(y);
+  const d = y - f;
+  if (Math.abs(d - 0.5) < 1e-6) return (f % 2 === 0 ? f : f + 1) / 100;
+  return Math.round(y) / 100;
 }
+var money = (x) => `$${x.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+var whole = (x) => `$${Math.round(x).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+var rateText = (r) => `$${(Math.round(r * 1e4) / 1e4).toFixed(4)}`;
+function ratePer1000(b, kind, anb) {
+  const [base, growth] = SAMPLE_PATHS[kind];
+  return b.num(base) * Math.pow(b.num(growth), anb - b.num("core:ff.premiumRates.baseAge"));
+}
+function restAssuredAnchorPer1000(b, anb, sex) {
+  const anchor = restAssuredAnchor(b, sex);
+  const years = anb - anchor.ratedAge;
+  return years === 0 ? anchor.per1000 : anchor.per1000 * Math.pow(b.num("core:ff.premiumRates.restAssuredAgeGrowth"), years);
+}
+function restAssuredAnchor(b, sex) {
+  return b.get(
+    sex === "female" ? "core:ff.premiumRates.restAssuredFemale" : "core:ff.premiumRates.restAssuredMale"
+  );
+}
+function isQuotedRestAssuredAge(b, anb, sex) {
+  return restAssuredAnchor(b, sex).ratedAge === anb;
+}
+function seriesFor(b, kind, rating) {
+  const sexKey = rating.sex === "female" ? "F" : "M";
+  if (rating.sex === null) {
+    b.caveat(kind === "rest-assured" ? `${rating.who}: sex not known, so Rest Assured II is priced on the male rate (the higher one).` : `${rating.who}: sex not known, so the rate is the male one (the higher).`);
+  }
+  if (kind === "rest-assured") {
+    b.rule("Rest Assured II has no smoker rates: one rate for everyone.");
+    return `${sexKey}-NS`;
+  }
+  if (rating.smoker === null) b.caveat("Non-smoker rates — ask if they smoke.");
+  return `${sexKey}-${rating.smoker === true ? "S" : "NS"}`;
+}
+function bandFor(b, product2, cover) {
+  const bands = b.get(`core:lifeRates.products.${product2}.bands`);
+  for (const x of bands) {
+    if (cover >= x.from && (x.to === null || cover <= x.to)) return x;
+  }
+  return null;
+}
+var isMiss = (x) => "grid" in x;
+function rateAt(b, base, anb) {
+  const ages = coreGroupKeys(base).map(Number).sort((x, y) => x - y);
+  if (ages.length === 0) return { grid: null };
+  if (ages.includes(anb)) return { rate: b.num(`${base}.${anb}`), how: "", gap: 0 };
+  let lo = null;
+  let hi = null;
+  for (const a of ages) {
+    if (a < anb) lo = a;
+    else if (a > anb && hi === null) hi = a;
+  }
+  if (lo === null || hi === null) return { grid: [ages[0], ages[ages.length - 1]] };
+  const rLo = b.num(`${base}.${lo}`);
+  const rHi = b.num(`${base}.${hi}`);
+  const rate = rLo + (rHi - rLo) * (anb - lo) / (hi - lo);
+  return {
+    rate,
+    how: `ANB ${anb} between ${lo} (${rateText(rLo)}) and ${hi} (${rateText(rHi)}): `,
+    gap: hi - lo
+  };
+}
+function fallbackQuote(b, kind, cover, anb, rating, reason) {
+  const quoted = kind === "rest-assured" && isQuotedRestAssuredAge(b, anb, rating.sex);
+  if (quoted) {
+    b.rule(`Rest Assured II at ANB ${anb} is the ApplyOn quote for that exact age: ${reason}`);
+  } else {
+    b.caveat(kind === "rest-assured" ? `Rest Assured II is priced from the two quoted ApplyOn rates moved by an age factor: ${reason}.` : `Sample rates, not Tatil's: ${reason}.`);
+  }
+  const which = kind === "rest-assured" ? quoted ? "the ApplyOn quote for this age" : "the two quoted ApplyOn rates and the age factor" : "the SAMPLE curve";
+  const per1000 = kind === "rest-assured" ? restAssuredAnchorPer1000(b, anb, rating.sex) : ratePer1000(b, kind, anb);
+  const monthly = cover * per1000 / 1e3;
+  return Object.freeze({
+    yearly: null,
+    monthly,
+    ratePer1000: per1000,
+    band: null,
+    basis: quoted ? "verified" : "estimate",
+    minApplied: false,
+    reason,
+    working: `${which}: ${rateText(per1000)} per $1,000 a month x ${cover / 1e3} = ${money(monthly)} / mth (${reason})`
+  });
+}
+function premiumQuote(b, kind, cover, anb, rating) {
+  const ref = BOOK[kind];
+  const vPath = `core:lifeRates.products.${ref.product}.variants.${ref.variant}`;
+  const name = b.get(`core:lifeRates.products.${ref.product}.name`);
+  const maxIssue = b.get(`${vPath}.maxIssueAnb`);
+  if (maxIssue !== null && anb > maxIssue) {
+    const reason = "Not available at this age";
+    b.rule(`${rating.who}: ${name} is not issued at ANB ${anb} (Tatil's maximum issue age is ANB ${maxIssue})`);
+    return Object.freeze({
+      yearly: null,
+      monthly: null,
+      ratePer1000: null,
+      band: null,
+      basis: "verified",
+      minApplied: false,
+      reason,
+      working: `${name}: ${reason} (maximum issue age ANB ${maxIssue})`
+    });
+  }
+  const series = seriesFor(b, kind, rating);
+  const band = bandFor(b, ref.product, cover);
+  if (band === null) {
+    return fallbackQuote(b, kind, cover, anb, rating, `${whole(cover)} falls between two rate bands`);
+  }
+  const hit = rateAt(b, `${vPath}.rates.${series}.${band.band}`, anb);
+  if (isMiss(hit)) {
+    const where = `${name}, ${series}, band ${band.band}`;
+    const reason = hit.grid === null ? `${where} has not been harvested yet` : `ANB ${anb} is outside the harvested ages (${hit.grid[0] === hit.grid[1] ? `only ANB ${hit.grid[0]}` : `ANB ${hit.grid[0]}-${hit.grid[1]}`}) for ${where}`;
+    return fallbackQuote(b, kind, cover, anb, rating, reason);
+  }
+  if (hit.gap > 5) {
+    b.caveat(`Straight line across a ${hit.gap}-year gap in the harvested ages: rougher than usual.`);
+  }
+  const fee = b.num(`core:lifeRates.products.${ref.product}.feeAnnual`);
+  const minAnnual = b.get(`core:lifeRates.products.${ref.product}.minPremiumAnnual`);
+  let yearly = cents(hit.rate * cover / 1e3 + fee);
+  let working = `${hit.how}${rateText(hit.rate)} per $1,000 x ${cover / 1e3}${fee ? ` + ${whole(fee)} fee` : ""} = ${money(yearly)} / yr`;
+  let minApplied = false;
+  if (minAnnual !== null && yearly < minAnnual) {
+    minApplied = true;
+    b.caveat(`Below Tatil's minimum premium: raised to ${money(minAnnual)} a year. The cover stays at ${whole(cover)}.`);
+    working += `; raised to the ${money(minAnnual)} minimum`;
+    yearly = minAnnual;
+  }
+  const factor = b.num("core:lifeRates.meta.modal.monthly");
+  const monthly = cents(yearly * factor);
+  working += `; x ${factor} = ${money(monthly)} / mth`;
+  return Object.freeze({
+    yearly,
+    monthly,
+    ratePer1000: hit.rate,
+    band: band.band,
+    basis: "verified",
+    minApplied,
+    reason: null,
+    working
+  });
+}
+function coverForPremium(b, kind, monthly, anb, rating) {
+  const ref = BOOK[kind];
+  const vPath = `core:lifeRates.products.${ref.product}.variants.${ref.variant}`;
+  const spec = b.get(`core:products.${ref.productId}`);
+  const name = b.get(`core:lifeRates.products.${ref.product}.name`);
+  const maxIssue = b.get(`${vPath}.maxIssueAnb`);
+  if (monthly <= 0) return 0;
+  if (maxIssue !== null && anb > maxIssue) {
+    b.rule(`${rating.who}: ${name} is not issued at ANB ${anb}, so no budget buys cover`);
+    return 0;
+  }
+  const minAnnual = b.get(`core:lifeRates.products.${ref.product}.minPremiumAnnual`);
+  const factor = b.num("core:lifeRates.meta.modal.monthly");
+  if (minAnnual !== null && monthly + 5e-3 < cents(minAnnual * factor)) {
+    b.caveat(`A budget of ${money(monthly)} a month is under ${name}'s minimum premium of ${money(cents(minAnnual * factor))} a month, so it buys no cover.`);
+    return 0;
+  }
+  const series = seriesFor(b, kind, rating);
+  const bands = b.get(`core:lifeRates.products.${ref.product}.bands`);
+  const fee = b.num(`core:lifeRates.products.${ref.product}.feeAnnual`);
+  const minCover = spec.cover?.min ?? 0;
+  const maxCover = spec.cover?.max ?? Infinity;
+  const yearly = monthly / factor;
+  let best = 0;
+  let sawBand = false;
+  let underMinCover = 0;
+  for (const band of bands) {
+    const hit = rateAt(b, `${vPath}.rates.${series}.${band.band}`, anb);
+    if (isMiss(hit)) continue;
+    sawBand = true;
+    const cover = Math.floor((yearly - fee) / hit.rate * 1e3);
+    if (cover <= 0) continue;
+    if (cover < band.from || band.to !== null && cover > band.to) continue;
+    if (cover > maxCover) continue;
+    if (cover < minCover) {
+      underMinCover = Math.max(underMinCover, cover);
+      continue;
+    }
+    const priced = premiumQuote(b, kind, cover, anb, rating).monthly;
+    if (priced === null || priced > monthly + 5e-3) continue;
+    best = Math.max(best, cover);
+  }
+  if (!sawBand) {
+    b.caveat(`Sample rates, not Tatil's: ${name} has no harvested rate at ANB ${anb}.`);
+    const per1000 = kind === "rest-assured" ? restAssuredAnchorPer1000(b, anb, rating.sex) : ratePer1000(b, kind, anb);
+    return per1000 > 0 ? monthly / per1000 * 1e3 : 0;
+  }
+  if (best === 0 && underMinCover > 0) {
+    const needs = premiumQuote(b, kind, minCover, anb, rating).monthly;
+    b.caveat(`${money(monthly)} a month buys ${whole(underMinCover)}, under ${name}'s minimum cover of ${whole(minCover)}; that needs about ${needs === null ? "more" : money(needs)} a month.`);
+  }
+  return best;
+}
+
+// src/premiums.ts
 function roughBand(b, estimate, minimumMonthly) {
   const spread = b.num("core:ff.premiumRates.bandSpread");
   const low = estimate * (1 - spread);
@@ -3267,12 +5022,14 @@ function roughBand(b, estimate, minimumMonthly) {
     label: "rough"
   });
 }
-function premiumFor(b, kind, cover, age) {
-  return cover * ratePer1000(b, kind, age) / 1e3;
+function premiumFor(b, kind, cover, anb, rating) {
+  return premiumQuote(b, kind, cover, anb, rating).monthly;
 }
-function coverForPremium(b, kind, monthly, age) {
-  const r = ratePer1000(b, kind, age);
-  return r > 0 ? monthly / r * 1e3 : 0;
+function coverForPremium2(b, kind, monthly, anb, rating) {
+  return coverForPremium(b, kind, monthly, anb, rating);
+}
+function clientRating(client) {
+  return { sex: client.sex, smoker: client.smoker ?? null, who: "You" };
 }
 function ratedAge(age) {
   return age + 1;
@@ -3288,20 +5045,20 @@ function restAssuredRatedAge(age) {
 function restAssuredEligible(b, age) {
   return canIssue(b, "rest-assured-ii", age);
 }
+function restAssuredRating(insured) {
+  return { sex: insured.sex, smoker: null, who: insured.who };
+}
 function restAssuredPer1000(b, insured) {
   if (insured.sex === null) {
     b.caveat(`${insured.who}: sex not known, so Rest Assured II is priced on the male rate (the higher one).`);
   }
-  const anchor = b.get(insured.sex === "female" ? "core:ff.premiumRates.restAssuredFemale" : "core:ff.premiumRates.restAssuredMale");
-  const years = restAssuredRatedAge(insured.age) - anchor.ratedAge;
-  return years === 0 ? anchor.per1000 : anchor.per1000 * Math.pow(b.num("core:ff.premiumRates.restAssuredAgeGrowth"), years);
+  return restAssuredAnchorPer1000(b, restAssuredRatedAge(insured.age), insured.sex);
 }
 function restAssuredPremium(b, insured, cover) {
-  return cover * restAssuredPer1000(b, insured) / 1e3;
+  return premiumFor(b, "rest-assured", cover, restAssuredRatedAge(insured.age), restAssuredRating(insured)) ?? 0;
 }
 function restAssuredCoverFor(b, insured, monthly) {
-  const r = restAssuredPer1000(b, insured);
-  return r > 0 ? monthly / r * 1e3 : 0;
+  return coverForPremium2(b, "rest-assured", monthly, restAssuredRatedAge(insured.age), restAssuredRating(insured));
 }
 function fitToMinimums(rows, total) {
   if (total <= 0) {
@@ -3357,6 +5114,7 @@ function homePlan(b, facts, budget, g) {
   const loan = g.price - dep;
   const target = Math.max(0, dep + close - g.saved);
   const age = facts.client.age;
+  const rating = clientRating(facts.client);
   const term = Math.max(b.num("core:ff.goals.mortgageMinYears"), Math.min(b.num("core:ff.goals.mortgageMaxYears"), b.num("core:ff.goals.mortgageEndsByAge") - age - g.years));
   const ratePct = b.num("core:ff.goals.mortgageRatePct");
   const pay = amortisedPayment(loan, ratePct, term);
@@ -3377,8 +5135,8 @@ function homePlan(b, facts, budget, g) {
       likelyLoan: pvOfPayment(maxPay, ratePct, term),
       stampDutyReliefPossible: g.price < b.num("core:ff.goals.stampDutyReliefBelow"),
       loanCoverMonthly: {
-        atPurchase: Math.max(minCover, premiumFor(b, "term", loan, age + g.years)),
-        tenYearsLater: Math.max(minCover, premiumFor(b, "term", loan, age + g.years + 10)),
+        atPurchase: Math.max(minCover, premiumFor(b, "term", loan, ratedAge(age + g.years), rating) ?? 0),
+        tenYearsLater: Math.max(minCover, premiumFor(b, "term", loan, ratedAge(age + g.years + 10), rating) ?? 0),
         label: "rough"
       }
     }
@@ -3426,27 +5184,49 @@ function assertRidersAllowed(b, product2, riders) {
     }
   }
 }
-function coverPerDollar(b, basis, age) {
+function coverAt(b, basis, monthly, age, rating) {
+  const anb = ratedAge(age);
   switch (basis) {
     case "term":
-      return 1e3 / ratePer1000(b, "term", age);
+      return coverForPremium2(b, "term", monthly, anb, rating);
     case "whole-life":
-      return 1e3 / ratePer1000(b, "whole-life", age);
+      return coverForPremium2(b, "whole-life", monthly, anb, rating);
     case "ci":
-      return 1e3 / ratePer1000(b, "ci", age);
+      return coverForPremium2(b, "ci", monthly, anb, rating);
+    // Cashbuilder II buys cover with 70% of its premium, at the whole life rate.
     case "cashbuilder":
-      return b.num("core:ff.premiumRates.cashbuilderCoverShare") * 1e3 / ratePer1000(b, "whole-life", age);
+      return coverForPremium2(b, "whole-life", monthly * b.num("core:ff.premiumRates.cashbuilderCoverShare"), anb, rating);
     case "endowment":
-      return 12 * b.num("core:ff.premiumRates.endowmentCoverYears") * b.num("core:ff.premiumRates.endowmentCoverShare");
+      return monthly * 12 * b.num("core:ff.premiumRates.endowmentCoverYears") * b.num("core:ff.premiumRates.endowmentCoverShare");
     case "none":
       return 0;
   }
 }
-function minimumFor(b, row2) {
+function premiumForCover(b, basis, cover, age, rating) {
+  const anb = ratedAge(age);
+  switch (basis) {
+    case "term":
+      return premiumFor(b, "term", cover, anb, rating) ?? 0;
+    case "whole-life":
+      return premiumFor(b, "whole-life", cover, anb, rating) ?? 0;
+    case "ci":
+      return premiumFor(b, "ci", cover, anb, rating) ?? 0;
+    case "cashbuilder": {
+      const share = b.num("core:ff.premiumRates.cashbuilderCoverShare");
+      return share > 0 ? (premiumFor(b, "whole-life", cover, anb, rating) ?? 0) / share : 0;
+    }
+    case "endowment": {
+      const per = 12 * b.num("core:ff.premiumRates.endowmentCoverYears") * b.num("core:ff.premiumRates.endowmentCoverShare");
+      return per > 0 ? cover / per : 0;
+    }
+    case "none":
+      return 0;
+  }
+}
+function minimumFor(b, row2, rating) {
   const spec = b.get(`core:products.${row2.product}`);
   const minPrem = spec.minPremiumMonthly ?? 0;
-  const per = coverPerDollar(b, row2.basis, row2.insuredAge);
-  const coverMin = spec.cover && per > 0 ? spec.cover.min / per : 0;
+  const coverMin = spec.cover ? premiumForCover(b, row2.basis, spec.cover.min, row2.insuredAge, rating) : 0;
   return Math.max(minPrem, coverMin);
 }
 function profileFor(facts) {
@@ -3477,8 +5257,9 @@ var fmt = (n) => `$${Math.round(n).toLocaleString("en-US")}`;
 function protectionPlanFor(b, facts, profile, item) {
   const { key } = item;
   const age = facts.client.age;
+  const rating = clientRating(facts.client);
   const capped = (product2, cover) => Math.min(b.get(`core:products.${product2}`).cover?.max ?? Infinity, cover);
-  const at = (basis, product2) => (monthly) => capped(product2, monthly * coverPerDollar(b, basis, age));
+  const at = (basis, product2) => (monthly) => capped(product2, coverAt(b, basis, monthly, age, rating));
   const ra = (insured) => (monthly) => capped("rest-assured-ii", restAssuredCoverFor(b, insured, monthly));
   const life = item.product === "whole-life" ? { product: "whole-life", name: "Whole life" } : { product: "term", name: "Term life" };
   if (key === "life-ruin") {
@@ -3595,14 +5376,13 @@ function protectionGroup(b, facts, profile, from, note) {
   const total = funded.reduce((a, p) => a + p.monthly, 0);
   return { title: "Protection", totalMonthly: total, funded, notYet, note: note + notYetNote(notYet) };
 }
-function fitGroup(b, title, total, rows, note) {
+function fitGroup(b, title, total, rows, note, rating) {
   for (const r0 of rows) assertRidersAllowed(b, r0.product, r0.riders);
-  const fitRows = rows.map((r0) => ({ key: r0, min: minimumFor(b, r0), weight: r0.weight }));
+  const fitRows = rows.map((r0) => ({ key: r0, min: minimumFor(b, r0, rating), weight: r0.weight }));
   const fit = fitToMinimums(fitRows, total);
   const funded = fit.funded.map(({ key: r0, monthly, min }) => {
     const spec = b.get(`core:products.${r0.product}`);
-    const per = coverPerDollar(b, r0.basis, r0.insuredAge);
-    const cover = per > 0 ? Math.min(spec.cover?.max ?? Infinity, monthly * per) : null;
+    const cover = r0.basis === "none" ? null : Math.min(spec.cover?.max ?? Infinity, coverAt(b, r0.basis, monthly, r0.insuredAge, rating));
     const band = roughBand(b, monthly, spec.minPremiumMonthly);
     return {
       key: r0.key,
@@ -3633,7 +5413,7 @@ function computeInsuranceBudget(facts, budget, buckets, from) {
   b.rule("each savings plan gets its minimum first; plans that cannot reach their minimum wait as 'not yet'");
   return {
     profile,
-    groups: [protectionGroup(b, facts, profile, from, protNote), fitGroup(b, "Savings plans", savTotal, savingsRows(facts, profile), savNote)],
+    groups: [protectionGroup(b, facts, profile, from, protNote), fitGroup(b, "Savings plans", savTotal, savingsRows(facts, profile), savNote, clientRating(facts.client))],
     note: "A budget, not a quote. Kyron turns it into real prices, and checks what fits your health and your goals.",
     provenance: b.build()
   };
@@ -3654,11 +5434,13 @@ function computeHealthScore(input) {
   const sc4 = retirement.wantedMonthly > 0 ? Math.min(max, max * retirement.floorMonthly / retirement.wantedMonthly) : max;
   const held = deathNeed.cover.knownLife + input.savings;
   const sc5 = max * held / Math.max(1, held + deathNeed.tiers.essential);
-  const score = Math.round(sc1 + sc2 + sc3 + sc4 + sc5);
+  const raw = Math.round(sc1 + sc2 + sc3 + sc4 + sc5);
+  const score = Number.isFinite(raw) ? raw : 0;
   const labels = b.get("core:ff.healthScore.labels");
+  const band = labels.find((l) => score >= l.from) || labels[labels.length - 1];
   return {
     score,
-    label: labels.find((l) => score >= l.from).label,
+    label: band.label,
     parts: [
       { key: "spending", label: "Spending", points: sc1, explains: "Needs as a share of take-home" },
       { key: "cushion", label: "Savings cushion", points: sc2, explains: "Months of costs saved, out of 6" },
@@ -3875,7 +5657,7 @@ var DEBT_WORDS = {
   informal: "family loan",
   other: "loan"
 };
-function money(n) {
+function money2(n) {
   const s = Math.abs(Math.round(n)).toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
   return (n < 0 ? "-$" : "$") + s;
 }
@@ -3891,10 +5673,10 @@ function computeClosing(ctxIn, options = {}) {
   const b = new ProvenanceBuilder();
   for (const p of [budget.provenance, careGraph2.provenance, deathNeed.provenance, retirement.provenance]) b.merge(p);
   const age = facts.client.age;
-  const TR = ratePer1000(b, "term", age);
-  const WL = ratePer1000(b, "whole-life", age);
+  const anb = ratedAge(age);
+  const rating = clientRating(facts.client);
   const term = b.get("core:products.term");
-  const whole = b.get("core:products.whole-life");
+  const whole2 = b.get("core:products.whole-life");
   const minCover = b.num("core:ff.closing.minimumCoverOnPlan");
   const tol = b.num("core:ff.deathNeed.metTolerance");
   const uw = deathNeed.underwritingCeiling;
@@ -3911,13 +5693,13 @@ function computeClosing(ctxIn, options = {}) {
       case "medical":
         return met ? "Final medical bills are paid." : "Final medical bills fall on the family.";
       case "debt":
-        return met ? "The expensive debt is cleared." : `The ${money(o.amount)} of expensive debt stays with the family.`;
+        return met ? "The expensive debt is cleared." : `The ${money2(o.amount)} of expensive debt stays with the family.`;
       case "mortgage":
-        return met ? "The mortgage clears. The family keeps the house." : `The mortgage of ${money(o.amount)} stays.`;
+        return met ? "The mortgage clears. The family keeps the house." : `The mortgage of ${money2(o.amount)} stays.`;
       case "income":
         return met || sv.monthOfShortfall === null ? "The household has enough to live on until the youngest is 19." : `The household money runs out in month ${sv.monthOfShortfall}.`;
       case "legacy":
-        return met ? `${money(o.amount)} is left behind, outside your estate.` : "Nothing is left behind.";
+        return met ? `${money2(o.amount)} is left behind, outside your estate.` : "Nothing is left behind.";
     }
     if (o.kind === "care" || o.kind === "edu") {
       const what = o.kind === "care" ? "care" : "degree";
@@ -3972,18 +5754,18 @@ function computeClosing(ctxIn, options = {}) {
     const notes = [];
     const partner = facts.partner;
     const spouseName = partner?.firstName ?? "Your partner";
-    if (L2 >= 2) notes.push(partner ? `${spouseName}'s income: ${money(partner.incomeMonthly)} a month, to age ${b.num("core:ff.deathNeed.partnerWorksToAge")}.` : "No partner income.");
-    if (L2 >= 3) notes.push(facts.client.nisPaying ? `NIS survivors' benefit: ${money(b.num("core:ff.offsets.nisSurvivorSpouseMonthly"))} a month to your spouse, and ${money(b.num("core:ff.offsets.nisSurvivorChildMonthly"))} a month for each child to ${b.num("core:ff.offsets.nisSurvivorChildToAge")}.` : "No NIS record, so no survivors' benefit.");
+    if (L2 >= 2) notes.push(partner ? `${spouseName}'s income: ${money2(partner.incomeMonthly)} a month, to age ${b.num("core:ff.deathNeed.partnerWorksToAge")}.` : "No partner income.");
+    if (L2 >= 3) notes.push(facts.client.nisPaying ? `NIS survivors' benefit: ${money2(b.num("core:ff.offsets.nisSurvivorSpouseMonthly"))} a month to your spouse, and ${money2(b.num("core:ff.offsets.nisSurvivorChildMonthly"))} a month for each child to ${b.num("core:ff.offsets.nisSurvivorChildToAge")}.` : "No NIS record, so no survivors' benefit.");
     const unknowns = L2 >= 4 ? deathNeed.cover.unknownLabels : [];
     if (L2 >= 4) {
-      notes.push(`Savings of ${money(facts.budget.savings)} are counted.`);
+      notes.push(`Savings of ${money2(facts.budget.savings)} are counted.`);
       for (const u of unknowns) notes.push(`${u}: ${UNKNOWN_SENTENCE}`);
     }
-    if (L2 >= 5) notes.push(`Your plan adds ${money(Math.min(uw, cover))} of cover.`);
+    if (L2 >= 5) notes.push(`Your plan adds ${money2(Math.min(uw, cover))} of cover.`);
     const mort = lines.find((l) => l.key === "mortgage");
     const inc = lines.find((l) => l.key === "income");
-    const head = [`Your family receives ${money(lump)}.`];
-    if (mort) head.push(mort.met ? "The mortgage clears." : `The mortgage of ${money(mort.amount)} stays.`);
+    const head = [`Your family receives ${money2(lump)}.`];
+    if (mort) head.push(mort.met ? "The mortgage clears." : `The mortgage of ${money2(mort.amount)} stays.`);
     if (L2 >= 5 && partner && inc?.met) head.push(`${spouseName}'s income is replaced to age ${partner.age + b.num("core:ff.deathNeed.survivorYears")}.`);
     else if (sv.monthOfShortfall !== null && !inc?.met) head.push(`The money runs out in month ${sv.monthOfShortfall}.`);
     const sentences = [...head, ...lines.map((l) => l.sentence), ...unknowns.length ? [UNKNOWN_SENTENCE] : []];
@@ -4025,8 +5807,8 @@ function computeClosing(ctxIn, options = {}) {
     const met = cash >= ciNeed + deathNeed.cover.knownCI || ciNeed <= 0;
     const s = [];
     if (planSentence) s.push(planSentence);
-    else s.push(deathNeed.cover.knownCI > 0 ? `Your critical illness cover pays ${money(deathNeed.cover.knownCI)}.` : "No critical illness cover.");
-    s.push(`Recovery is paid from ${money(cash)}, about ${(needs > 0 ? cash / needs : 0).toFixed(1)} months of costs.`);
+    else s.push(deathNeed.cover.knownCI > 0 ? `Your critical illness cover pays ${money2(deathNeed.cover.knownCI)}.` : "No critical illness cover.");
+    s.push(`Recovery is paid from ${money2(cash)}, about ${(needs > 0 ? cash / needs : 0).toFixed(1)} months of costs.`);
     if (ciUnknown.length) s.push(UNKNOWN_SENTENCE);
     return {
       lumpAvailable: lump,
@@ -4041,7 +5823,7 @@ function computeClosing(ctxIn, options = {}) {
   const criticalIllness = {
     coverSuggested: ciCover,
     today: ciOutcome(deathNeed.cover.knownCI, null),
-    plan: ciOutcome(deathNeed.cover.knownCI + ciCover, ciCover > 0 ? `Life Span Gold pays ${money(ciCover)} as one lump sum on diagnosis, to use as you need while you recover.` : "Your cover in force already meets the critical illness need.")
+    plan: ciOutcome(deathNeed.cover.knownCI + ciCover, ciCover > 0 ? `Life Span Gold pays ${money2(ciCover)} as one lump sum on diagnosis, to use as you need while you recover.` : "Your cover in force already meets the critical illness need.")
   };
   const ri = retirement;
   const sources = ri.workPension.monthly > 0 ? ri.workPension.kind === "public-service" ? "NIS, the Senior Citizens' Pension and your public service pension" : "NIS, the Senior Citizens' Pension and your work pension" : "NIS and the Senior Citizens' Pension";
@@ -4051,7 +5833,7 @@ function computeClosing(ctxIn, options = {}) {
     monthsUntilShortfall: ri.gapMonthly > 0 ? 1 : null,
     obligationsMet: ri.gapMonthly > 0 ? [] : ["Income for life"],
     obligationsFailed: ri.gapMonthly > 0 ? ["Income for life"] : [],
-    sentences: [ri.gapMonthly > 0 ? `At ${ri.retireAge} you can count on ${money(ri.floorMonthly)} a month from ${sources}. You want ${money(ri.wantedMonthly)}. The gap is ${money(ri.gapMonthly)} a month, for life.` : `At ${ri.retireAge} you can count on ${money(ri.floorMonthly)} a month from ${sources}. You want ${money(ri.wantedMonthly)}. Your pensions cover it.`],
+    sentences: [ri.gapMonthly > 0 ? `At ${ri.retireAge} you can count on ${money2(ri.floorMonthly)} a month from ${sources}. You want ${money2(ri.wantedMonthly)}. The gap is ${money2(ri.gapMonthly)} a month, for life.` : `At ${ri.retireAge} you can count on ${money2(ri.floorMonthly)} a month from ${sources}. You want ${money2(ri.wantedMonthly)}. Your pensions cover it.`],
     unknowns: []
   };
   const explorer = ri.stress.find((s) => s.vehicleId === "destiny-explorer");
@@ -4062,8 +5844,8 @@ function computeClosing(ctxIn, options = {}) {
     obligationsMet: ["Income for life"],
     obligationsFailed: [],
     sentences: ri.gapMonthly > 0 ? [
-      `Saving ${money(ri.destinyMonthly)} a month into Destiny ${ri.routing.mode === "registered" ? "Registered" : "Unregistered"} closes the gap, and a life annuity at retirement pays it for as long as you live.`,
-      ...ri.reliefAnnual > 0 ? [`About ${money(ri.reliefAnnual)} a year comes back in tax.`] : [],
+      `Saving ${money2(ri.destinyMonthly)} a month into Destiny ${ri.routing.mode === "registered" ? "Registered" : "Unregistered"} closes the gap, and a life annuity at retirement pays it for as long as you live.`,
+      ...ri.reliefAnnual > 0 ? [`About ${money2(ri.reliefAnnual)} a year comes back in tax.`] : [],
       ...explorer ? [explorer.sentence] : []
     ] : ["No extra retirement saving is needed for the income you want."],
     unknowns: []
@@ -4115,9 +5897,8 @@ function computeClosing(ctxIn, options = {}) {
   if (!dependants) b.rule("no partner, no children, no parent care paid: no ruin-level life cover");
   const lifeProduct = canIssue(b, "term", age) ? "term" : "whole-life";
   if (dependants && lifeProduct === "whole-life") b.rule(`term life cannot be issued at rated age ${ratedAge(age)}, so the ruin-level life plan is whole life`);
-  const lifeSpec = lifeProduct === "term" ? term : whole;
-  const lifeRate = lifeProduct === "term" ? TR : WL;
-  const lifePremium = (cover) => cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, cover * lifeRate / 1e3) : 0;
+  const lifeSpec = lifeProduct === "term" ? term : whole2;
+  const lifePremium = (cover) => cover > 0 ? Math.max(lifeSpec.minPremiumMonthly ?? 0, premiumFor(b, lifeProduct, cover, anb, rating) ?? 0) : 0;
   const essPrem = lifePremium(packages.essential);
   const recPrem = lifePremium(packages.recommended);
   const cardPrem = (k) => lifePremium(packages[k]);
@@ -4126,9 +5907,8 @@ function computeClosing(ctxIn, options = {}) {
     if (!ok) b.rule(`${what}: ${id2} cannot be issued at rated age ${ratedAge(insuredAge)}, so there is no ladder item`);
     return ok;
   };
-  const ciRate = ratePer1000(b, "ci", age);
-  const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, lsg.cover.min * ciRate / 1e3);
-  const ciFull = Math.max(ciMin, ciCover * ciRate / 1e3);
+  const ciMin = Math.max(lsg.minPremiumMonthly ?? 0, premiumFor(b, "ci", lsg.cover.min, anb, rating) ?? 0);
+  const ciFull = Math.max(ciMin, premiumFor(b, "ci", ciCover, anb, rating) ?? 0);
   const build = b.num("core:ff.budget.bufferBuildMonths");
   const oneMonth = Math.max(0, needs * b.num("core:ff.budget.bufferPreconditionMonths") - facts.budget.savings) / build;
   const threeMonths = Math.max(0, needs * b.num("core:ff.budget.bufferTargetMonths") - facts.budget.savings) / build;
@@ -4139,7 +5919,7 @@ function computeClosing(ctxIn, options = {}) {
   const profile = profileFor(facts);
   const funerals = parentFuneral.filter((x) => x.product).sort((x, y) => y.age - x.age);
   const ciOn = ciNeed > 0 && issuable("life-span-gold", age, "Critical illness cover");
-  const di = profile !== "later" && issuable("cashbuilder-ii", age, "Disability income") ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }) : 0;
+  const di = profile !== "later" && issuable("cashbuilder-ii", age, "Disability income") ? minimumFor(b, { product: "cashbuilder-ii", basis: "cashbuilder", insuredAge: age }, rating) : 0;
   const own = { age, sex: facts.client.sex, who: "You" };
   const ownCover = Math.min(ra.cover.max ?? Infinity, Math.max(ra.cover.min, w.funeral));
   const ownFinal = profile === "later" && issuable("rest-assured-ii", age, "Your own final expense") ? { min: restAssuredPremium(b, own, ra.cover.min), full: restAssuredPremium(b, own, ownCover) } : null;
@@ -4147,17 +5927,17 @@ function computeClosing(ctxIn, options = {}) {
     const loan = p.home?.loan ?? p.car?.loan ?? 0;
     if (loan <= 0) return [];
     const id2 = canIssue(b, "term", age + p.years) ? "term" : "whole-life";
-    const spec = id2 === "term" ? term : whole;
+    const spec = id2 === "term" ? term : whole2;
     const cover = Math.min(spec.cover.max ?? Infinity, Math.max(spec.cover.min, loan));
-    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, ratedAge(age)));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, anb, rating) ?? 0);
     return [{ key: `loan-cover:${p.goalId}`, tier: p.years <= near ? 2 : 3, label: `Life cover for the ${p.kind === "home" ? "home" : "car"} loan`, min: prem, full: prem, insurance: true, product: id2 }];
   });
   const cosignedCover = facts.debts.items.flatMap((d, ix) => {
     if (!d.cosigned || d.balance <= 0) return [];
     const id2 = canIssue(b, "term", age) ? "term" : "whole-life";
-    const spec = id2 === "term" ? term : whole;
+    const spec = id2 === "term" ? term : whole2;
     const cover = Math.min(spec.cover.max ?? Infinity, Math.max(spec.cover.min, d.balance));
-    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, ratedAge(age)));
+    const prem = Math.max(spec.minPremiumMonthly ?? 0, premiumFor(b, id2, cover, anb, rating) ?? 0);
     return [{ key: `cosigned-cover:${ix}`, tier: 2, label: `Life cover for the ${DEBT_WORDS[d.type]} ${d.cosignerName ?? "someone"} co-signed`, min: prem, full: prem, insurance: true, product: id2 }];
   });
   const specsFor = (chosen) => [
@@ -4198,7 +5978,7 @@ function computeClosing(ctxIn, options = {}) {
     const beyond = lad.items.find((i) => i.key === "life-beyond-ruin");
     if (budget.stage === 0 || !ruin || ruin.allocated <= 0) return 0;
     const target = Math.max(packages.essential, packages[chosen]);
-    const toCard = ruin.allocated >= ruin.full - 1e-9 ? target : Math.max(packages.essential, Math.min(target, lifeRate > 0 ? ruin.allocated / lifeRate * 1e3 : 0));
+    const toCard = ruin.allocated >= ruin.full - 1e-9 ? target : Math.max(packages.essential, Math.min(target, coverForPremium2(b, lifeProduct, ruin.allocated, anb, rating)));
     const share = beyond && beyond.full > 0 ? beyond.allocated / beyond.full : 0;
     return toCard + share * Math.max(0, packages.recommended - target);
   };
@@ -4210,7 +5990,7 @@ function computeClosing(ctxIn, options = {}) {
       return { cover: 0, items: [], totalMonthly: 0, totalHighMonthly: 0, partial: !!ruin && wanted > 0, permanentDropped: false, notCovered: notCoveredAt(0), notYet: ruin?.notYet ?? false };
     }
     const cover = lifeCoverFunded(lad, pkg);
-    const band = roughBand(b, cover * lifeRate / 1e3, lifeSpec.minPremiumMonthly);
+    const band = roughBand(b, premiumFor(b, lifeProduct, cover, anb, rating) ?? 0, lifeSpec.minPremiumMonthly);
     const items = [{ product: lifeProduct, cover, premiumMonthly: prem, band }];
     return { cover, items, totalMonthly: prem, totalHighMonthly: band.high, partial: cover < wanted - 0.5, permanentDropped: false, notCovered: notCoveredAt(cover), notYet: false };
   };
@@ -4236,7 +6016,7 @@ function computeClosing(ctxIn, options = {}) {
     }
     const short = Math.max(0, ruin.full - lifeMonthly);
     if (short <= 1e-9) return { ...base, status: "in-plan", needsMonthly: 0, statusText: "In your plan" };
-    return { ...base, status: "needs-more", needsMonthly: premiumMonthly - lifeMonthly, statusText: `Needs ${money(premiumMonthly - lifeMonthly)} more a month` };
+    return { ...base, status: "needs-more", needsMonthly: premiumMonthly - lifeMonthly, statusText: `Needs ${money2(premiumMonthly - lifeMonthly)} more a month` };
   });
   b.rule("each package card's status is a ladder run with that card chosen, at the insurance budget in use");
   const shares = b.get("core:ff.closing.bandShares");
@@ -4273,7 +6053,7 @@ function computeClosing(ctxIn, options = {}) {
       monthsUntilShortfall: null,
       obligationsMet: legLine?.met ? ["What you leave behind"] : [],
       obligationsFailed: legLine && !legLine.met ? ["What you leave behind"] : [],
-      sentences: [w.legacy <= 0 ? "No legacy goal was set." : legLine?.met ? `${money(w.legacy)} goes straight to the person you name. It does not form part of your estate, and creditors cannot reach it (Insurance Act s.187).` : "The plan does not yet reach what you want to leave behind."],
+      sentences: [w.legacy <= 0 ? "No legacy goal was set." : legLine?.met ? `${money2(w.legacy)} goes straight to the person you name. It does not form part of your estate, and creditors cannot reach it (Insurance Act s.187).` : "The plan does not yet reach what you want to leave behind."],
       unknowns: []
     }
   };
@@ -5446,7 +7226,9 @@ export {
   careGraphInputFromFacts,
   cashFromFacts,
   catalogueGroup,
+  cents,
   childLabel,
+  clientRating,
   completeOrder,
   computeBudgetAnalysis,
   computeBusiness,
@@ -5470,8 +7252,10 @@ export {
   computeRetirementNeeds,
   computeRoomPlan,
   computeStartEarly,
+  coreGroupKeys,
+  coreRowExists,
   coreRowPaths,
-  coverForPremium,
+  coverForPremium2 as coverForPremium,
   coverHeld,
   defaultOrder,
   dependents,
@@ -5484,7 +7268,7 @@ export {
   insuranceRange,
   isRoomDestination,
   minimumFor,
-  money,
+  money2 as money,
   monthIndex,
   monthLabel,
   mortgageBalance,
@@ -5498,6 +7282,7 @@ export {
   payoffMonths,
   policiesByType,
   premiumFor,
+  premiumQuote,
   profileFor,
   ratePer1000,
   ratedAge,
@@ -5512,6 +7297,7 @@ export {
   restAssuredPer1000,
   restAssuredPremium,
   restAssuredRatedAge,
+  restAssuredRating,
   roomPlanRecord,
   roughBand,
   routeAnnuity,

@@ -97,12 +97,12 @@ export type { LovedOnesResult, LovedOneResult, LovedOnePlan } from "./loved-ones
 export { computeBusiness } from "./business.ts";
 export type { BusinessResult, BusinessNeed, BusinessNeedTag } from "./business.ts";
 export {
-  roughBand, fitToMinimums, ratePer1000, premiumFor, coverForPremium,
-  restAssuredPremium, restAssuredPer1000, restAssuredCoverFor, restAssuredRatedAge, restAssuredEligible, ratedAge, canIssue,
+  roughBand, fitToMinimums, ratePer1000, premiumFor, coverForPremium, premiumQuote, cents, clientRating,
+  restAssuredPremium, restAssuredPer1000, restAssuredCoverFor, restAssuredRatedAge, restAssuredEligible, restAssuredRating, ratedAge, canIssue,
 } from "./premiums.ts";
-export type { PremiumBand, FitRow, FitResult, RateKind, RestAssuredInsured } from "./premiums.ts";
+export type { PremiumBand, FitRow, FitResult, RateKind, SampleKind, Rating, PremiumQuote, RestAssuredInsured } from "./premiums.ts";
 
-export { CORE_TABLES, coreRowPaths, resolveCoreRow, ASSUMPTION_SET_ID } from "./parameters/index.ts";
+export { CORE_TABLES, coreRowPaths, coreRowExists, coreGroupKeys, resolveCoreRow, ASSUMPTION_SET_ID } from "./parameters/index.ts";
 export type { Row, RowStatus } from "./parameters/index.ts";
 export { PRODUCTS as TATIL_PRODUCTS, RIDERS as TATIL_RIDERS, VEHICLES as RETURN_VEHICLES, REST_ASSURED_GRADING } from "./parameters/tatil-products-2026-10.ts";
 export type { ProductId, ProductSpec, RiderId, RiderSpec, VehicleSpec } from "./parameters/tatil-products-2026-10.ts";

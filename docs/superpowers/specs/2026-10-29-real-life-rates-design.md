@@ -14,7 +14,14 @@ The run also fixes the age-60 crash (decision 9), which blocks every screen for 
 
 ## 2. Risks and conflicts, written before the code (rule 5)
 
-**R1 — `smoker` on the client facts vs rule 8. Needs Kyron's word.**
+**R1 — `smoker` on the client facts vs rule 8. SIGNED by Kyron, 28 Oct 2026.**
+
+> Nicotine use (`facts.client.smoker`) is the one health-related fact allowed in the case facts, by Kyron's
+> decision of 28 Oct 2026, used only to pick premium rates. It never appears in parameter tables, and fixtures
+> use synthetic people. Every other health answer stays out (rule 8).
+
+That paragraph is the rule. The reasoning behind it:
+
 The brief's decision 4 says smoker "is never written into this repo's data (rule 8)", and Part 2 then says to
 read `facts.client.smoker`. Those pull apart. The portal has already decided it: its run record
 `RUN-2026-10-28-life-rate-engine.md` §2 keeps it "as `facts.client.smoker` (true / false; absent until
@@ -25,11 +32,11 @@ present, with the same kind of comment `hasHealthCover` already carries ("an und
 health answer"). Guard 8 is untouched: `HEALTH_KEY` is `/^health(flag|note)$/i`, and a snapshot is built from
 the closing result, which never carries it. Rule 8 is read as: no smoker status in `parameters/`, in a golden,
 in a fixture of a real person, or in any stored snapshot. Fixtures are synthetic people.
-*If Kyron wants the stricter reading instead, the field moves to `FactFinderOptions.smoker` and
-`validateLifeCaseFacts` gains a guard that rejects `client.smoker`. That is a one-line change to this spec and
-about twenty lines of code. Say which at sign-off.*
+A guard (G14) asserts the rule's second half: no `core:lifeRates` or `core:ff` row, and no fixture, carries a
+smoker field.
 
-**R2 — the sample fallback changes age basis, so some goldens move. Needs Kyron's word.**
+**R2 — the sample fallback changes age basis, so some goldens move. SIGNED by Kyron, 28 Oct 2026:
+everything on age next birthday; fallback goldens moving about 7% is expected.**
 Today the SAMPLE curve is read at the client's **actual** age in `closing.ts:255-256` and `:471`
 (`ratePer1000(b, kind, age)`) but at the **rated** age in `closing.ts:498` and `:508`
 (`premiumFor(b, id, cover, ratedAge(age))`). Two age bases for one curve. This spec puts everything on ANB
@@ -40,8 +47,19 @@ age-year of growth (about +7% to +8% on the sample curve). Every such golden is 
 The two verified ApplyOn quotes (male rated 72, female rated 67, taxes and stamp duty included) sit outside the
 book's harvested grid (ANB 20-70), and `issueAge.max` is 80. So ANB 71-80 keeps the anchor formula, and ANB
 20-70 uses the book. At the seam, $30,000 male: ANB 70 from the book is **$241.06 a month**, the anchor formula
-at rated age 70 is **$238.44 a month** — a 1.1% step. Accepted: both figures are labelled rough, and the four
-verified anchor goldens must not move. Harvesting ANB 71-80 is fence F5.
+at rated age 70 is **$238.44 a month** — a 1.1% step. Accepted: both figures are labelled rough. Harvesting
+ANB 71-80 is fence F5.
+
+**R3a — correction found while wiring the engine (29 Oct 2026). Two of the four Rest Assured goldens move.**
+R3 first claimed that all four verified anchor goldens sit outside the grid. Only the male pair does
+(rated age 72, past ANB 70). The **female pair is at rated age 67, which is inside the grid** (ANB 65 and 70 are
+harvested), so the book now prices it by interpolation: rate 69.978, giving **$300.21 a month on $50,000**
+(quote $297.60, +0.88%) and **$180.12 on $30,000** (quote $178.56, +0.87%). Decision: **the book wins inside the
+grid.** Keeping a one-off anchor inside the grid would re-create the two-sources-of-truth problem this run
+exists to remove (decision 1: re-running the import is the only way a rate changes). The two ApplyOn quotes stay
+in the run record as a 1% accuracy check, and in `core:ff.premiumRates` as the ANB 71-80 fallback only.
+`core/test/rest-assured.test.ts` moves those two goldens, with the quoted figures kept in a comment as the
+check. Flagged for Kyron at STOP B.
 
 **R4 — bands make cover-for-budget non-monotone, and the effect is large.**
 Term, male, ANB 36, non-smoker: **$499,999 costs $262.23 a month** and **$500,000 costs $175.66 a month**. A
@@ -53,7 +71,8 @@ naive inversion returns the small answer. Decision 7's algorithm is written out 
 fee and bands it is not. Each becomes a call to `premiumFor` or `coverForPremium`. Any site missed here will
 quietly show a cover that is out by the fee.
 
-**R6 — whole life at $150 a month may not reach its own minimum cover.**
+**R6 — whole life at $150 a month may not reach its own minimum cover. SIGNED by Kyron, 28 Oct 2026: kept as a
+fence (F6) for a follow-up, not fixed this run.**
 Whole life, male, ANB 36, non-smoker (rate interpolated 22.472): $150 a month buys about **$61,776**, under the
 $65,000 minimum cover. `minimumFor` already takes the larger of the minimum premium and the cost of the minimum
 cover, so the ladder is right; but `coverForPremium` must not report an un-issuable cover. §5.6 returns 0 with a
@@ -348,6 +367,7 @@ Every case that works today scores the same: those cases all take the `hhNet > 0
 | G11 | `coverForPremium` across the band edge returns the larger cover (R4, §5.6). | parity test |
 | G12 | Interpolation: Rest Assured II, F, ANB 56, $125,000, Payment to Age 100 is within 1% of the held-out $5,788.75 a year. | parity test |
 | G13 | Every `core:lifeRates` row passes the existing "source and ISO asOf" guard. | existing `provenance-core.test.ts` |
+| G14 | No parameter row and no fixture carries a smoker field (R1's second half). | `core/test/life-rates-parity.test.ts` |
 
 ## 7. Parity cases (must be exact to the cent)
 
@@ -380,8 +400,8 @@ Every case that works today scores the same: those cases all take the `hhNet > 0
 
 ## 9. Stop points and deliverables
 
-- **STOP A (now).** Kyron signs this spec and answers R1 (where `smoker` lives) and R2 (ANB everywhere, so
-  fallback goldens move). No code until then.
+- **STOP A — passed.** Kyron signed this spec on 28 Oct 2026: R1 as the quoted paragraph, R2 "everything on age
+  next birthday; fallback goldens moving about 7% is expected", R6 kept as fence F6.
 - **Parts 1-2.** The import script, the generated table, the engine, the age-60 fix, the Life Span Gold minimum.
 - **STOP B.** Deliverable B pasted back: the `npm test` summary, the §7 parity table filled in with actual
   figures, and every moved golden old -> new with one line of reason each. Kyron accepts the new goldens.
