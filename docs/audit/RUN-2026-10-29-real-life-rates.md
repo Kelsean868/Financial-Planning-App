@@ -3,8 +3,9 @@
 Date: 29 Oct 2026 · Branch `feat/real-life-rates` · Spec `docs/superpowers/specs/2026-10-29-real-life-rates-design.md`
 Brief `docs/briefs/2026-10-28-real-life-rates-brief.md` · Model: Opus 5 (import script and nothing else on Sonnet 5.5)
 
-Status: **STOP B — waiting for Kyron to accept the moved goldens.** Parts 1, 2 and 3 are done and green.
-Part 4's PR is not opened yet.
+Status: **done, waiting on Kyron's merge.** Kyron accepted the moved goldens, R3a included, at STOP B on
+29 Oct 2026. PR: https://github.com/Kelsean868/Financial-Planning-App/pull/8 — CC does not merge and does not
+deploy (rule 9).
 
 ## 1. Risks, written before the change (rule 5)
 
