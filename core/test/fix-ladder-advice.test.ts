@@ -115,16 +115,17 @@ test("guard 25: the close screen's life package is the ladder's life allocation,
   assert.ok(n > 500, `${n} baskets checked`);
 });
 
-test("expected result, family: cap $533.13; term $238.83 and CI $294.30; the funerals and disability income wait", () => {
+// Real rates (29 Oct 2026): was term 238.83, CI 294.30 and the mother's minimum 178.56.
+test("expected result, family: cap $533.13; term $297.29 and CI $235.84; the funerals and disability income wait", () => {
   const r = computeFactFinder(SAMPLE_FAMILY);
   const [prot] = r.insuranceBudget.groups;
   assert.equal(money2(r.closing.ladder.insuranceCapMonthly), "533.13");
-  assert.deepEqual(prot.funded.map((p) => [p.name, money2(p.monthly)]), [["Term life", "238.83"], ["Critical illness (Life Span Gold)", "294.30"]]);
+  assert.deepEqual(prot.funded.map((p) => [p.name, money2(p.monthly)]), [["Term life", "297.29"], ["Critical illness (Life Span Gold)", "235.84"]]);
   assert.deepEqual(prot.notYet.map((p) => [p.name, money2(p.needsMonthly)]), [
-    ["Your father's funeral cover (Rest Assured II)", "262.88"], ["Your mother's funeral cover (Rest Assured II)", "178.56"],
+    ["Your father's funeral cover (Rest Assured II)", "262.88"], ["Your mother's funeral cover (Rest Assured II)", "180.12"],
     ["Cashbuilder II with disability income rider", "300.00"],
   ]);
-  assert.equal(money2(r.closing.chosen.basket.totalMonthly), "238.83");
+  assert.equal(money2(r.closing.chosen.basket.totalMonthly), "297.29");
   assert.equal(Math.round(r.closing.chosen.basket.cover), 823567, "the basket's cover is the ruin level");
   assert.equal(money2(r.buckets.protection), "533.13", "the budget card's Protection bucket agrees (F-13)");
 });

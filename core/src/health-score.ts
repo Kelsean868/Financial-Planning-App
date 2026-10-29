@@ -38,11 +38,16 @@ export function computeHealthScore(input: {
   const sc4 = retirement.wantedMonthly > 0 ? Math.min(max, max * retirement.floorMonthly / retirement.wantedMonthly) : max;
   const held = deathNeed.cover.knownLife + input.savings;
   const sc5 = max * held / Math.max(1, held + deathNeed.tiers.essential);
-  const score = Math.round(sc1 + sc2 + sc3 + sc4 + sc5);
+  // A part can still arrive as NaN from a degenerate case (no pay and no costs at 60+). Score it as 0
+  // rather than throwing on a label that does not exist (real-life-rates spec §5.8).
+  const raw = Math.round(sc1 + sc2 + sc3 + sc4 + sc5);
+  const score = Number.isFinite(raw) ? raw : 0;
   const labels = b.get<readonly { from: number; label: string }[]>("core:ff.healthScore.labels");
+  // The last label is the `from: 0` one, so the fallback is "Needs work", never a surprise.
+  const band = labels.find((l) => score >= l.from) || labels[labels.length - 1]!;
   return {
     score,
-    label: labels.find((l) => score >= l.from)!.label,
+    label: band.label,
     parts: [
       { key: "spending", label: "Spending", points: sc1, explains: "Needs as a share of take-home" },
       { key: "cushion", label: "Savings cushion", points: sc2, explains: "Months of costs saved, out of 6" },

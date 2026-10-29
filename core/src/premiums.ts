@@ -1,34 +1,30 @@
 /**
- * Rough premium figures (Section 2 §2.5). Term, whole life and critical illness come from rate rows
- * marked `estimate`. Rest Assured II is priced from two quoted rates (male and female, `verified`)
- * moved by an estimated age factor away from the quoted age; `restAssuredPremium` is the one place
- * that arithmetic lives. The engine returns a band labelled "rough", never a quote; when the band's
- * top is under the plan's minimum, it returns the minimum labelled "the minimum premium".
+ * Premium figures for the engine (Section 2 §2.5, real-life-rates spec 2026-10-29).
+ *
+ * Every rate now comes from Tatil's harvested rate book, through `life-rates.ts`, which owns the
+ * arithmetic: bands, the $360 fee, the modal factor, interpolation between harvested ages, the SAMPLE
+ * fallback and Tatil's minimum premiums. This module holds what sits around it — the rough band, product
+ * eligibility by rated age, the Rest Assured II wrappers, and fitting plans to their minimums.
+ *
+ * The engine still returns a band labelled "rough", never a quote; when the band's top is under the
+ * plan's minimum, it returns the minimum labelled "the minimum premium".
  */
 import { ProvenanceBuilder } from "./provenance.ts";
+import {
+  premiumQuote, coverForPremium as coverFromRates, ratePer1000, cents, restAssuredAnchorPer1000,
+  type RateKind, type Rating, type SampleKind, type PremiumQuote,
+} from "./life-rates.ts";
 import type { ProductId, ProductSpec } from "./parameters/tatil-products-2026-10.ts";
-import type { RestAssuredAnchor } from "./parameters/fact-finder-2026-10.ts";
 import type { Sex } from "./life-case-facts.ts";
 
-export type RateKind = "term" | "whole-life" | "ci";
+export { premiumQuote, ratePer1000, cents };
+export type { RateKind, Rating, SampleKind, PremiumQuote };
 
 export interface PremiumBand {
   readonly low: number;
   readonly high: number;
   /** "rough" for an estimate band; "the minimum premium" when the minimum binds. Never a price. */
   readonly label: "rough" | "the minimum premium";
-}
-
-const RATE_PATHS: Record<RateKind, [string, string]> = {
-  term: ["core:ff.premiumRates.termPer1000", "core:ff.premiumRates.termAgeGrowth"],
-  "whole-life": ["core:ff.premiumRates.wholeLifePer1000", "core:ff.premiumRates.wholeLifeAgeGrowth"],
-  ci: ["core:ff.premiumRates.ciPer1000", "core:ff.premiumRates.ciAgeGrowth"],
-};
-
-/** Estimated monthly premium per $1,000 of cover at an age (sample rates, anchored at the base age). */
-export function ratePer1000(b: ProvenanceBuilder, kind: RateKind, age: number): number {
-  const [base, growth] = RATE_PATHS[kind];
-  return b.num(base) * Math.pow(b.num(growth), age - b.num("core:ff.premiumRates.baseAge"));
 }
 
 export function product(b: ProvenanceBuilder, id: ProductId): ProductSpec {
@@ -50,15 +46,27 @@ export function roughBand(b: ProvenanceBuilder, estimate: number, minimumMonthly
   });
 }
 
-/** Monthly premium estimate for an amount of cover. */
-export function premiumFor(b: ProvenanceBuilder, kind: RateKind, cover: number, age: number): number {
-  return cover * ratePer1000(b, kind, age) / 1000;
+/**
+ * Monthly premium for an amount of cover, at an age next birthday. Null past the product's maximum issue
+ * age ("Not available at this age"); callers build a plan item only after `canIssue`, so in practice the
+ * null is the backstop rather than a case they handle.
+ */
+export function premiumFor(
+  b: ProvenanceBuilder, kind: RateKind, cover: number, anb: number, rating: Rating,
+): number | null {
+  return premiumQuote(b, kind, cover, anb, rating).monthly;
 }
 
-/** Cover an amount of premium buys, at the estimate rate. */
-export function coverForPremium(b: ProvenanceBuilder, kind: RateKind, monthly: number, age: number): number {
-  const r = ratePer1000(b, kind, age);
-  return r > 0 ? monthly / r * 1000 : 0;
+/** Cover a monthly premium buys, worked out per band (spec §5.6). */
+export function coverForPremium(
+  b: ProvenanceBuilder, kind: RateKind, monthly: number, anb: number, rating: Rating,
+): number {
+  return coverFromRates(b, kind, monthly, anb, rating);
+}
+
+/** The rating for the client themself. The nicotine answer is absent until they answer it. */
+export function clientRating(client: { readonly sex: Sex; readonly smoker?: boolean }): Rating {
+  return { sex: client.sex, smoker: client.smoker ?? null, who: "You" };
 }
 
 /* --------------------------------------------------------------- Rest Assured II */
@@ -95,25 +103,31 @@ export function restAssuredEligible(b: ProvenanceBuilder, age: number): boolean 
   return canIssue(b, "rest-assured-ii", age);
 }
 
-/** Monthly premium per $1,000 of cover: the quoted rate for the sex, moved by the age factor away from the quoted age. */
+/** The rating a Rest Assured II insured is priced on. Nicotine is never asked of a parent or an elder. */
+export function restAssuredRating(insured: RestAssuredInsured): Rating {
+  return { sex: insured.sex, smoker: null, who: insured.who };
+}
+
+/**
+ * Monthly premium per $1,000 of cover from the two quoted ApplyOn rates, moved by the age factor away from
+ * the quoted age. **Fallback only now:** the harvested grid (ANB 20 to 70) prices everything inside it, and
+ * this covers ANB 71 to 80, which nobody has harvested (spec R3, fence F5).
+ */
 export function restAssuredPer1000(b: ProvenanceBuilder, insured: RestAssuredInsured): number {
   if (insured.sex === null) {
     b.caveat(`${insured.who}: sex not known, so Rest Assured II is priced on the male rate (the higher one).`);
   }
-  const anchor = b.get<RestAssuredAnchor>(insured.sex === "female" ? "core:ff.premiumRates.restAssuredFemale" : "core:ff.premiumRates.restAssuredMale");
-  const years = restAssuredRatedAge(insured.age) - anchor.ratedAge;
-  return years === 0 ? anchor.per1000 : anchor.per1000 * Math.pow(b.num("core:ff.premiumRates.restAssuredAgeGrowth"), years);
+  return restAssuredAnchorPer1000(b, restAssuredRatedAge(insured.age), insured.sex);
 }
 
-/** Monthly Rest Assured II premium for an amount of cover. */
+/** Monthly Rest Assured II premium for an amount of cover, from the rate book. */
 export function restAssuredPremium(b: ProvenanceBuilder, insured: RestAssuredInsured, cover: number): number {
-  return cover * restAssuredPer1000(b, insured) / 1000;
+  return premiumFor(b, "rest-assured", cover, restAssuredRatedAge(insured.age), restAssuredRating(insured)) ?? 0;
 }
 
 /** Rest Assured II cover a monthly premium buys. */
 export function restAssuredCoverFor(b: ProvenanceBuilder, insured: RestAssuredInsured, monthly: number): number {
-  const r = restAssuredPer1000(b, insured);
-  return r > 0 ? monthly / r * 1000 : 0;
+  return coverForPremium(b, "rest-assured", monthly, restAssuredRatedAge(insured.age), restAssuredRating(insured));
 }
 
 /* --------------------------------------------------------------- fitting to minimums */

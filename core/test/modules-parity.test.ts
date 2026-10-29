@@ -46,11 +46,12 @@ test("insurance budget, young single: the ladder at the $281 recommended; CI onl
 test("insurance budget, family: the ladder at the $533 recommended; the parents' funerals wait", () => {
   const [prot, sav] = computeFactFinder(SAMPLE_FAMILY).insuranceBudget.groups;
   // Was term 238.83, the father's funeral 293.45 and the mother's 178.56 of the $711 ceiling; CI and Cashbuilder II
-  // waited. Now, at the $533.13 cap in the order life, CI, funerals: term $238.83, then CI's $150 minimum topped up
-  // to $294.30 in pass two. The father ($262.88), the mother ($178.56) and Cashbuilder II ($300) wait.
+  // waited. Then, at the $533.13 cap in the order life, CI, funerals: term $238.83 and CI $294.30.
+  // Real rates (29 Oct 2026): term $297.29, then CI's $154.44 minimum topped up to $235.84 in pass two.
+  // The father ($262.88), the mother ($180.12) and Cashbuilder II ($300) wait.
   assert.equal(prot.totalMonthly.toFixed(2), "533.13");
-  assert.deepEqual(prot.funded.map((p) => [p.product, p.monthly.toFixed(2)]), [["term", "238.83"], ["life-span-gold", "294.30"]]);
-  assert.deepEqual(prot.notYet.map((p) => [p.product, p.needsMonthly.toFixed(2)]), [["rest-assured-ii", "262.88"], ["rest-assured-ii", "178.56"], ["cashbuilder-ii", "300.00"]]);
+  assert.deepEqual(prot.funded.map((p) => [p.product, p.monthly.toFixed(2)]), [["term", "297.29"], ["life-span-gold", "235.84"]]);
+  assert.deepEqual(prot.notYet.map((p) => [p.product, p.needsMonthly.toFixed(2)]), [["rest-assured-ii", "262.88"], ["rest-assured-ii", "180.12"], ["cashbuilder-ii", "300.00"]]);
   assert.equal(prot.note.split(" Not yet:")[0], "Your safe range is $355 to $711. We plan to $533, the recommended amount, and fund plans in priority order.");
   assert.deepEqual(sav.funded.map((p) => [p.key, R(p.monthly)]), [["annuity", 872], ["endowment", 926]]);
 });

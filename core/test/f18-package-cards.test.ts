@@ -81,45 +81,52 @@ test("guard 27: an insurance budget below $200, above max(ceiling, $200), or not
   assert.ok(n > 200, `${n} bad amounts checked`);
 });
 
-test("expected result 1: family, Essential, $533.13: term $238.83, critical illness $294.30 (unchanged)", () => {
+// Real rates (29 Oct 2026): was term 238.83 and CI 294.30 on the sample curves. Term is dearer because the
+// harvested rate at ANB 39 is $3.7701 per $1,000 a year plus the $360 fee; CI is cheaper, and its minimum is
+// now $154.44, so the ladder's pass two leaves it less.
+test("expected result 1: family, Essential, $533.13: term $297.29, critical illness $235.84", () => {
   const r = computeFactFinder(SAMPLE_FAMILY, { package: "essential", budgetMonthly: computeFactFinder(SAMPLE_FAMILY).budget.band.recommended });
   assert.equal(money2(r.closing.ladder.insuranceCapMonthly), "533.13");
-  assert.deepEqual(r.insuranceBudget.groups[0].funded.map((p) => [p.name, money2(p.monthly)]), [["Term life", "238.83"], ["Critical illness (Life Span Gold)", "294.30"]]);
+  assert.deepEqual(r.insuranceBudget.groups[0].funded.map((p) => [p.name, money2(p.monthly)]), [["Term life", "297.29"], ["Critical illness (Life Span Gold)", "235.84"]]);
   const card = r.closing.cards[0]!;
-  assert.deepEqual([card.status, Math.round(card.cover), money2(card.premiumMonthly)], ["in-plan", 823567, "238.83"]);
+  assert.deepEqual([card.status, Math.round(card.cover), money2(card.premiumMonthly)], ["in-plan", 823567, "297.29"]);
   assert.equal(r.closing.chosen.basket.partial, false, "the Essential card is funded in full");
 });
 
-test("expected result 2: family, Recommended, $533.13: life $383.13, critical illness $150; the card needs $195 more", () => {
+// Real rates (29 Oct 2026): was life 383.13, CI 150.00, the card needing $195 more and $1,321,144 of cover.
+test("expected result 2: family, Recommended, $533.13: life $378.69, critical illness $154.44; the card needs $297 more", () => {
   const r = computeFactFinder(SAMPLE_FAMILY, { package: "recommended" });
   assert.equal(money2(r.closing.ladder.insuranceCapMonthly), "533.13");
-  // Pass one: life 238.83 and CI 150 (left 144.30); pass two fills life first: 238.83 + 144.30.
-  assert.deepEqual(r.insuranceBudget.groups[0].funded.map((p) => [p.name, money2(p.monthly)]), [["Term life", "383.13"], ["Critical illness (Life Span Gold)", "150.00"]]);
+  // Pass one: life 297.29 and CI 154.44 (left 81.40); pass two fills life first: 297.29 + 81.40.
+  assert.deepEqual(r.insuranceBudget.groups[0].funded.map((p) => [p.name, money2(p.monthly)]), [["Term life", "378.69"], ["Critical illness (Life Span Gold)", "154.44"]]);
   const card = r.closing.cards[1]!;
   assert.deepEqual([card.status, Math.round(card.cover), money2(card.premiumMonthly), money2(card.needsMonthly), card.statusText],
-    ["needs-more", 1994846, "578.51", "195.37", "Needs $195 more a month"]);
-  assert.equal(Math.round(r.closing.chosen.basket.cover), 1321144, "383.13 a month at 0.29 per $1,000");
-  assert.equal(r.closing.scenarios.death.plan.sentences[0], "Your family receives $1,341,144.");
-  assert.equal(r.closing.scenarios.death.plan.sentences[9], "Your father's care stops in month 120.");
+    ["needs-more", 1994846, "676.16", "297.47", "Needs $297 more a month"]);
+  assert.equal(Math.round(r.closing.chosen.basket.cover), 1075221, "$378.69 a month at the harvested term rate, after the $360 fee");
+  assert.equal(r.closing.scenarios.death.plan.sentences[0], "Your family receives $1,095,221.");
+  assert.equal(r.closing.scenarios.death.plan.sentences[9], "Your father's care stops in month 61.");
 });
 
-test("expected result 3: family, Recommended, $710.84: life $297.96, CI $150, father's funeral $262.88; less life than at $533", () => {
+// Real rates (29 Oct 2026): was life 297.96, CI 150.00 and the FATHER's funeral at 262.88. Life and CI now
+// cost 530.72 together, so only $180.12 is left — enough for the mother ($180.12) but not the father
+// ($262.88), who moves to "not yet". The oldest-first order is unchanged; the money ran out sooner.
+test("expected result 3: family, Recommended, $710.84: life $376.28, CI $154.44, mother's funeral $180.12; the father waits", () => {
   const band = computeFactFinder(SAMPLE_FAMILY).budget.band;
   const r = computeFactFinder(SAMPLE_FAMILY, { package: "recommended", budgetMonthly: band.ceiling });
   const [prot] = r.insuranceBudget.groups;
-  // Pass one: life 238.83, CI 150, father 262.88 (left 59.13); the mother (178.56) and disability income (300) wait.
-  // Pass two: life takes the 59.13. The father's minimum fits at $711, so life gets less than at $533.
+  // Pass one: life 297.29, CI 154.44, the mother 180.12 (left 78.99); the father (262.88) and disability
+  // income (300) wait. Pass two: life takes the 78.99.
   assert.deepEqual(prot.funded.map((p) => [p.name, money2(p.monthly)]), [
-    ["Term life", "297.96"], ["Critical illness (Life Span Gold)", "150.00"], ["Your father's funeral cover (Rest Assured II)", "262.88"],
+    ["Term life", "376.28"], ["Critical illness (Life Span Gold)", "154.44"], ["Your mother's funeral cover (Rest Assured II)", "180.12"],
   ]);
-  assert.deepEqual(prot.notYet.map((p) => p.name), ["Your mother's funeral cover (Rest Assured II)", "Cashbuilder II with disability income rider"]);
+  assert.deepEqual(prot.notYet.map((p) => p.name), ["Your father's funeral cover (Rest Assured II)", "Cashbuilder II with disability income rider"]);
   assert.equal(money2(r.buckets.protection), "710.84", "the budget card follows the slider");
   assert.ok(prot.note.startsWith("Your safe range is $355 to $711. We plan to $711, the amount you chose,"));
-  assert.equal(Math.round(r.closing.chosen.basket.cover), 1027453);
-  assert.equal(r.closing.scenarios.death.plan.sentences[0], "Your family receives $1,047,453.");
-  assert.equal(r.closing.scenarios.death.plan.sentences[9], "Your father's care stops in month 49.");
+  assert.equal(Math.round(r.closing.chosen.basket.cover), 1067773);
+  assert.equal(r.closing.scenarios.death.plan.sentences[0], "Your family receives $1,087,773.");
+  assert.equal(r.closing.scenarios.death.plan.sentences[9], "Your father's care stops in month 59.");
   assert.equal(r.closing.scenarios.death.plan.sentences[10], "Child B's degree stops in month 1.", "the Child B line");
-  assert.equal(r.closing.cards[1]!.statusText, "Needs $281 more a month");
+  assert.equal(r.closing.cards[1]!.statusText, "Needs $300 more a month");
 });
 
 test("expected result 4: young single: no life item, so every card shows no life plan", () => {
@@ -134,15 +141,15 @@ test("default card is Essential; the chosen card fills life first in pass two, a
   const def = computeFactFinder(SAMPLE_FAMILY);
   assert.equal(def.closing.chosen.package, "essential");
   const ruin = (r: FactFinderResult): number => r.closing.ladder.items.find((i) => i.key === "life-ruin")!.allocated;
-  assert.equal(money2(ruin(def)), "238.83");
+  assert.equal(money2(ruin(def)), "297.29");
   const rec = computeFactFinder(SAMPLE_FAMILY, { package: "recommended" });
   const order = rec.closing.ladder.items.map((i) => i.key);
   const moved = [...order];
   moved.splice(moved.indexOf("critical-illness"), 1);
   moved.splice(moved.indexOf("life-ruin"), 0, "critical-illness");
   const r = computeFactFinder(SAMPLE_FAMILY, { package: "recommended", ladderOrder: moved });
-  assert.equal(money2(ruin(r)), "238.83", "CI moved above life: CI fills first in pass two");
-  assert.equal(money2(r.closing.ladder.items.find((i) => i.key === "critical-illness")!.allocated), "294.30");
+  assert.equal(money2(ruin(r)), "297.29", "CI moved above life: CI fills first in pass two");
+  assert.equal(money2(r.closing.ladder.items.find((i) => i.key === "critical-illness")!.allocated), "235.84");
 });
 
 test("an order saved under one card still works under another (completeOrder)", () => {

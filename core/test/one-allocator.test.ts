@@ -12,7 +12,7 @@
 import { test } from "node:test";
 import assert from "node:assert/strict";
 import {
-  computeFactFinder, requestReorder, restAssuredPremium, parentAge, parentSex, parentLabel, ratePer1000, ProvenanceBuilder,
+  computeFactFinder, requestReorder, restAssuredPremium, parentAge, parentSex, parentLabel, premiumFor, ratedAge, clientRating, ProvenanceBuilder,
   TATIL_PRODUCTS, SAMPLE_FAMILY, type FactFinderResult,
 } from "../src/index.ts";
 import { clone, eachCase, CENT } from "./ladder-cases.ts";
@@ -44,7 +44,12 @@ function productMinimum(r: FactFinderResult, key: string): number {
   const age = r.facts.client.age;
   const item = r.closing.ladder.items.find((i) => i.key === key)!;
   if (key === "life-ruin" || key.startsWith("loan-cover:")) return min(item.product!);
-  if (key === "critical-illness") return Math.max(min("life-span-gold"), TATIL_PRODUCTS["life-span-gold"].value.cover!.min * ratePer1000(b, "ci", age) / 1000);
+  // Since 29 Oct 2026 the critical illness floor is what Tatil's own rate charges for the minimum cover
+  // at the client's age next birthday and rating, not the old sample curve (real-life-rates spec).
+  if (key === "critical-illness") {
+    const cover = TATIL_PRODUCTS["life-span-gold"].value.cover!.min;
+    return Math.max(min("life-span-gold"), premiumFor(b, "ci", cover, ratedAge(age), clientRating(r.facts.client)) ?? 0);
+  }
   if (key === "disability-income") return min("cashbuilder-ii");
   if (key === "own-final-expense") return restAssuredPremium(b, { age, sex: r.facts.client.sex, who: "You" }, ra);
   if (key === "life-beyond-ruin") return 0;
@@ -88,11 +93,13 @@ test("Tier 1 default order: life, CI, parent funerals oldest first, disability i
 });
 
 // Fix run 3 re-baseline: was life 238.83, father 293.45, mother 178.56, CI and disability income not yet, at the $711 ceiling.
+// Real rates (29 Oct 2026): was life 238.83 and CI 294.30 on the sample curves; the harvested term rate at ANB 39 is
+// dearer and Life Span Gold's minimum is now $154.44, so pass two leaves CI less.
 test("the sample family at the $533 recommended: what each Tier 1 item gets", () => {
   const items = computeFactFinder(SAMPLE_FAMILY).closing.ladder.items.filter((i) => i.tier === 1);
   assert.deepEqual(items.map((i) => [i.label, i.allocated.toFixed(2), i.notYet]), [
-    ["Life cover to the ruin level", "238.83", false],
-    ["Critical illness cover", "294.30", false],
+    ["Life cover to the ruin level", "297.29", false],
+    ["Critical illness cover", "235.84", false],
     ["Your father's funeral cover", "0.00", true],
     ["Your mother's funeral cover", "0.00", true],
     ["Disability income (Cashbuilder II with the Disability Income Rider)", "0.00", true],
@@ -101,15 +108,21 @@ test("the sample family at the $533 recommended: what each Tier 1 item gets", ()
 
 // Fix run 3 re-baseline: the reorder is now the father's funeral above CI (CI is above it by default). Was CI moved above
 // the father, giving term 238.83, CI 209.13, father 262.88 at the $711 ceiling.
+// Real rates (29 Oct 2026): at the $533.13 default cap there is no longer room for any funeral, so a reorder there
+// changes nothing and would prove nothing. The reorder is shown at the $710.84 ceiling instead, where by default life
+// $297.29, CI $233.43 and the mother $180.12 are funded, and moving the father above CI funds him instead of CI.
 test("a reorder inside Tier 1 moves both screens: the father's funeral above critical illness", () => {
-  const r = computeFactFinder(SAMPLE_FAMILY);
+  const cap = computeFactFinder(SAMPLE_FAMILY).budget.band.ceiling;
+  const r = computeFactFinder(SAMPLE_FAMILY, { budgetMonthly: cap });
+  assert.deepEqual(r.insuranceBudget.groups[0].funded.map((p) => [p.product, p.monthly.toFixed(2)]),
+    [["term", "297.29"], ["life-span-gold", "233.43"], ["rest-assured-ii", "180.12"]], "before the reorder");
   const order = r.closing.ladder.items.map((i) => i.key);
   const father = "parent-funeral:00000000-0000-4000-8000-000000000006";
   const moved = requestReorder(r.closing.ladderSpecs, order, father, order.indexOf("critical-illness"), "2026-10-27T12:00:00Z");
   assert.equal(moved.declined.length, 0, "inside a tier: no declined record");
-  const re = computeFactFinder(SAMPLE_FAMILY, { ladderOrder: moved.order });
+  const re = computeFactFinder(SAMPLE_FAMILY, { budgetMonthly: cap, ladderOrder: moved.order });
   assertParity(re, "reordered");
-  assert.deepEqual(re.insuranceBudget.groups[0].funded.map((p) => [p.product, p.monthly.toFixed(2)]), [["term", "238.83"], ["rest-assured-ii", "294.30"]]);
-  assert.deepEqual(re.insuranceBudget.groups[0].notYet.map((p) => [p.product, p.needsMonthly.toFixed(2)]), [["life-span-gold", "150.00"], ["rest-assured-ii", "178.56"], ["cashbuilder-ii", "300.00"]]);
-  assert.equal(re.closing.chosen.basket.totalMonthly.toFixed(2), "238.83", "the close screen's life package follows the ladder");
+  assert.deepEqual(re.insuranceBudget.groups[0].funded.map((p) => [p.product, p.monthly.toFixed(2)]), [["term", "297.29"], ["rest-assured-ii", "413.55"]]);
+  assert.deepEqual(re.insuranceBudget.groups[0].notYet.map((p) => [p.product, p.needsMonthly.toFixed(2)]), [["life-span-gold", "154.44"], ["rest-assured-ii", "180.12"], ["cashbuilder-ii", "300.00"]]);
+  assert.equal(re.closing.chosen.basket.totalMonthly.toFixed(2), "297.29", "the close screen's life package follows the ladder");
 });
